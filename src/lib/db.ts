@@ -26,6 +26,7 @@ db.exec(`
     back TEXT NOT NULL,            -- English translation
     notes TEXT,                    -- Optional notes, examples, etc.
     audio_url TEXT,                -- Optional audio pronunciation
+    image_url TEXT,                -- Optional image for visual learning
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now')),
 
@@ -63,6 +64,12 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_reviews_card_id ON reviews(card_id);
 `);
 
+// Migration: Add image_url column if it doesn't exist (for existing databases)
+const columns = db.prepare("PRAGMA table_info(cards)").all() as { name: string }[];
+if (!columns.some((col) => col.name === "image_url")) {
+  db.exec("ALTER TABLE cards ADD COLUMN image_url TEXT");
+}
+
 export default db;
 
 // Types
@@ -81,6 +88,7 @@ export interface Card {
   back: string;
   notes: string | null;
   audio_url: string | null;
+  image_url: string | null;
   created_at: string;
   updated_at: string;
   // FSRS fields

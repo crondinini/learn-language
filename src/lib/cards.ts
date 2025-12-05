@@ -6,6 +6,7 @@ export interface CreateCardInput {
   back: string;
   notes?: string;
   audio_url?: string;
+  image_url?: string;
 }
 
 export interface UpdateCardInput {
@@ -13,6 +14,7 @@ export interface UpdateCardInput {
   back?: string;
   notes?: string;
   audio_url?: string;
+  image_url?: string;
 }
 
 export function getCardsByDeckId(deckId: number): Card[] {
@@ -31,23 +33,24 @@ export function getCardById(id: number): Card | undefined {
 
 export function createCard(input: CreateCardInput): Card {
   const stmt = db.prepare(`
-    INSERT INTO cards (deck_id, front, back, notes, audio_url)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO cards (deck_id, front, back, notes, audio_url, image_url)
+    VALUES (?, ?, ?, ?, ?, ?)
   `);
   const result = stmt.run(
     input.deck_id,
     input.front,
     input.back,
     input.notes || null,
-    input.audio_url || null
+    input.audio_url || null,
+    input.image_url || null
   );
   return getCardById(result.lastInsertRowid as number) as Card;
 }
 
 export function createCards(cards: CreateCardInput[]): Card[] {
   const stmt = db.prepare(`
-    INSERT INTO cards (deck_id, front, back, notes, audio_url)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO cards (deck_id, front, back, notes, audio_url, image_url)
+    VALUES (?, ?, ?, ?, ?, ?)
   `);
 
   const insertMany = db.transaction((items: CreateCardInput[]) => {
@@ -58,7 +61,8 @@ export function createCards(cards: CreateCardInput[]): Card[] {
         card.front,
         card.back,
         card.notes || null,
-        card.audio_url || null
+        card.audio_url || null,
+        card.image_url || null
       );
       ids.push(result.lastInsertRowid as number);
     }
@@ -75,7 +79,7 @@ export function updateCard(id: number, input: UpdateCardInput): Card | undefined
 
   const stmt = db.prepare(`
     UPDATE cards
-    SET front = ?, back = ?, notes = ?, audio_url = ?, updated_at = datetime('now')
+    SET front = ?, back = ?, notes = ?, audio_url = ?, image_url = ?, updated_at = datetime('now')
     WHERE id = ?
   `);
   stmt.run(
@@ -83,6 +87,7 @@ export function updateCard(id: number, input: UpdateCardInput): Card | undefined
     input.back ?? card.back,
     input.notes ?? card.notes,
     input.audio_url ?? card.audio_url,
+    input.image_url ?? card.image_url,
     id
   );
   return getCardById(id);

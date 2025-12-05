@@ -25,6 +25,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     back: body.back,
     notes: body.notes,
     audio_url: body.audio_url,
+    image_url: body.image_url,
   });
 
   if (!card) {

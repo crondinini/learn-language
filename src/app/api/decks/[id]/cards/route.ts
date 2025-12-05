@@ -39,6 +39,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       back: card.back,
       notes: card.notes,
       audio_url: card.audio_url,
+      image_url: card.image_url,
     }));
 
     // Validate all cards have required fields
@@ -68,6 +69,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       back: body.back,
       notes: body.notes,
       audio_url: body.audio_url,
+      image_url: body.image_url,
     });
 
     return NextResponse.json(card, { status: 201 });
