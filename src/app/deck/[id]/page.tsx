@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import SpeakerButton from "@/components/SpeakerButton";
+import Header from "@/components/Header";
 
 interface Card {
   id: number;
@@ -197,53 +198,30 @@ export default function DeckPage({ params }: { params: Promise<{ id: string }> }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      {/* Header */}
-      <header className="border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-700 dark:bg-slate-900/80">
-        <div className="mx-auto max-w-5xl px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-8">
-              <Link href="/" className="text-2xl font-bold text-slate-800 dark:text-white">
-                تعلم
-                <span className="ml-2 text-sm font-normal text-slate-500">Learn Arabic</span>
-              </Link>
-              <nav className="flex items-center gap-6">
-                <Link
-                  href="/"
-                  className="text-sm font-medium text-emerald-600 dark:text-emerald-400"
-                >
-                  Decks
-                </Link>
-                <Link
-                  href="/vocab"
-                  className="text-sm font-medium text-slate-500 transition hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-                >
-                  Vocabulary
-                </Link>
-              </nav>
-            </div>
-            <div className="flex items-center gap-3">
-              {totalDueCount > 0 ? (
-                <Link
-                  href="/review"
-                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
-                >
-                  Study Now ({totalDueCount})
-                </Link>
-              ) : (
-                <span className="rounded-lg bg-slate-200 px-4 py-2 text-sm font-medium text-slate-400 dark:bg-slate-700 dark:text-slate-500">
-                  Study Now (0)
-                </span>
-              )}
+      <Header
+        actions={
+          <>
+            {totalDueCount > 0 ? (
               <Link
-                href="/"
-                className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
+                href="/review"
+                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
               >
-                + New Deck
+                Study Now ({totalDueCount})
               </Link>
-            </div>
-          </div>
-        </div>
-      </header>
+            ) : (
+              <span className="rounded-lg bg-slate-200 px-4 py-2 text-sm font-medium text-slate-400 dark:bg-slate-700 dark:text-slate-500">
+                Study Now (0)
+              </span>
+            )}
+            <Link
+              href="/"
+              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
+            >
+              + New Deck
+            </Link>
+          </>
+        }
+      />
 
       {/* Main Content */}
       <main className="mx-auto max-w-5xl px-6 py-8">
