@@ -5,28 +5,91 @@ import path from "path";
 import db from "@/lib/db";
 import { getCardById } from "@/lib/cards";
 
-const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
+/**
+ * Sanitize a string for use in a filename
+ */
+function sanitizeFilename(str: string): string {
+  return str
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-") // Replace non-alphanumeric with dashes
+    .replace(/^-+|-+$/g, "")     // Remove leading/trailing dashes
+    .substring(0, 30);           // Limit length
+}
 
-// ElevenLabs Arabic voice IDs - you can change this to your preferred voice
-// Popular Arabic voices: "pMsXgVXv3BLzUgSXRplE" (Arabic male), or use their voice library
+// TTS Provider config
+const TTS_PROVIDER = process.env.TTS_PROVIDER || "elevenlabs"; // "google" or "elevenlabs"
+
+// ElevenLabs config
+const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
 const ARABIC_VOICE_ID = process.env.ELEVENLABS_VOICE_ID || "pMsXgVXv3BLzUgSXRplE";
 
 /**
+ * Generate audio using Google Cloud TTS
+ */
+async function generateWithGoogle(text: string): Promise<Buffer> {
+  const textToSpeech = await import("@google-cloud/text-to-speech");
+  const client = new textToSpeech.TextToSpeechClient();
+
+  const request = {
+    input: { text },
+    voice: {
+      languageCode: "ar-XA", // Modern Standard Arabic
+      ssmlGender: "MALE" as const,
+    },
+    audioConfig: { audioEncoding: "MP3" as const },
+  };
+
+  const [response] = await client.synthesizeSpeech(request);
+  return Buffer.from(response.audioContent as Uint8Array);
+}
+
+/**
+ * Generate audio using ElevenLabs
+ */
+async function generateWithElevenLabs(text: string): Promise<Buffer> {
+  if (!ELEVENLABS_API_KEY) {
+    throw new Error("ElevenLabs API key not configured");
+  }
+
+  const response = await fetch(
+    `https://api.elevenlabs.io/v1/text-to-speech/${ARABIC_VOICE_ID}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "xi-api-key": ELEVENLABS_API_KEY,
+      },
+      body: JSON.stringify({
+        text,
+        model_id: "eleven_multilingual_v2",
+        voice_settings: {
+          stability: 0.5,
+          similarity_boost: 0.75,
+          style: 0.0,
+          use_speaker_boost: true,
+        },
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`ElevenLabs API error: ${response.status} - ${errorText}`);
+  }
+
+  const audioBuffer = await response.arrayBuffer();
+  return Buffer.from(audioBuffer);
+}
+
+/**
  * POST /api/audio
- * Generate audio for a card using ElevenLabs and save locally
- * Body: { cardId: number }
+ * Generate audio for a card using configured TTS provider
+ * Body: { cardId: number, regenerate?: boolean }
  */
 export async function POST(request: NextRequest) {
   try {
-    if (!ELEVENLABS_API_KEY) {
-      return NextResponse.json(
-        { error: "ElevenLabs API key not configured. Add ELEVENLABS_API_KEY to .env.local" },
-        { status: 500 }
-      );
-    }
-
     const body = await request.json();
-    const { cardId } = body;
+    const { cardId, regenerate } = body;
 
     if (!cardId) {
       return NextResponse.json({ error: "cardId is required" }, { status: 400 });
@@ -38,47 +101,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Card not found" }, { status: 404 });
     }
 
-    // Check if audio already exists
-    if (card.audio_url) {
+    // Check if audio already exists (unless regenerating)
+    if (card.audio_url && !regenerate) {
       return NextResponse.json({
         message: "Audio already exists",
         audio_url: card.audio_url,
       });
     }
 
-    // Call ElevenLabs API
-    const response = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${ARABIC_VOICE_ID}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "xi-api-key": ELEVENLABS_API_KEY,
-        },
-        body: JSON.stringify({
-          text: card.front, // Arabic text
-          model_id: "eleven_multilingual_v2", // Best for Arabic
-          voice_settings: {
-            stability: 0.5,
-            similarity_boost: 0.75,
-            style: 0.0,
-            use_speaker_boost: true,
-          },
-        }),
+    // Generate audio based on provider
+    let audioBuffer: Buffer;
+    try {
+      if (TTS_PROVIDER === "google") {
+        audioBuffer = await generateWithGoogle(card.front);
+      } else {
+        audioBuffer = await generateWithElevenLabs(card.front);
       }
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("ElevenLabs API error:", errorText);
+    } catch (error) {
+      console.error(`${TTS_PROVIDER} TTS error:`, error);
       return NextResponse.json(
-        { error: `ElevenLabs API error: ${response.status}` },
+        { error: `TTS generation failed: ${error instanceof Error ? error.message : "Unknown error"}` },
         { status: 500 }
       );
     }
-
-    // Get audio buffer
-    const audioBuffer = await response.arrayBuffer();
 
     // Ensure audio directory exists
     const audioDir = path.join(process.cwd(), "public", "audio");
@@ -86,10 +131,11 @@ export async function POST(request: NextRequest) {
       await mkdir(audioDir, { recursive: true });
     }
 
-    // Save audio file with card ID as filename
-    const filename = `card-${cardId}.mp3`;
+    // Save audio file with card ID and English translation in filename
+    const safeName = sanitizeFilename(card.back);
+    const filename = `card-${cardId}-${safeName}.mp3`;
     const filepath = path.join(audioDir, filename);
-    await writeFile(filepath, Buffer.from(audioBuffer));
+    await writeFile(filepath, audioBuffer);
 
     // Update card with audio URL
     const audioUrl = `/audio/${filename}`;
@@ -101,6 +147,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       message: "Audio generated successfully",
       audio_url: audioUrl,
+      provider: TTS_PROVIDER,
     });
   } catch (error) {
     console.error("Error generating audio:", error);

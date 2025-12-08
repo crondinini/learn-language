@@ -9,7 +9,8 @@ This app addresses common frustrations with existing flashcard apps:
 - **Clean, modern UI** - Not the dated interface of traditional SRS apps
 - **Arabic-first design** - Proper RTL (right-to-left) text support
 - **FSRS algorithm** - State-of-the-art spaced repetition scheduling
-- **Native pronunciation** - ElevenLabs AI-generated Arabic audio
+- **Native pronunciation** - Google Cloud TTS or ElevenLabs AI-generated Arabic audio
+- **Visual learning** - Image support for vocabulary cards
 
 ## Tech Stack
 
@@ -20,14 +21,15 @@ This app addresses common frustrations with existing flashcard apps:
 | SQLite (better-sqlite3) | Local database |
 | Tailwind CSS | Styling |
 | [ts-fsrs](https://github.com/open-spaced-repetition/ts-fsrs) | Spaced repetition algorithm |
-| ElevenLabs | AI text-to-speech for Arabic |
+| Google Cloud TTS | AI text-to-speech for Arabic (recommended) |
+| ElevenLabs | Alternative AI text-to-speech |
 | Web Speech API | Fallback pronunciation |
 
 ## Requirements
 
 - Node.js 18+
 - npm or yarn
-- ElevenLabs API key (optional, for high-quality audio)
+- Google Cloud TTS credentials OR ElevenLabs API key (optional, for audio)
 
 ## Getting Started
 
@@ -35,9 +37,9 @@ This app addresses common frustrations with existing flashcard apps:
 # Install dependencies
 npm install
 
-# Set up environment variables (optional, for ElevenLabs audio)
+# Set up environment variables
 cp .env.example .env.local
-# Edit .env.local and add your ELEVENLABS_API_KEY
+# Edit .env.local (see Environment Variables section)
 
 # Run development server
 npm run dev
@@ -56,7 +58,7 @@ src/
 │   ├── review/
 │   │   └── page.tsx                # Global review - study all decks
 │   ├── deck/[id]/
-│   │   ├── page.tsx                # Deck detail - card management
+│   │   ├── page.tsx                # Deck detail - card management & preview
 │   │   └── review/
 │   │       └── page.tsx            # Deck review - study single deck
 │   ├── globals.css                 # Global styles
@@ -74,8 +76,10 @@ src/
 │       │   └── route.ts            # GET/POST /api/review
 │       ├── vocab/
 │       │   └── route.ts            # GET /api/vocab (stats + filtering)
-│       └── audio/
-│           └── route.ts            # POST/DELETE /api/audio
+│       ├── audio/
+│       │   └── route.ts            # POST/DELETE /api/audio
+│       └── images/
+│           └── route.ts            # POST/DELETE /api/images
 ├── lib/
 │   ├── db.ts                       # SQLite connection + schema
 │   ├── decks.ts                    # Deck CRUD operations
@@ -86,10 +90,10 @@ src/
     └── SpeakerButton.tsx           # Audio playback component
 
 public/
-└── audio/                          # Generated audio files (card-{id}.mp3)
+├── audio/                          # Generated audio files (card-{id}-{word}.mp3)
+└── images/                         # Uploaded card images
 
-scripts/
-└── test-db.ts                      # Database integration tests
+tts/                                # Google Cloud TTS credentials (gitignored)
 ```
 
 ## Database Schema
@@ -110,16 +114,17 @@ scripts/
 | deck_id | INTEGER | Foreign key to decks |
 | front | TEXT | Arabic word/phrase |
 | back | TEXT | English translation |
-| notes | TEXT | Optional notes |
+| notes | TEXT | Optional notes/example sentences |
 | audio_url | TEXT | Path to generated audio file |
-| stability | REAL | FSRS: Memory stability |
+| image_url | TEXT | Path to uploaded image |
+| stability | REAL | FSRS: Memory stability (days) |
 | difficulty | REAL | FSRS: Card difficulty (0-10) |
 | elapsed_days | INTEGER | Days since last review |
 | scheduled_days | INTEGER | Days until next review |
-| reps | INTEGER | Number of reviews |
-| lapses | INTEGER | Times forgotten |
+| reps | INTEGER | Consecutive successful reviews (resets on Again) |
+| lapses | INTEGER | Times forgotten (pressed Again) |
 | state | INTEGER | 0=New, 1=Learning, 2=Review, 3=Relearning |
-| due | TEXT | Next review date |
+| due | TEXT | Next review timestamp |
 | last_review | TEXT | Last review timestamp |
 
 ### Reviews (for analytics)
@@ -140,8 +145,10 @@ scripts/
 - [x] RESTful API routes
 - [x] FSRS scheduling with ts-fsrs library
 - [x] Review submission and card scheduling updates
-- [x] ElevenLabs audio generation API
-- [x] Local audio file storage
+- [x] Google Cloud TTS audio generation (Modern Standard Arabic)
+- [x] ElevenLabs audio generation (alternative provider)
+- [x] Local audio file storage with descriptive filenames
+- [x] Image upload and storage for cards
 
 ### Frontend
 - [x] Home page with deck list and statistics
@@ -167,17 +174,39 @@ scripts/
 - [x] Rating buttons (Again, Hard, Good, Easy) with interval preview
 - [x] FSRS scheduling algorithm integration (ts-fsrs)
 - [x] Session progress tracking and summary
-- [x] Keyboard shortcuts (Space to flip, 1-4 for ratings)
+- [x] Keyboard shortcuts:
+  - `Space` / `Enter` - Flip card
+  - `1` / `2` / `3` / `4` - Rate (Again/Hard/Good/Easy)
+  - `←` / `→` - Navigate cards without rating
 - [x] "Study Now" button in header (global review across all decks)
 - [x] Deck-specific review sessions
+- [x] "Again" adds card to end of queue (see it again this session)
+- [x] Ratings saved immediately (stop anytime, progress preserved)
+
+### Card Preview
+- [x] Click any card in deck view to preview
+- [x] Full flashcard preview with flip animation
+- [x] Arrow navigation to browse all cards
+- [x] Keyboard shortcuts (←/→ navigate, Space flip, Escape close)
+- [x] Quick access to edit from preview
 
 ### Audio Pronunciation
-- [x] ElevenLabs AI text-to-speech integration
+- [x] Google Cloud TTS integration (recommended for Arabic)
+- [x] ElevenLabs AI text-to-speech (alternative)
+- [x] Configurable TTS provider via environment variable
 - [x] On-demand audio generation (click speaker button)
 - [x] Local audio file caching (generates once, plays forever)
-- [x] Web Speech API fallback (when no ElevenLabs key)
+- [x] Descriptive filenames (e.g., `card-5-hello.mp3`)
+- [x] Web Speech API fallback (when no TTS configured)
 - [x] Visual feedback (gray/yellow/green/blue button states)
 - [x] Right-click to regenerate audio
+
+### Card Images
+- [x] Upload images for vocabulary cards
+- [x] Image display in card list (thumbnail)
+- [x] Image display on flashcard front during review
+- [x] Image-only mode toggle (hide Arabic text, show only image)
+- [x] Delete/replace images via edit modal
 
 ## Features To Implement
 
@@ -191,8 +220,7 @@ scripts/
 ### Content Management
 - [ ] **Bulk Import** - Paste vocabulary lists for auto card creation
 - [ ] **AI Card Generation** - Generate cards from text/topics
-- [ ] **Example Sentences** - Context for vocabulary
-- [ ] **Card Images** - Add images to vocabulary cards for visual learning
+- [ ] **Example Sentences** - Dedicated field for context
 
 ### User Experience
 - [ ] **Tags/Categories** - Organize cards within decks
@@ -216,10 +244,10 @@ DELETE /api/decks/:id      # Delete deck (cascades to cards)
 
 ```
 GET    /api/decks/:id/cards    # List cards in deck
-POST   /api/decks/:id/cards    # Create card(s) { front, back, notes? }
+POST   /api/decks/:id/cards    # Create card(s) { front, back, notes?, image_url? }
                                # Supports array for bulk creation
 GET    /api/cards/:id          # Get card by ID
-PATCH  /api/cards/:id          # Update card { front?, back?, notes? }
+PATCH  /api/cards/:id          # Update card { front?, back?, notes?, image_url? }
 DELETE /api/cards/:id          # Delete card
 ```
 
@@ -242,8 +270,15 @@ GET    /api/vocab                        # Get all vocabulary with stats
 ### Audio
 
 ```
-POST   /api/audio              # Generate audio { cardId }
+POST   /api/audio              # Generate audio { cardId, regenerate?: boolean }
 DELETE /api/audio?cardId=X     # Delete audio for card
+```
+
+### Images
+
+```
+POST   /api/images             # Upload image (FormData: cardId, image file)
+DELETE /api/images?cardId=X    # Delete image for card
 ```
 
 ## Environment Variables
@@ -251,32 +286,57 @@ DELETE /api/audio?cardId=X     # Delete audio for card
 Create a `.env.local` file:
 
 ```bash
-# ElevenLabs API (optional - falls back to Web Speech API)
+# TTS Provider: "google" (recommended) or "elevenlabs"
+TTS_PROVIDER=google
+
+# Google Cloud TTS (recommended for Arabic)
+# Download service account JSON from Google Cloud Console
+GOOGLE_APPLICATION_CREDENTIALS=./tts/your-credentials.json
+
+# ElevenLabs API (alternative)
+# Get your API key from: https://elevenlabs.io/app/settings/api-keys
 ELEVENLABS_API_KEY=your_api_key_here
 
-# Optional: Custom voice ID
+# Optional: Custom ElevenLabs voice ID
 # ELEVENLABS_VOICE_ID=pMsXgVXv3BLzUgSXRplE
 ```
 
-Get your API key from: https://elevenlabs.io/app/settings/api-keys
+### Setting up Google Cloud TTS
 
-## Running Tests
-
-```bash
-# Run database integration tests
-npx tsx scripts/test-db.ts
-```
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project (or select existing)
+3. Enable the "Cloud Text-to-Speech API"
+4. Go to IAM & Admin > Service Accounts
+5. Create a service account
+6. Create a JSON key and download it
+7. Save to `tts/` folder and update `GOOGLE_APPLICATION_CREDENTIALS`
 
 ## FSRS Algorithm
 
 This app uses the [ts-fsrs](https://github.com/open-spaced-repetition/ts-fsrs) library, implementing the Free Spaced Repetition Scheduler (FSRS) - a modern alternative to SM-2 (used by Anki).
 
-Key concepts:
-- **Stability (S)** - How long a memory will last
-- **Difficulty (D)** - Inherent difficulty of the card
-- **Retrievability (R)** - Probability of recall at any given time
+### Key Concepts
 
-The scheduling formula:
+| Field | Description |
+|-------|-------------|
+| **Stability** | How long the memory will last (in days) |
+| **Difficulty** | Inherent difficulty of the card (0-10) |
+| **State** | New (0) → Learning (1) → Review (2), or Relearning (3) if forgotten |
+| **Reps** | Consecutive successful reviews (resets when you press Again) |
+| **Lapses** | Total times you forgot the card |
+| **Due** | Timestamp when card becomes available for review |
+
+### Rating Effects
+
+| Rating | Effect |
+|--------|--------|
+| **Again (1)** | Card goes to Relearning, short interval, reps reset, lapses +1 |
+| **Hard (2)** | Shorter interval than Good, reps +1 |
+| **Good (3)** | Normal interval based on stability, reps +1 |
+| **Easy (4)** | Longer interval, reps +1 |
+
+### Scheduling Formula
+
 ```
 R(t) = (1 + t / (9 * S))^(-1)
 ```
