@@ -1,76 +1,109 @@
 import Database from "better-sqlite3";
 import path from "path";
 
-const dbPath = path.join(process.cwd(), "learn-language.db");
+let _db: Database.Database | null = null;
 
-const db = new Database(dbPath);
-db.pragma("journal_mode = WAL");
-db.pragma("foreign_keys = ON");
+// Skip DB initialization during Next.js build
+const isBuildTime = process.env.NEXT_PHASE === "phase-production-build";
 
-// Initialize schema
-db.exec(`
-  -- Decks table: collections of cards
-  CREATE TABLE IF NOT EXISTS decks (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    description TEXT,
-    created_at TEXT DEFAULT (datetime('now')),
-    updated_at TEXT DEFAULT (datetime('now'))
-  );
+function getDb(): Database.Database {
+  if (isBuildTime) {
+    // Return a dummy proxy during build to prevent errors
+    return new Proxy({} as Database.Database, {
+      get() {
+        return () => [];
+      },
+    });
+  }
 
-  -- Cards table: vocabulary items
-  CREATE TABLE IF NOT EXISTS cards (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    deck_id INTEGER NOT NULL,
-    front TEXT NOT NULL,           -- Arabic word/phrase
-    back TEXT NOT NULL,            -- English translation
-    notes TEXT,                    -- Optional notes, examples, etc.
-    audio_url TEXT,                -- Optional audio pronunciation
-    image_url TEXT,                -- Optional image for visual learning
-    created_at TEXT DEFAULT (datetime('now')),
-    updated_at TEXT DEFAULT (datetime('now')),
+  if (_db) return _db;
 
-    -- FSRS scheduling fields
-    stability REAL DEFAULT 0,      -- Memory stability (days)
-    difficulty REAL DEFAULT 0,     -- Card difficulty (0-10)
-    elapsed_days INTEGER DEFAULT 0,
-    scheduled_days INTEGER DEFAULT 0,
-    reps INTEGER DEFAULT 0,        -- Number of reviews
-    lapses INTEGER DEFAULT 0,      -- Number of times forgotten
-    state INTEGER DEFAULT 0,       -- 0=New, 1=Learning, 2=Review, 3=Relearning
-    due TEXT DEFAULT (datetime('now')),
-    last_review TEXT,
+  const dbPath = path.join(process.cwd(), "data", "learn-language.db");
+  _db = new Database(dbPath);
+  _db.pragma("journal_mode = WAL");
+  _db.pragma("foreign_keys = ON");
 
-    FOREIGN KEY (deck_id) REFERENCES decks(id) ON DELETE CASCADE
-  );
+  // Initialize schema
+  _db.exec(`
+    -- Decks table: collections of cards
+    CREATE TABLE IF NOT EXISTS decks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      description TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    );
 
-  -- Review history for analytics and optimization
-  CREATE TABLE IF NOT EXISTS reviews (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    card_id INTEGER NOT NULL,
-    rating INTEGER NOT NULL,       -- 1=Again, 2=Hard, 3=Good, 4=Easy
-    review_time TEXT DEFAULT (datetime('now')),
-    elapsed_days INTEGER,
-    scheduled_days INTEGER,
-    state INTEGER,
+    -- Cards table: vocabulary items
+    CREATE TABLE IF NOT EXISTS cards (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      deck_id INTEGER NOT NULL,
+      front TEXT NOT NULL,           -- Arabic word/phrase
+      back TEXT NOT NULL,            -- English translation
+      notes TEXT,                    -- Optional notes, examples, etc.
+      audio_url TEXT,                -- Optional audio pronunciation
+      image_url TEXT,                -- Optional image for visual learning
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now')),
 
-    FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE CASCADE
-  );
+      -- FSRS scheduling fields
+      stability REAL DEFAULT 0,      -- Memory stability (days)
+      difficulty REAL DEFAULT 0,     -- Card difficulty (0-10)
+      elapsed_days INTEGER DEFAULT 0,
+      scheduled_days INTEGER DEFAULT 0,
+      reps INTEGER DEFAULT 0,        -- Number of reviews
+      lapses INTEGER DEFAULT 0,      -- Number of times forgotten
+      state INTEGER DEFAULT 0,       -- 0=New, 1=Learning, 2=Review, 3=Relearning
+      due TEXT DEFAULT (datetime('now')),
+      last_review TEXT,
 
-  -- Indexes for performance
-  CREATE INDEX IF NOT EXISTS idx_cards_deck_id ON cards(deck_id);
-  CREATE INDEX IF NOT EXISTS idx_cards_due ON cards(due);
-  CREATE INDEX IF NOT EXISTS idx_cards_state ON cards(state);
-  CREATE INDEX IF NOT EXISTS idx_reviews_card_id ON reviews(card_id);
-`);
+      FOREIGN KEY (deck_id) REFERENCES decks(id) ON DELETE CASCADE
+    );
 
-// Migration: Add image_url column if it doesn't exist (for existing databases)
-const columns = db.prepare("PRAGMA table_info(cards)").all() as { name: string }[];
-if (!columns.some((col) => col.name === "image_url")) {
-  db.exec("ALTER TABLE cards ADD COLUMN image_url TEXT");
+    -- Review history for analytics and optimization
+    CREATE TABLE IF NOT EXISTS reviews (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      card_id INTEGER NOT NULL,
+      rating INTEGER NOT NULL,       -- 1=Again, 2=Hard, 3=Good, 4=Easy
+      review_time TEXT DEFAULT (datetime('now')),
+      elapsed_days INTEGER,
+      scheduled_days INTEGER,
+      state INTEGER,
+
+      FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE CASCADE
+    );
+
+    -- Indexes for performance
+    CREATE INDEX IF NOT EXISTS idx_cards_deck_id ON cards(deck_id);
+    CREATE INDEX IF NOT EXISTS idx_cards_due ON cards(due);
+    CREATE INDEX IF NOT EXISTS idx_cards_state ON cards(state);
+    CREATE INDEX IF NOT EXISTS idx_reviews_card_id ON reviews(card_id);
+
+    -- Homework table: assignments for the class
+    CREATE TABLE IF NOT EXISTS homework (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      description TEXT NOT NULL,
+      type TEXT NOT NULL DEFAULT 'recording',  -- Type of homework (recording, etc.)
+      status TEXT NOT NULL DEFAULT 'pending',  -- pending, completed
+      recording_url TEXT,                       -- URL to recorded audio (for recording type)
+      created_at TEXT DEFAULT (datetime('now')),
+      completed_at TEXT
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_homework_status ON homework(status);
+    CREATE INDEX IF NOT EXISTS idx_homework_created_at ON homework(created_at);
+  `);
+
+  // Migration: Add image_url column if it doesn't exist (for existing databases)
+  const columns = _db.prepare("PRAGMA table_info(cards)").all() as { name: string }[];
+  if (!columns.some((col) => col.name === "image_url")) {
+    _db.exec("ALTER TABLE cards ADD COLUMN image_url TEXT");
+  }
+
+  return _db;
 }
 
-export default db;
+export default getDb();
 
 // Types
 export interface Deck {
@@ -127,4 +160,26 @@ export const Rating = {
   Hard: 2,
   Good: 3,
   Easy: 4,
+} as const;
+
+// Homework interface
+export interface Homework {
+  id: number;
+  description: string;
+  type: 'recording';  // More types can be added later
+  status: 'pending' | 'completed';
+  recording_url: string | null;
+  created_at: string;
+  completed_at: string | null;
+}
+
+// Homework types enum
+export const HomeworkType = {
+  Recording: 'recording',
+} as const;
+
+// Homework status enum
+export const HomeworkStatus = {
+  Pending: 'pending',
+  Completed: 'completed',
 } as const;

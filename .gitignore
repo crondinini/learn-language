@@ -40,12 +40,16 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# database
+# database and data folder
 *.db
 *.db-shm
 *.db-wal
+data/
 .env.local
 
 # Generated content
 public/audio/
 public/images/
+
+# TTS credentials
+tts/

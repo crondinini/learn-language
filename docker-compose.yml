@@ -1,0 +1,17 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      # Persist database
+      - ./data/learn-language.db:/app/learn-language.db
+      # Persist media files
+      - ./data/audio:/app/public/audio
+      - ./data/homework:/app/public/homework
+      - ./data/images:/app/public/images
+      # Persist env file
+      - ./.env.local:/app/.env.local:ro
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
