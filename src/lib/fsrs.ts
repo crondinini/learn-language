@@ -73,6 +73,7 @@ function toFSRSCard(card: Card): FSRSCard {
     lapses: card.lapses || 0,
     state: card.state as FSRSState,
     last_review: card.last_review ? new Date(card.last_review) : undefined,
+    learning_steps: 0,
   };
 }
 
@@ -163,8 +164,9 @@ export function reviewCard(card: Card, rating: number, now: Date = new Date()): 
   const fsrsCard = toFSRSCard(card);
   const recordLog = f.repeat(fsrsCard, now);
 
-  const ratingKey = rating as FSRSRating;
-  return toSchedulingInfo(card, recordLog[ratingKey], rating, now);
+  // Use type assertion to handle ts-fsrs type changes
+  const log = recordLog as unknown as Record<number, RecordLog[keyof RecordLog]>;
+  return toSchedulingInfo(card, log[rating], rating, now);
 }
 
 /**
