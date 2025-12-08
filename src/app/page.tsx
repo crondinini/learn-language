@@ -80,6 +80,12 @@ export default function Home() {
                   Vocabulary
                 </Link>
                 <Link
+                  href="/reading"
+                  className="text-sm font-medium text-slate-500 transition hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                >
+                  Reading
+                </Link>
+                <Link
                   href="/homework"
                   className="text-sm font-medium text-slate-500 transition hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                 >

@@ -92,12 +92,45 @@ function getDb(): Database.Database {
 
     CREATE INDEX IF NOT EXISTS idx_homework_status ON homework(status);
     CREATE INDEX IF NOT EXISTS idx_homework_created_at ON homework(created_at);
+
+    -- Reading texts table: paragraphs and sentences for reading practice
+    CREATE TABLE IF NOT EXISTS texts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT,
+      arabic TEXT NOT NULL,
+      translation TEXT NOT NULL,
+      category TEXT,
+      recording_url TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    );
+
+    -- Linking table between texts and cards (vocabulary words in texts)
+    CREATE TABLE IF NOT EXISTS text_cards (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      text_id INTEGER NOT NULL,
+      card_id INTEGER NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (text_id) REFERENCES texts(id) ON DELETE CASCADE,
+      FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE CASCADE,
+      UNIQUE(text_id, card_id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_texts_category ON texts(category);
+    CREATE INDEX IF NOT EXISTS idx_text_cards_text_id ON text_cards(text_id);
+    CREATE INDEX IF NOT EXISTS idx_text_cards_card_id ON text_cards(card_id);
   `);
 
   // Migration: Add image_url column if it doesn't exist (for existing databases)
-  const columns = _db.prepare("PRAGMA table_info(cards)").all() as { name: string }[];
-  if (!columns.some((col) => col.name === "image_url")) {
+  const cardColumns = _db.prepare("PRAGMA table_info(cards)").all() as { name: string }[];
+  if (!cardColumns.some((col) => col.name === "image_url")) {
     _db.exec("ALTER TABLE cards ADD COLUMN image_url TEXT");
+  }
+
+  // Migration: Add recording_url column to texts if it doesn't exist
+  const textColumns = _db.prepare("PRAGMA table_info(texts)").all() as { name: string }[];
+  if (textColumns.length > 0 && !textColumns.some((col) => col.name === "recording_url")) {
+    _db.exec("ALTER TABLE texts ADD COLUMN recording_url TEXT");
   }
 
   return _db;
@@ -183,3 +216,23 @@ export const HomeworkStatus = {
   Pending: 'pending',
   Completed: 'completed',
 } as const;
+
+// Text interface for reading practice
+export interface Text {
+  id: number;
+  title: string | null;
+  arabic: string;
+  translation: string;
+  category: string | null;
+  recording_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// TextCard linking interface
+export interface TextCard {
+  id: number;
+  text_id: number;
+  card_id: number;
+  created_at: string;
+}
