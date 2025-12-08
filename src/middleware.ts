@@ -9,6 +9,16 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // Check for API token in Authorization header (for CLI/API access)
+  const authHeader = request.headers.get('Authorization')
+  if (authHeader?.startsWith('Bearer ')) {
+    const apiToken = authHeader.slice(7)
+    const expectedToken = process.env.API_TOKEN
+    if (expectedToken && apiToken === expectedToken) {
+      return NextResponse.next()
+    }
+  }
+
   // Check for auth cookie
   const token = request.cookies.get('auth-token')?.value
 
