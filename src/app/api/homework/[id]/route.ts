@@ -43,7 +43,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { description, status, recording_url } = body;
+    const { description, status, recording_url, written_text, image_url } = body;
 
     const existing = db
       .prepare("SELECT * FROM homework WHERE id = ?")
@@ -74,6 +74,14 @@ export async function PUT(
     if (recording_url !== undefined) {
       updates.push("recording_url = ?");
       values.push(recording_url);
+    }
+    if (written_text !== undefined) {
+      updates.push("written_text = ?");
+      values.push(written_text);
+    }
+    if (image_url !== undefined) {
+      updates.push("image_url = ?");
+      values.push(image_url);
     }
 
     if (updates.length === 0) {
@@ -125,11 +133,21 @@ export async function DELETE(
       );
     }
 
-    // Delete associated recording file if exists
+    // Delete associated files if they exist
+    const pathModule = await import("path");
+    const fs = await import("fs/promises");
+
     if (existing.recording_url) {
-      const path = await import("path");
-      const fs = await import("fs/promises");
-      const filepath = path.join(process.cwd(), "public", existing.recording_url);
+      const filepath = pathModule.join(process.cwd(), "public", existing.recording_url);
+      try {
+        await fs.unlink(filepath);
+      } catch {
+        // File might not exist, that's ok
+      }
+    }
+
+    if (existing.image_url) {
+      const filepath = pathModule.join(process.cwd(), "public", existing.image_url);
       try {
         await fs.unlink(filepath);
       } catch {

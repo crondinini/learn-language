@@ -1,11 +1,11 @@
 services:
   app:
-    build: .
+    image: localhost:5000/learn-language:latest
     ports:
       - "3000:3000"
     volumes:
-      # Persist database
-      - ./data/learn-language.db:/app/learn-language.db
+      # Persist database and data directory
+      - ./data:/app/data
       # Persist media files
       - ./data/audio:/app/public/audio
       - ./data/homework:/app/public/homework

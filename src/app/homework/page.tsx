@@ -6,9 +6,11 @@ import Header from "@/components/Header";
 interface Homework {
   id: number;
   description: string;
-  type: "recording";
+  type: "recording" | "written";
   status: "pending" | "completed";
   recording_url: string | null;
+  written_text: string | null;
+  image_url: string | null;
   created_at: string;
   completed_at: string | null;
 }
@@ -18,6 +20,7 @@ export default function HomeworkPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [newDescription, setNewDescription] = useState("");
+  const [newType, setNewType] = useState<"recording" | "written">("recording");
   const [filter, setFilter] = useState<"all" | "pending" | "completed">("all");
 
   // Recording state
@@ -27,6 +30,14 @@ export default function HomeworkPage() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+
+  // Written homework state
+  const [writtenId, setWrittenId] = useState<number | null>(null);
+  const [writtenText, setWrittenText] = useState("");
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     fetchHomework();
@@ -47,10 +58,11 @@ export default function HomeworkPage() {
     await fetch("/api/homework", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ description: newDescription, type: "recording" }),
+      body: JSON.stringify({ description: newDescription, type: newType }),
     });
 
     setNewDescription("");
+    setNewType("recording");
     setShowModal(false);
     fetchHomework();
   }
@@ -139,6 +151,99 @@ export default function HomeworkPage() {
     }
   }
 
+  // Start written homework
+  function startWritten(id: number) {
+    setWrittenId(id);
+    setWrittenText("");
+    setSelectedImage(null);
+    setImagePreview(null);
+  }
+
+  // Cancel written homework
+  function cancelWritten() {
+    setWrittenId(null);
+    setWrittenText("");
+    setSelectedImage(null);
+    setImagePreview(null);
+  }
+
+  // Handle image selection
+  function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  }
+
+  // Remove selected image
+  function removeImage() {
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }
+
+  // Submit written homework
+  async function submitWritten() {
+    if (!writtenId || (!writtenText.trim() && !selectedImage)) {
+      alert("Please enter text or upload an image");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // If there's an image, upload it first
+      if (selectedImage) {
+        const formData = new FormData();
+        formData.append("image", selectedImage);
+
+        const imageRes = await fetch(`/api/homework/${writtenId}/image`, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!imageRes.ok) {
+          throw new Error("Failed to upload image");
+        }
+      }
+
+      // If there's text, update it (and mark complete if no image)
+      if (writtenText.trim()) {
+        const updateBody: { written_text: string; status?: string } = {
+          written_text: writtenText.trim(),
+        };
+        // Only set status to completed if no image was uploaded (image upload already sets it)
+        if (!selectedImage) {
+          updateBody.status = "completed";
+        }
+
+        const textRes = await fetch(`/api/homework/${writtenId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updateBody),
+        });
+
+        if (!textRes.ok) {
+          throw new Error("Failed to save text");
+        }
+      }
+
+      setWrittenId(null);
+      setWrittenText("");
+      setSelectedImage(null);
+      setImagePreview(null);
+      fetchHomework();
+    } catch (error) {
+      console.error("Error submitting written homework:", error);
+      alert("Failed to submit homework");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   function formatDate(dateStr: string) {
     return new Date(dateStr).toLocaleDateString("en-GB", {
       day: "numeric",
@@ -213,14 +318,23 @@ export default function HomeworkPage() {
                       >
                         {hw.status}
                       </span>
+                      <span
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                          hw.type === "recording"
+                            ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                            : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
+                        }`}
+                      >
+                        {hw.type}
+                      </span>
                       <span className="text-xs text-slate-400">
                         {formatDate(hw.created_at)}
                       </span>
                     </div>
                     <p className="mt-2 text-slate-800 dark:text-white">{hw.description}</p>
 
-                    {/* Recording UI */}
-                    {hw.status === "pending" && (
+                    {/* Recording UI - for recording type */}
+                    {hw.type === "recording" && hw.status === "pending" && (
                       <div className="mt-4">
                         {recordingId === hw.id ? (
                           <div className="flex items-center gap-3">
@@ -270,12 +384,118 @@ export default function HomeworkPage() {
                       </div>
                     )}
 
-                    {/* Playback for completed */}
-                    {hw.status === "completed" && hw.recording_url && (
+                    {/* Written UI - for written type */}
+                    {hw.type === "written" && hw.status === "pending" && (
+                      <div className="mt-4">
+                        {writtenId === hw.id ? (
+                          <div className="space-y-3">
+                            <textarea
+                              value={writtenText}
+                              onChange={(e) => setWrittenText(e.target.value)}
+                              placeholder="Type your answer here..."
+                              rows={4}
+                              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                            />
+                            <div className="flex items-center gap-3">
+                              <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                onChange={handleImageSelect}
+                                className="hidden"
+                                id={`image-upload-${hw.id}`}
+                              />
+                              <label
+                                htmlFor={`image-upload-${hw.id}`}
+                                className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+                              >
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                Upload Image
+                              </label>
+                              <span className="text-xs text-slate-400">or type text above</span>
+                            </div>
+                            {imagePreview && (
+                              <div className="relative inline-block">
+                                <img
+                                  src={imagePreview}
+                                  alt="Preview"
+                                  className="max-h-48 rounded-lg border border-slate-200 dark:border-slate-600"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={removeImage}
+                                  className="absolute -right-2 -top-2 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
+                                >
+                                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              </div>
+                            )}
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={submitWritten}
+                                disabled={isSubmitting || (!writtenText.trim() && !selectedImage)}
+                                className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+                              >
+                                {isSubmitting ? "Submitting..." : "Submit"}
+                              </button>
+                              <button
+                                onClick={cancelWritten}
+                                disabled={isSubmitting}
+                                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => startWritten(hw.id)}
+                            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                          >
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                            Write Answer
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Playback for completed recording */}
+                    {hw.type === "recording" && hw.status === "completed" && hw.recording_url && (
                       <div className="mt-4">
                         <audio src={hw.recording_url} controls className="h-10" />
                         {hw.completed_at && (
                           <p className="mt-1 text-xs text-slate-400">
+                            Completed {formatDate(hw.completed_at)}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Display for completed written homework */}
+                    {hw.type === "written" && hw.status === "completed" && (
+                      <div className="mt-4 space-y-3">
+                        {hw.written_text && (
+                          <div className="rounded-lg bg-slate-50 p-3 dark:bg-slate-700/50">
+                            <p className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300">
+                              {hw.written_text}
+                            </p>
+                          </div>
+                        )}
+                        {hw.image_url && (
+                          <img
+                            src={hw.image_url}
+                            alt="Homework submission"
+                            className="max-h-64 rounded-lg border border-slate-200 dark:border-slate-600"
+                          />
+                        )}
+                        {hw.completed_at && (
+                          <p className="text-xs text-slate-400">
                             Completed {formatDate(hw.completed_at)}
                           </p>
                         )}
@@ -321,12 +541,13 @@ export default function HomeworkPage() {
                   Type
                 </label>
                 <select
-                  disabled
-                  className="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-500 dark:border-slate-600 dark:bg-slate-700"
+                  value={newType}
+                  onChange={(e) => setNewType(e.target.value as "recording" | "written")}
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
                 >
-                  <option>Recording</option>
+                  <option value="recording">Recording</option>
+                  <option value="written">Written</option>
                 </select>
-                <p className="mt-1 text-xs text-slate-400">More types coming soon</p>
               </div>
               <div className="flex gap-3 pt-2">
                 <button

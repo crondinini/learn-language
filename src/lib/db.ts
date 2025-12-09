@@ -83,9 +83,11 @@ function getDb(): Database.Database {
     CREATE TABLE IF NOT EXISTS homework (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       description TEXT NOT NULL,
-      type TEXT NOT NULL DEFAULT 'recording',  -- Type of homework (recording, etc.)
+      type TEXT NOT NULL DEFAULT 'recording',  -- Type of homework (recording, written)
       status TEXT NOT NULL DEFAULT 'pending',  -- pending, completed
       recording_url TEXT,                       -- URL to recorded audio (for recording type)
+      written_text TEXT,                        -- Text content (for written type)
+      image_url TEXT,                           -- URL to uploaded image (for written type)
       created_at TEXT DEFAULT (datetime('now')),
       completed_at TEXT
     );
@@ -131,6 +133,17 @@ function getDb(): Database.Database {
   const textColumns = _db.prepare("PRAGMA table_info(texts)").all() as { name: string }[];
   if (textColumns.length > 0 && !textColumns.some((col) => col.name === "recording_url")) {
     _db.exec("ALTER TABLE texts ADD COLUMN recording_url TEXT");
+  }
+
+  // Migration: Add written_text and image_url columns to homework if they don't exist
+  const homeworkColumns = _db.prepare("PRAGMA table_info(homework)").all() as { name: string }[];
+  if (homeworkColumns.length > 0) {
+    if (!homeworkColumns.some((col) => col.name === "written_text")) {
+      _db.exec("ALTER TABLE homework ADD COLUMN written_text TEXT");
+    }
+    if (!homeworkColumns.some((col) => col.name === "image_url")) {
+      _db.exec("ALTER TABLE homework ADD COLUMN image_url TEXT");
+    }
   }
 
   return _db;
@@ -199,9 +212,11 @@ export const Rating = {
 export interface Homework {
   id: number;
   description: string;
-  type: 'recording';  // More types can be added later
+  type: 'recording' | 'written';
   status: 'pending' | 'completed';
   recording_url: string | null;
+  written_text: string | null;
+  image_url: string | null;
   created_at: string;
   completed_at: string | null;
 }
@@ -209,6 +224,7 @@ export interface Homework {
 // Homework types enum
 export const HomeworkType = {
   Recording: 'recording',
+  Written: 'written',
 } as const;
 
 // Homework status enum
