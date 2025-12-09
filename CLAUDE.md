@@ -1,0 +1,2 @@
+- for this project, the code should be changed in this host, but the deployment, database and running of the app needs to happen in the raspberry (using ssh pi)
+- refer to the deploy to pi skill when deploying new code, remember to commit before

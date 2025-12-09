@@ -12,6 +12,8 @@ services:
       - ./data/images:/app/public/images
       # Persist env file
       - ./.env.local:/app/.env.local:ro
+      # Google TTS credentials
+      - ./tts:/app/tts:ro
     environment:
       - NODE_ENV=production
     restart: unless-stopped

@@ -394,7 +394,9 @@ export default function HomeworkPage() {
                               onChange={(e) => setWrittenText(e.target.value)}
                               placeholder="Type your answer here..."
                               rows={4}
-                              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                              dir="auto"
+                              className="w-full rounded-lg border border-slate-300 px-4 py-3 text-xl leading-relaxed focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                              style={{ fontFamily: "var(--font-arabic), sans-serif" }}
                             />
                             <div className="flex items-center gap-3">
                               <input
@@ -481,8 +483,12 @@ export default function HomeworkPage() {
                     {hw.type === "written" && hw.status === "completed" && (
                       <div className="mt-4 space-y-3">
                         {hw.written_text && (
-                          <div className="rounded-lg bg-slate-50 p-3 dark:bg-slate-700/50">
-                            <p className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300">
+                          <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-700/50">
+                            <p
+                              dir="auto"
+                              className="whitespace-pre-wrap text-xl leading-relaxed text-slate-700 dark:text-slate-300"
+                              style={{ fontFamily: "var(--font-arabic), sans-serif" }}
+                            >
                               {hw.written_text}
                             </p>
                           </div>
