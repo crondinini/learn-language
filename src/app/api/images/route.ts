@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     await writeFile(filepath, buffer);
 
     // Update card with image URL
-    const imageUrl = `/images/${filename}`;
+    const imageUrl = `/api/media/images/${filename}`;
     const updateStmt = db.prepare(
       "UPDATE cards SET image_url = ?, updated_at = datetime('now') WHERE id = ?"
     );

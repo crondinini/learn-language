@@ -65,7 +65,7 @@ export async function POST(
     await writeFile(filepath, Buffer.from(arrayBuffer));
 
     // Update homework with image URL and mark as completed
-    const imageUrl = `/homework/images/${filename}`;
+    const imageUrl = `/api/media/homework/images/${filename}`;
     db.prepare(
       "UPDATE homework SET image_url = ?, status = 'completed', completed_at = datetime('now') WHERE id = ?"
     ).run(imageUrl, id);

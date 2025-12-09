@@ -151,10 +151,10 @@ export default function HomeworkPage() {
     }
   }
 
-  // Start written homework
-  function startWritten(id: number) {
+  // Start written homework (or edit existing)
+  function startWritten(id: number, existingText?: string | null) {
     setWrittenId(id);
-    setWrittenText("");
+    setWrittenText(existingText || "");
     setSelectedImage(null);
     setImagePreview(null);
   }
@@ -482,28 +482,115 @@ export default function HomeworkPage() {
                     {/* Display for completed written homework */}
                     {hw.type === "written" && hw.status === "completed" && (
                       <div className="mt-4 space-y-3">
-                        {hw.written_text && (
-                          <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-700/50">
-                            <p
+                        {writtenId === hw.id ? (
+                          /* Edit mode */
+                          <div className="space-y-3">
+                            <textarea
+                              value={writtenText}
+                              onChange={(e) => setWrittenText(e.target.value)}
+                              placeholder="Type your answer here..."
+                              rows={4}
                               dir="auto"
-                              className="whitespace-pre-wrap text-xl leading-relaxed text-slate-700 dark:text-slate-300"
+                              className="w-full rounded-lg border border-slate-300 px-4 py-3 text-xl leading-relaxed focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
                               style={{ fontFamily: "var(--font-arabic), sans-serif" }}
-                            >
-                              {hw.written_text}
-                            </p>
+                            />
+                            <div className="flex items-center gap-3">
+                              <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                onChange={handleImageSelect}
+                                className="hidden"
+                                id={`image-edit-${hw.id}`}
+                              />
+                              <label
+                                htmlFor={`image-edit-${hw.id}`}
+                                className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+                              >
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                {hw.image_url ? "Replace Image" : "Upload Image"}
+                              </label>
+                            </div>
+                            {imagePreview && (
+                              <div className="relative inline-block">
+                                <img
+                                  src={imagePreview}
+                                  alt="Preview"
+                                  className="max-h-48 rounded-lg border border-slate-200 dark:border-slate-600"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={removeImage}
+                                  className="absolute -right-2 -top-2 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
+                                >
+                                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              </div>
+                            )}
+                            {!imagePreview && hw.image_url && (
+                              <div className="text-xs text-slate-400">
+                                Current image will be kept unless you upload a new one
+                              </div>
+                            )}
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={submitWritten}
+                                disabled={isSubmitting || (!writtenText.trim() && !selectedImage && !hw.image_url)}
+                                className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+                              >
+                                {isSubmitting ? "Saving..." : "Save"}
+                              </button>
+                              <button
+                                onClick={cancelWritten}
+                                disabled={isSubmitting}
+                                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300"
+                              >
+                                Cancel
+                              </button>
+                            </div>
                           </div>
-                        )}
-                        {hw.image_url && (
-                          <img
-                            src={hw.image_url}
-                            alt="Homework submission"
-                            className="max-h-64 rounded-lg border border-slate-200 dark:border-slate-600"
-                          />
-                        )}
-                        {hw.completed_at && (
-                          <p className="text-xs text-slate-400">
-                            Completed {formatDate(hw.completed_at)}
-                          </p>
+                        ) : (
+                          /* Display mode */
+                          <>
+                            {hw.written_text && (
+                              <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-700/50">
+                                <p
+                                  dir="auto"
+                                  className="whitespace-pre-wrap text-xl leading-relaxed text-slate-700 dark:text-slate-300"
+                                  style={{ fontFamily: "var(--font-arabic), sans-serif" }}
+                                >
+                                  {hw.written_text}
+                                </p>
+                              </div>
+                            )}
+                            {hw.image_url && (
+                              <img
+                                src={hw.image_url}
+                                alt="Homework submission"
+                                className="max-h-64 rounded-lg border border-slate-200 dark:border-slate-600"
+                              />
+                            )}
+                            <div className="flex items-center gap-3">
+                              {hw.completed_at && (
+                                <p className="text-xs text-slate-400">
+                                  Completed {formatDate(hw.completed_at)}
+                                </p>
+                              )}
+                              <button
+                                onClick={() => startWritten(hw.id, hw.written_text)}
+                                className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                              >
+                                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                                Edit
+                              </button>
+                            </div>
+                          </>
                         )}
                       </div>
                     )}

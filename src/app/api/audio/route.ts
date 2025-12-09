@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
     await writeFile(filepath, audioBuffer);
 
     // Update card with audio URL
-    const audioUrl = `/audio/${filename}`;
+    const audioUrl = `/api/media/audio/${filename}`;
     const updateStmt = db.prepare(
       "UPDATE cards SET audio_url = ?, updated_at = datetime('now') WHERE id = ?"
     );

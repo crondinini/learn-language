@@ -56,7 +56,7 @@ export async function POST(
     await writeFile(filepath, Buffer.from(arrayBuffer));
 
     // Update homework with recording URL and mark as completed
-    const recordingUrl = `/homework/${filename}`;
+    const recordingUrl = `/api/media/homework/${filename}`;
     db.prepare(
       "UPDATE homework SET recording_url = ?, status = 'completed', completed_at = datetime('now') WHERE id = ?"
     ).run(recordingUrl, id);
