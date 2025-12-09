@@ -214,7 +214,11 @@ export default function ReadingPage() {
                           onClick={() => selectText(text)}
                         >
                           <div className="flex items-start justify-between gap-2">
-                            <p className="flex-1 text-right font-arabic text-lg leading-relaxed text-slate-800 dark:text-white" dir="rtl">
+                            <p
+                              className="flex-1 text-right text-lg leading-relaxed text-slate-800 dark:text-white"
+                              dir="rtl"
+                              style={{ fontFamily: "var(--font-arabic), sans-serif" }}
+                            >
                               {text.arabic.length > 60 ? text.arabic.slice(0, 60) + "..." : text.arabic}
                             </p>
                             {text.recording_url && (
@@ -261,9 +265,9 @@ export default function ReadingPage() {
                 {/* Arabic Text */}
                 <div className="mb-6 rounded-lg bg-slate-50 p-6 dark:bg-slate-900">
                   <p
-                    className="font-arabic text-2xl leading-loose text-slate-800 dark:text-white"
+                    className="text-2xl leading-loose text-slate-800 dark:text-white"
                     dir="rtl"
-                    style={{ lineHeight: "2.5" }}
+                    style={{ fontFamily: "var(--font-arabic), sans-serif", lineHeight: "2.5" }}
                   >
                     {selectedText.arabic}
                   </p>
@@ -381,7 +385,10 @@ export default function ReadingPage() {
                           key={card.id}
                           className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-sm dark:bg-emerald-900/30"
                         >
-                          <span className="font-arabic text-emerald-800 dark:text-emerald-300">
+                          <span
+                            className="text-emerald-800 dark:text-emerald-300"
+                            style={{ fontFamily: "var(--font-arabic), sans-serif" }}
+                          >
                             {card.front}
                           </span>
                           <span className="text-emerald-600 dark:text-emerald-400">
@@ -432,7 +439,8 @@ export default function ReadingPage() {
                   placeholder="أنا اسمي..."
                   rows={4}
                   dir="rtl"
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-arabic text-lg focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-4 py-3 text-xl leading-relaxed focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                  style={{ fontFamily: "var(--font-arabic), sans-serif" }}
                   required
                 />
               </div>
