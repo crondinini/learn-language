@@ -19,7 +19,8 @@ if env_file.exists():
             key, value = line.split("=", 1)
             os.environ[key] = value
 
-API_URL = "http://localhost:3001"
+API_URL = os.environ.get("API_URL", "https://learn.rocksbythesea.uk")
+API_TOKEN = os.environ.get("API_TOKEN", "")
 UNSPLASH_ACCESS_KEY = os.environ.get("UNSPLASH_ACCESS_KEY")
 
 def main():
@@ -34,9 +35,12 @@ def main():
         print("Error: UNSPLASH_ACCESS_KEY not set in .env.local")
         sys.exit(1)
 
+    # Headers for API requests
+    api_headers = {"Authorization": f"Bearer {API_TOKEN}"} if API_TOKEN else {}
+
     # Get card info
     print(f"Fetching card {card_id}...")
-    card = requests.get(f"{API_URL}/api/cards/{card_id}").json()
+    card = requests.get(f"{API_URL}/api/cards/{card_id}", headers=api_headers).json()
     word = card.get("back")
 
     if not word:
@@ -91,6 +95,7 @@ def main():
     image_url = f"/images/{filename}"
     result = requests.patch(
         f"{API_URL}/api/cards/{card_id}",
+        headers=api_headers,
         json={"image_url": image_url}
     )
 
