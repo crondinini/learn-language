@@ -12,180 +12,146 @@ allowed_tools:
 
 # Download Playaling Audio
 
-This skill downloads MSA (Modern Standard Arabic) audio pronunciations from Playaling's audio dictionary.
+This skill downloads MSA (Modern Standard Arabic) audio pronunciations from Playaling's audio dictionary using Chrome DevTools MCP.
 
-## Method 1: Direct API Call (Preferred)
+## Prerequisites
 
-The Playaling search API returns audio URLs directly in the response. This is faster and more reliable than browser automation.
+- User must be logged into Playaling in the browser
+- Chrome DevTools MCP must be connected
 
-### Step 1: Search for the Word
-
-```bash
-curl -s -X POST "https://api.playaling.com/index.php/api/v1/dictionary/search?page=1&limit=5" \
-  -H "Content-Type: application/json" \
-  -H "Accept: application/json" \
-  -d '{"searchText":"ARABIC_WORD","searchIn":"special","dialects":[1,2,3],"sortBy":"popularityOfCluster","sortReverse":1}'
-```
-
-Replace `ARABIC_WORD` with the Arabic word to search for (e.g., "كتاب").
-
-### Step 2: Parse the Response
-
-The response JSON contains audio URLs for each dialect:
-
-```json
-{
-  "vocabulary": {
-    "data": [{
-      "substring_title": "كتاب",
-      "translation_title": "book",
-      "audio": {
-        "msa": {
-          "url": "https://api.playaling.com/upload/audio/HASH/msa.mp3?h=TIMESTAMP",
-          "applicable": 1,
-          "verified": 1
-        },
-        "egyptian": { "url": "...", ... },
-        "levantine": { "url": "...", ... },
-        "gulf": { "url": "...", ... },
-        "darija": { "url": "...", ... }
-      }
-    }]
-  }
-}
-```
-
-Use `jq` to extract the MSA audio URL:
-
-```bash
-curl -s -X POST "https://api.playaling.com/index.php/api/v1/dictionary/search?page=1&limit=5" \
-  -H "Content-Type: application/json" \
-  -d '{"searchText":"كتاب","searchIn":"special","dialects":[1,2,3],"sortBy":"popularityOfCluster","sortReverse":1}' \
-  | jq -r '.vocabulary.data[0].audio.msa.url'
-```
-
-### Step 3: Download the Audio
-
-```bash
-# Get the URL
-AUDIO_URL=$(curl -s -X POST "https://api.playaling.com/index.php/api/v1/dictionary/search?page=1&limit=5" \
-  -H "Content-Type: application/json" \
-  -d '{"searchText":"كتاب","searchIn":"special","dialects":[1,2,3],"sortBy":"popularityOfCluster","sortReverse":1}' \
-  | jq -r '.vocabulary.data[0].audio.msa.url')
-
-# Download the file
-curl -o "audio-kitaab.mp3" "$AUDIO_URL"
-```
-
-### Step 4: Send to Pi
-
-```bash
-rsync audio-kitaab.mp3 pi:~/learn-language/public/audio/
-```
-
-Or use scp:
-```bash
-scp audio-kitaab.mp3 pi:~/learn-language/public/audio/
-```
-
-## Method 2: Browser Automation (Chrome MCP)
-
-Use this method if the API is unavailable or returns errors.
+## Workflow
 
 ### Step 1: Navigate to Audio Dictionary
 
+Check if already on the page, otherwise navigate:
+
 ```
-mcp__chrome-devtools__new_page with url: https://app.playaling.com/audio-dictionary
+mcp__chrome-devtools__list_pages
+```
+
+If not on audio-dictionary:
+```
+mcp__chrome-devtools__new_page with url: "https://app.playaling.com/audio-dictionary"
 ```
 
 ### Step 2: Search for the Word
 
-1. Take a snapshot to find the search textbox
-2. Fill the textbox with the Arabic word:
-   ```
-   mcp__chrome-devtools__fill with uid: TEXTBOX_UID, value: "كتاب"
-   ```
-3. Press Enter:
-   ```
-   mcp__chrome-devtools__press_key with key: "Enter"
-   ```
+1. Take a snapshot to find the search textbox:
+```
+mcp__chrome-devtools__take_snapshot
+```
+
+2. Find the textbox with placeholder "Type something" and fill it:
+```
+mcp__chrome-devtools__fill with uid: <textbox_uid>, value: "<arabic_word>"
+```
+
+3. Press Enter to search:
+```
+mcp__chrome-devtools__press_key with key: "Enter"
+```
+
+4. Wait for results to load (take another snapshot)
 
 ### Step 3: Click MSA Play Button
 
-1. Take a verbose snapshot to find the MSA play button in the results
-2. The play buttons are typically image elements near the "MSA" label
-3. Click the MSA play button to trigger audio loading
+1. Take a verbose snapshot to see the structure:
+```
+mcp__chrome-devtools__take_snapshot with verbose: true
+```
+
+2. Look for the search results. The structure is:
+   - Each result row has: Arabic word, English translation, and play buttons for each dialect
+   - The play buttons are image elements in a row: Lev | MSA | Egy
+   - Find the image element that corresponds to MSA (middle position)
+
+3. Click the MSA play button:
+```
+mcp__chrome-devtools__click with uid: <msa_button_uid>
+```
 
 ### Step 4: Get Audio URL from Network
 
+List network requests filtering for media:
 ```
 mcp__chrome-devtools__list_network_requests with resourceTypes: ["media"]
 ```
 
-Look for requests to `api.playaling.com/upload/audio/*/msa.mp3`
-
-### Step 5: Download and Transfer
-
-Same as Method 1, Steps 3-4.
-
-## Complete Example Script
-
-```bash
-#!/bin/bash
-# Download Playaling audio for a word and send to Pi
-
-WORD="$1"
-OUTPUT_NAME="$2"
-
-if [ -z "$WORD" ] || [ -z "$OUTPUT_NAME" ]; then
-  echo "Usage: $0 <arabic-word> <output-name>"
-  exit 1
-fi
-
-# Search and get MSA audio URL
-AUDIO_URL=$(curl -s -X POST "https://api.playaling.com/index.php/api/v1/dictionary/search?page=1&limit=5" \
-  -H "Content-Type: application/json" \
-  -d "{\"searchText\":\"$WORD\",\"searchIn\":\"special\",\"dialects\":[1,2,3],\"sortBy\":\"popularityOfCluster\",\"sortReverse\":1}" \
-  | jq -r '.vocabulary.data[0].audio.msa.url')
-
-if [ "$AUDIO_URL" == "null" ] || [ -z "$AUDIO_URL" ]; then
-  echo "No MSA audio found for '$WORD'"
-  exit 1
-fi
-
-# Download locally
-TEMP_FILE="/tmp/${OUTPUT_NAME}.mp3"
-curl -s -o "$TEMP_FILE" "$AUDIO_URL"
-
-if [ ! -s "$TEMP_FILE" ]; then
-  echo "Failed to download audio"
-  exit 1
-fi
-
-echo "Downloaded: $TEMP_FILE"
-
-# Send to Pi
-rsync "$TEMP_FILE" pi:~/learn-language/public/audio/
-echo "Uploaded to Pi: ~/learn-language/public/audio/${OUTPUT_NAME}.mp3"
-
-# Cleanup
-rm "$TEMP_FILE"
+Look for a request URL matching pattern:
 ```
+https://api.playaling.com/upload/audio/*/msa.mp3*
+```
+
+Get the full URL from the request details:
+```
+mcp__chrome-devtools__get_network_request with reqid: <request_id>
+```
+
+### Step 5: Download the Audio File
+
+Use curl to download the audio file:
+```bash
+curl -o "/tmp/word-audio.mp3" "AUDIO_URL"
+```
+
+### Step 6: Send to Pi
+
+Transfer the file to the Pi:
+```bash
+rsync /tmp/word-audio.mp3 pi:~/learn-language/public/audio/
+```
+
+Or with a specific name:
+```bash
+rsync /tmp/word-audio.mp3 pi:~/learn-language/public/audio/card-123-word.mp3
+```
+
+## Complete Example
+
+For the word "كتاب" (book):
+
+1. Navigate to `https://app.playaling.com/audio-dictionary`
+2. Fill search box with "كتاب", press Enter
+3. Take snapshot, find MSA play button (look for image near "MSA" text)
+4. Click MSA button
+5. Check network requests for `msa.mp3`
+6. Download: `curl -o /tmp/kitaab.mp3 "https://api.playaling.com/upload/audio/HASH/msa.mp3"`
+7. Upload: `rsync /tmp/kitaab.mp3 pi:~/learn-language/public/audio/`
 
 ## Available Dialects
 
-| Dialect | Key in JSON | Description |
-|---------|-------------|-------------|
-| MSA | `msa` | Modern Standard Arabic (فصحى) |
-| Egyptian | `egyptian` | Egyptian Arabic (مصري) |
-| Levantine | `levantine` | Levantine Arabic (شامي) |
-| Gulf | `gulf` | Gulf Arabic (خليجي) |
-| Darija | `darija` | North African Arabic (دارجة) |
+| Dialect | Label | Description |
+|---------|-------|-------------|
+| MSA | "MSA" | Modern Standard Arabic (فصحى) - preferred for learning |
+| Egyptian | "Egy" | Egyptian Arabic (مصري) |
+| Levantine | "Lev" | Levantine Arabic (شامي) |
+| Gulf | appears in expanded view | Gulf Arabic (خليجي) |
+| Darija | appears in expanded view | North African Arabic (دارجة) |
+
+## Identifying Play Buttons in Snapshot
+
+When viewing the verbose snapshot, look for this pattern:
+- A row with `StaticText "MSA"`
+- Nearby `generic` elements containing `image` elements are the play buttons
+- The image elements are clickable and will play the audio
+
+Example structure:
+```
+uid=X_107 ignored
+  uid=X_108 generic  <- Lev button
+    uid=X_109 StaticText "Lev"
+  uid=X_111 generic  <- MSA button (this is what to click)
+    uid=X_112 StaticText "MSA"
+  uid=X_114 generic  <- Egy button
+    uid=X_115 StaticText "Egy"
+```
+
+The actual play button images are typically inside the row for each vocabulary entry, not next to the dialect labels. Look for `image` elements under each vocabulary row in the results.
 
 ## Notes
 
-- The API is public but may have rate limits
-- Some words may not have audio for all dialects (check `applicable` and `verified` fields)
-- Audio files are MP3 format
-- The `?h=` timestamp parameter is optional and can be omitted
-- Results are sorted by popularity, so the first result is usually the most common meaning
+- The audio files are MP3 format
+- MSA pronunciation is recommended for formal Arabic learning
+- Some words may not have all dialect pronunciations available
+- The user must be logged into Playaling for this to work
+- Audio URLs include a timestamp parameter `?h=` which can be omitted

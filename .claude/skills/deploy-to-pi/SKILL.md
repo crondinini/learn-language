@@ -9,7 +9,7 @@ Use this skill when the user wants to deploy changes to the Raspberry Pi.
 git add -A && git commit -m "Your commit message"
 
 # 2. Run deploy script (backs up DB, builds, pushes, restarts, verifies)
-./scripts/deploy.sh
+./.claude/skills/deploy-to-pi/scripts/deploy.sh
 ```
 
 The deploy script automatically:
