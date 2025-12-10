@@ -15,6 +15,7 @@ export interface UpdateCardInput {
   notes?: string;
   audio_url?: string;
   image_url?: string;
+  deck_id?: number;
 }
 
 export function getCardsByDeckId(deckId: number): Card[] {
@@ -79,7 +80,7 @@ export function updateCard(id: number, input: UpdateCardInput): Card | undefined
 
   const stmt = db.prepare(`
     UPDATE cards
-    SET front = ?, back = ?, notes = ?, audio_url = ?, image_url = ?, updated_at = datetime('now')
+    SET front = ?, back = ?, notes = ?, audio_url = ?, image_url = ?, deck_id = ?, updated_at = datetime('now')
     WHERE id = ?
   `);
   stmt.run(
@@ -88,6 +89,7 @@ export function updateCard(id: number, input: UpdateCardInput): Card | undefined
     input.notes ?? card.notes,
     input.audio_url ?? card.audio_url,
     input.image_url ?? card.image_url,
+    input.deck_id ?? card.deck_id,
     id
   );
   return getCardById(id);

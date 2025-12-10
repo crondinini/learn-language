@@ -96,14 +96,14 @@ curl -o "/tmp/word-audio.mp3" "AUDIO_URL"
 
 ### Step 6: Send to Pi
 
-Transfer the file to the Pi:
+Transfer the file to the Pi (Docker maps data/audio to /app/public/audio):
 ```bash
-rsync /tmp/word-audio.mp3 pi:~/learn-language/public/audio/
+rsync /tmp/word-audio.mp3 pi:~/learn-language/data/audio/
 ```
 
 Or with a specific name:
 ```bash
-rsync /tmp/word-audio.mp3 pi:~/learn-language/public/audio/card-123-word.mp3
+rsync /tmp/word-audio.mp3 pi:~/learn-language/data/audio/card-123-word.mp3
 ```
 
 ## Complete Example
@@ -116,7 +116,7 @@ For the word "كتاب" (book):
 4. Click MSA button
 5. Check network requests for `msa.mp3`
 6. Download: `curl -o /tmp/kitaab.mp3 "https://api.playaling.com/upload/audio/HASH/msa.mp3"`
-7. Upload: `rsync /tmp/kitaab.mp3 pi:~/learn-language/public/audio/`
+7. Upload: `rsync /tmp/kitaab.mp3 pi:~/learn-language/data/audio/` (Docker maps this to /app/public/audio)
 
 ## Available Dialects
 
