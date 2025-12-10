@@ -86,6 +86,7 @@ function getDb(): Database.Database {
       type TEXT NOT NULL DEFAULT 'recording',  -- Type of homework (recording, written)
       status TEXT NOT NULL DEFAULT 'pending',  -- pending, completed
       recording_url TEXT,                       -- URL to recorded audio (for recording type)
+      transcription TEXT,                       -- Speech-to-text transcription of recording
       written_text TEXT,                        -- Text content (for written type)
       image_url TEXT,                           -- URL to uploaded image (for written type)
       created_at TEXT DEFAULT (datetime('now')),
@@ -135,7 +136,7 @@ function getDb(): Database.Database {
     _db.exec("ALTER TABLE texts ADD COLUMN recording_url TEXT");
   }
 
-  // Migration: Add written_text and image_url columns to homework if they don't exist
+  // Migration: Add written_text, image_url, and transcription columns to homework if they don't exist
   const homeworkColumns = _db.prepare("PRAGMA table_info(homework)").all() as { name: string }[];
   if (homeworkColumns.length > 0) {
     if (!homeworkColumns.some((col) => col.name === "written_text")) {
@@ -143,6 +144,9 @@ function getDb(): Database.Database {
     }
     if (!homeworkColumns.some((col) => col.name === "image_url")) {
       _db.exec("ALTER TABLE homework ADD COLUMN image_url TEXT");
+    }
+    if (!homeworkColumns.some((col) => col.name === "transcription")) {
+      _db.exec("ALTER TABLE homework ADD COLUMN transcription TEXT");
     }
   }
 
@@ -215,6 +219,7 @@ export interface Homework {
   type: 'recording' | 'written';
   status: 'pending' | 'completed';
   recording_url: string | null;
+  transcription: string | null;
   written_text: string | null;
   image_url: string | null;
   created_at: string;
