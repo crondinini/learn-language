@@ -4,29 +4,23 @@ Use this skill when the user wants to deploy changes to the Raspberry Pi.
 
 ## Quick Deploy (Recommended)
 
-Commit changes, build on Mac, push to Pi's local registry, backup DB, pull and restart:
-
 ```bash
 # 1. Commit changes first
 git add -A && git commit -m "Your commit message"
 
-# 2. Build and push (only changed layers transfer - fast!)
-docker buildx build --platform linux/arm64 \
-  -t 192.168.1.163:5000/learn-language:latest --push .
-
-# 3. Backup database before deploying
-ssh pi "cp ~/learn-language/data/learn-language.db ~/learn-language/data/backups/learn-language-\$(date +%Y%m%d-%H%M%S).db"
-
-# 4. Pull and restart on Pi
-ssh pi "docker pull localhost:5000/learn-language:latest && \
-  cd ~/learn-language && docker compose up -d"
+# 2. Run deploy script (backs up DB, builds, pushes, restarts, verifies)
+./scripts/deploy.sh
 ```
 
-After initial setup, code-only changes transfer ~1-5MB instead of full image.
+The deploy script automatically:
+1. Backs up the database on Pi
+2. Builds Docker image for arm64
+3. Pushes to Pi's local registry
+4. Pulls and restarts on Pi
+5. Verifies deployment (HTTP 200)
 
 **IMPORTANT**:
 - Always commit before deploying to track what's deployed
-- Always backup the database before deploying to prevent data loss
 
 ## Environment Variables
 
