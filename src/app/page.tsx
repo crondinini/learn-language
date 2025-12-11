@@ -109,17 +109,19 @@ export default function Home() {
             {decks.map((deck) => (
               <div
                 key={deck.id}
-                className="group relative rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md dark:border-slate-700 dark:bg-slate-800"
+                className="group relative flex min-h-[140px] flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md dark:border-slate-700 dark:bg-slate-800"
               >
-                <Link href={`/deck/${deck.id}`} className="block">
-                  <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                    {deck.name}
-                  </h2>
-                  {deck.description && (
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                      {deck.description}
-                    </p>
-                  )}
+                <Link href={`/deck/${deck.id}`} className="flex flex-1 flex-col">
+                  <div className="flex-1">
+                    <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                      {deck.name}
+                    </h2>
+                    {deck.description && (
+                      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                        {deck.description}
+                      </p>
+                    )}
+                  </div>
                   <div className="mt-4">
                     <p className="text-sm text-slate-600 dark:text-slate-300">
                       <span className="font-semibold text-emerald-600">{deck.learned_cards}</span>
