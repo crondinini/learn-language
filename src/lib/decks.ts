@@ -14,6 +14,8 @@ export interface DeckWithStats extends Deck {
   total_cards: number;
   due_cards: number;
   new_cards: number;
+  learning_cards: number;
+  learned_cards: number;
 }
 
 export function getAllDecks(): DeckWithStats[] {
@@ -22,7 +24,9 @@ export function getAllDecks(): DeckWithStats[] {
       d.*,
       COUNT(c.id) as total_cards,
       SUM(CASE WHEN c.due <= datetime('now') THEN 1 ELSE 0 END) as due_cards,
-      SUM(CASE WHEN c.state = 0 THEN 1 ELSE 0 END) as new_cards
+      SUM(CASE WHEN c.state = 0 THEN 1 ELSE 0 END) as new_cards,
+      SUM(CASE WHEN c.state IN (0, 1) THEN 1 ELSE 0 END) as learning_cards,
+      SUM(CASE WHEN c.state IN (2, 3) THEN 1 ELSE 0 END) as learned_cards
     FROM decks d
     LEFT JOIN cards c ON c.deck_id = d.id
     GROUP BY d.id
@@ -37,7 +41,9 @@ export function getDeckById(id: number): DeckWithStats | undefined {
       d.*,
       COUNT(c.id) as total_cards,
       SUM(CASE WHEN c.due <= datetime('now') THEN 1 ELSE 0 END) as due_cards,
-      SUM(CASE WHEN c.state = 0 THEN 1 ELSE 0 END) as new_cards
+      SUM(CASE WHEN c.state = 0 THEN 1 ELSE 0 END) as new_cards,
+      SUM(CASE WHEN c.state IN (0, 1) THEN 1 ELSE 0 END) as learning_cards,
+      SUM(CASE WHEN c.state IN (2, 3) THEN 1 ELSE 0 END) as learned_cards
     FROM decks d
     LEFT JOIN cards c ON c.deck_id = d.id
     WHERE d.id = ?

@@ -11,6 +11,8 @@ interface Deck {
   total_cards: number;
   due_cards: number;
   new_cards: number;
+  learning_cards: number;
+  learned_cards: number;
 }
 
 export default function Home() {
@@ -118,22 +120,9 @@ export default function Home() {
                       {deck.description}
                     </p>
                   )}
-                  <div className="mt-4 flex gap-4 text-sm">
-                    <div className="flex flex-col">
-                      <span className="text-2xl font-bold text-slate-700 dark:text-slate-200">
-                        {deck.total_cards}
-                      </span>
-                      <span className="text-slate-400">cards</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-2xl font-bold text-amber-600">{deck.due_cards}</span>
-                      <span className="text-slate-400">due</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-2xl font-bold text-emerald-600">{deck.new_cards}</span>
-                      <span className="text-slate-400">new</span>
-                    </div>
-                  </div>
+                  <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+                    Learning {deck.learning_cards} words / Learned {deck.learned_cards} words
+                  </p>
                 </Link>
                 <button
                   onClick={() => deleteDeck(deck.id)}
