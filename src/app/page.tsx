@@ -120,9 +120,14 @@ export default function Home() {
                       {deck.description}
                     </p>
                   )}
-                  <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
-                    Learning {deck.learning_cards} words / Learned {deck.learned_cards} words
-                  </p>
+                  <div className="mt-4 space-y-1 text-sm">
+                    <p className="text-yellow-600">
+                      <span className="font-semibold">{deck.learning_cards}</span> Learning
+                    </p>
+                    <p className="text-emerald-600">
+                      <span className="font-semibold">{deck.learned_cards}</span> Learned
+                    </p>
+                  </div>
                 </Link>
                 <button
                   onClick={() => deleteDeck(deck.id)}
