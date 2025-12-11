@@ -120,13 +120,21 @@ export default function Home() {
                       {deck.description}
                     </p>
                   )}
-                  <div className="mt-4 space-y-1 text-sm">
-                    <p className="text-yellow-600">
-                      <span className="font-semibold">{deck.learning_cards}</span> Learning
+                  <div className="mt-4">
+                    <p className="text-sm text-slate-600 dark:text-slate-300">
+                      <span className="font-semibold text-emerald-600">{deck.learned_cards}</span>
+                      <span className="text-slate-400"> / </span>
+                      <span className="font-semibold">{deck.learning_cards + deck.learned_cards}</span>
+                      <span className="text-slate-400"> words learned</span>
                     </p>
-                    <p className="text-emerald-600">
-                      <span className="font-semibold">{deck.learned_cards}</span> Learned
-                    </p>
+                    <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                      <div
+                        className="h-full rounded-full bg-emerald-500 transition-all"
+                        style={{
+                          width: `${deck.learning_cards + deck.learned_cards > 0 ? (deck.learned_cards / (deck.learning_cards + deck.learned_cards)) * 100 : 0}%`,
+                        }}
+                      />
+                    </div>
                   </div>
                 </Link>
                 <button
