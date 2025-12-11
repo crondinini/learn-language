@@ -113,7 +113,7 @@ export function getDueCards(deckId?: number, limit: number = 20): Card[] {
     params.push(deckId);
   }
 
-  query += " ORDER BY due ASC LIMIT ?";
+  query += " ORDER BY RANDOM() LIMIT ?";
   params.push(limit);
 
   const stmt = db.prepare(query);

@@ -52,6 +52,17 @@ export default function ReviewSession({ deckId, backUrl, backLabel }: ReviewSess
   const [schedulingInfo, setSchedulingInfo] = useState<any>(null);
   const [imageOnly, setImageOnly] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  async function copyToClipboard(text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  }
 
   useEffect(() => {
     fetchDueCards();
@@ -327,6 +338,24 @@ export default function ReviewSession({ deckId, backUrl, backLabel }: ReviewSess
                       audioUrl={currentCard.audio_url}
                       size="lg"
                     />
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        copyToClipboard(currentCard.front);
+                      }}
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-700 dark:bg-slate-700 dark:text-slate-400 dark:hover:bg-slate-600"
+                      title={copied ? "Copied!" : "Copy Arabic text"}
+                    >
+                      {copied ? (
+                        <svg className="h-5 w-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      )}
+                    </button>
                     {currentCard.image_url && (
                       <button
                         onClick={(e) => {
@@ -377,6 +406,24 @@ export default function ReviewSession({ deckId, backUrl, backLabel }: ReviewSess
                       audioUrl={currentCard.audio_url}
                       size="md"
                     />
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        copyToClipboard(currentCard.front);
+                      }}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-700 dark:bg-slate-700 dark:text-slate-400 dark:hover:bg-slate-600"
+                      title={copied ? "Copied!" : "Copy Arabic text"}
+                    >
+                      {copied ? (
+                        <svg className="h-4 w-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      )}
+                    </button>
                   </div>
                   <p className="text-4xl font-medium text-slate-800 dark:text-white">
                     {currentCard.back}
