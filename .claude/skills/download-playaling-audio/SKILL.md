@@ -106,17 +106,33 @@ Or with a specific name:
 rsync /tmp/word-audio.mp3 pi:~/learn-language/data/audio/card-123-word.mp3
 ```
 
+### Step 7: Update Card Database
+
+After uploading the audio file, update the card's `audio_url` in the database via the API so the app knows where to find it:
+
+```bash
+curl -X PATCH "https://learn.rocksbythesea.uk/api/cards/CARD_ID" \
+  -H "Authorization: Bearer API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"audio_url": "/audio/card-CARD_ID-word.mp3"}'
+```
+
+The `audio_url` should match the filename you used when uploading (without the full path, just `/audio/filename.mp3`).
+
+Get the API token from `.env.local` (look for `API_TOKEN`).
+
 ## Complete Example
 
-For the word "كتاب" (book):
+For the word "كتاب" (book) on card 42:
 
 1. Navigate to `https://app.playaling.com/audio-dictionary`
 2. Fill search box with "كتاب", press Enter
 3. Take snapshot, find MSA play button (look for image near "MSA" text)
 4. Click MSA button
 5. Check network requests for `msa.mp3`
-6. Download: `curl -o /tmp/kitaab.mp3 "https://api.playaling.com/upload/audio/HASH/msa.mp3"`
-7. Upload: `rsync /tmp/kitaab.mp3 pi:~/learn-language/data/audio/` (Docker maps this to /app/public/audio)
+6. Download: `curl -o /tmp/card-42-kitaab.mp3 "https://api.playaling.com/upload/audio/HASH/msa.mp3"`
+7. Upload: `rsync /tmp/card-42-kitaab.mp3 pi:~/learn-language/data/audio/` (Docker maps this to /app/public/audio)
+8. Update DB: `curl -X PATCH "https://learn.rocksbythesea.uk/api/cards/42" -H "Authorization: Bearer API_TOKEN" -H "Content-Type: application/json" -d '{"audio_url": "/audio/card-42-kitaab.mp3"}'`
 
 ## Available Dialects
 
