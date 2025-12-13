@@ -1,8 +1,53 @@
-import { createMcpHandler } from "mcp-handler";
+import { createMcpHandler, withMcpAuth } from "mcp-handler";
 import { z } from "zod";
 
 const API_BASE_URL = "https://learn.rocksbythesea.uk";
 const API_TOKEN = "EGfYvc4Fm4vzD4QBqouEyLoW";
+
+// AuthInfo type for static client verification
+interface AuthInfo {
+  token: string;
+  clientId: string;
+  scopes: string[];
+}
+
+// Static client verifier for simple auth
+function createStaticClientVerifier(options: {
+  clients: Array<{
+    clientId: string;
+    clientSecret: string;
+    scopes?: string[];
+  }>;
+}) {
+  return async (_req: Request, bearerToken?: string): Promise<AuthInfo | undefined> => {
+    if (!bearerToken) return undefined;
+
+    for (const client of options.clients) {
+      // Check base64 encoded "clientId:clientSecret" or just the secret
+      const expectedToken = Buffer.from(`${client.clientId}:${client.clientSecret}`).toString("base64");
+      if (bearerToken === expectedToken || bearerToken === client.clientSecret) {
+        return {
+          token: bearerToken,
+          clientId: client.clientId,
+          scopes: client.scopes || [],
+        };
+      }
+    }
+
+    return undefined;
+  };
+}
+
+// Configure static clients
+const verifyClient = createStaticClientVerifier({
+  clients: [
+    {
+      clientId: "claude",
+      clientSecret: process.env.MCP_CLIENT_SECRET || "mcp-secret-change-me",
+      scopes: ["add_word"],
+    },
+  ],
+});
 
 // Helper to make authenticated API requests
 async function apiRequest(
@@ -18,7 +63,7 @@ async function apiRequest(
   return fetch(url, { ...options, headers });
 }
 
-const handler = createMcpHandler(
+const baseHandler = createMcpHandler(
   (server) => {
     server.tool(
       "add_word",
@@ -85,5 +130,10 @@ const handler = createMcpHandler(
     verboseLogs: true,
   }
 );
+
+// Wrap with auth
+const handler = withMcpAuth(baseHandler, verifyClient, {
+  required: true,
+});
 
 export { handler as GET, handler as POST };
