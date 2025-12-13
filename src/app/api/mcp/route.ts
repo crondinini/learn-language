@@ -84,7 +84,7 @@ const handler = createMcpHandler(
     version: "1.0.0",
   },
   {
-    basePath: "/api/mcp",
+    basePath: "/api",
     verboseLogs: true,
   }
 );
