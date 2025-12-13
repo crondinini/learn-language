@@ -20,19 +20,55 @@ function createStaticClientVerifier(options: {
   }>;
 }) {
   return async (_req: Request, bearerToken?: string): Promise<AuthInfo | undefined> => {
+    console.log("[MCP Auth] bearerToken received:", bearerToken ? `"${bearerToken.substring(0, 20)}..."` : "undefined");
+
     if (!bearerToken) return undefined;
 
     for (const client of options.clients) {
-      // Check base64 encoded "clientId:clientSecret" or just the secret
-      const expectedToken = Buffer.from(`${client.clientId}:${client.clientSecret}`).toString("base64");
-      if (bearerToken === expectedToken || bearerToken === client.clientSecret) {
+      const expectedBase64 = Buffer.from(`${client.clientId}:${client.clientSecret}`).toString("base64");
+      console.log("[MCP Auth] Checking client:", client.clientId);
+      console.log("[MCP Auth] Expected base64:", expectedBase64);
+      console.log("[MCP Auth] Received token:", bearerToken);
+
+      // Method 1: Check base64 encoded "clientId:clientSecret"
+      if (bearerToken === expectedBase64) {
+        console.log("[MCP Auth] Match via Method 1 (base64)");
         return {
           token: bearerToken,
           clientId: client.clientId,
           scopes: client.scopes || [],
         };
       }
+
+      // Method 2: Check if token is just the secret
+      if (bearerToken === client.clientSecret) {
+        console.log("[MCP Auth] Match via Method 2 (secret only)");
+        return {
+          token: bearerToken,
+          clientId: client.clientId,
+          scopes: client.scopes || [],
+        };
+      }
+
+      // Method 3: Try to decode base64 token and extract clientId:clientSecret
+      try {
+        const decoded = Buffer.from(bearerToken, "base64").toString("utf-8");
+        const [tokenClientId, tokenSecret] = decoded.split(":");
+        console.log("[MCP Auth] Method 3 decoded:", decoded);
+        if (tokenClientId === client.clientId && tokenSecret === client.clientSecret) {
+          console.log("[MCP Auth] Match via Method 3 (decoded base64)");
+          return {
+            token: bearerToken,
+            clientId: client.clientId,
+            scopes: client.scopes || [],
+          };
+        }
+      } catch {
+        console.log("[MCP Auth] Method 3 failed to decode");
+      }
     }
+
+    console.log("[MCP Auth] No match found");
 
     return undefined;
   };
