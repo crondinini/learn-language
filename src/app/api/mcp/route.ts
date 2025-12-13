@@ -79,10 +79,7 @@ const handler = createMcpHandler(
       }
     );
   },
-  {
-    name: "learn-language",
-    version: "1.0.0",
-  },
+  {},
   {
     basePath: "/api",
     verboseLogs: true,
