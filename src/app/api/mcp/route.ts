@@ -1,89 +1,101 @@
 import { createMcpHandler, withMcpAuth } from "mcp-handler";
 import { z } from "zod";
+import { accessTokens } from "../../oauth/token/route";
 
 const API_BASE_URL = "https://learn.rocksbythesea.uk";
 const API_TOKEN = "EGfYvc4Fm4vzD4QBqouEyLoW";
 
-// AuthInfo type for static client verification
+// AuthInfo type for client verification
 interface AuthInfo {
   token: string;
   clientId: string;
   scopes: string[];
 }
 
-// Static client verifier for simple auth
-function createStaticClientVerifier(options: {
-  clients: Array<{
-    clientId: string;
-    clientSecret: string;
-    scopes?: string[];
-  }>;
-}) {
-  return async (_req: Request, bearerToken?: string): Promise<AuthInfo | undefined> => {
-    console.log("[MCP Auth] bearerToken received:", bearerToken ? `"${bearerToken.substring(0, 20)}..."` : "undefined");
+// Helper to format expiry time for logging
+function formatExpiry(expiresAt: number): string {
+  const now = Date.now();
+  const remainingMs = expiresAt - now;
+  const remainingHours = Math.round(remainingMs / 1000 / 60 / 60 * 10) / 10;
+  const expiryDate = new Date(expiresAt).toISOString();
+  return `${expiryDate} (${remainingHours}h remaining)`;
+}
 
-    if (!bearerToken) return undefined;
-
-    for (const client of options.clients) {
-      const expectedBase64 = Buffer.from(`${client.clientId}:${client.clientSecret}`).toString("base64");
-      console.log("[MCP Auth] Checking client:", client.clientId);
-      console.log("[MCP Auth] Expected base64:", expectedBase64);
-      console.log("[MCP Auth] Received token:", bearerToken);
-
-      // Method 1: Check base64 encoded "clientId:clientSecret"
-      if (bearerToken === expectedBase64) {
-        console.log("[MCP Auth] Match via Method 1 (base64)");
-        return {
-          token: bearerToken,
-          clientId: client.clientId,
-          scopes: client.scopes || [],
-        };
-      }
-
-      // Method 2: Check if token is just the secret
-      if (bearerToken === client.clientSecret) {
-        console.log("[MCP Auth] Match via Method 2 (secret only)");
-        return {
-          token: bearerToken,
-          clientId: client.clientId,
-          scopes: client.scopes || [],
-        };
-      }
-
-      // Method 3: Try to decode base64 token and extract clientId:clientSecret
-      try {
-        const decoded = Buffer.from(bearerToken, "base64").toString("utf-8");
-        const [tokenClientId, tokenSecret] = decoded.split(":");
-        console.log("[MCP Auth] Method 3 decoded:", decoded);
-        if (tokenClientId === client.clientId && tokenSecret === client.clientSecret) {
-          console.log("[MCP Auth] Match via Method 3 (decoded base64)");
-          return {
-            token: bearerToken,
-            clientId: client.clientId,
-            scopes: client.scopes || [],
-          };
-        }
-      } catch {
-        console.log("[MCP Auth] Method 3 failed to decode");
-      }
-    }
-
-    console.log("[MCP Auth] No match found");
-
+// OAuth token verifier - checks access tokens issued by our OAuth flow
+function verifyOAuthToken(bearerToken: string): AuthInfo | undefined {
+  const tokenData = accessTokens.get(bearerToken);
+  if (!tokenData) {
     return undefined;
+  }
+
+  // Check if token is expired
+  if (tokenData.expiresAt < Date.now()) {
+    console.log(`[MCP Auth] Token expired at ${formatExpiry(tokenData.expiresAt)}`);
+    accessTokens.delete(bearerToken);
+    return undefined;
+  }
+
+  console.log(`[MCP Auth] Token valid, expires: ${formatExpiry(tokenData.expiresAt)}`);
+  return {
+    token: bearerToken,
+    clientId: tokenData.clientId,
+    scopes: ["add_word"],
   };
 }
 
-// Configure static clients
-const verifyClient = createStaticClientVerifier({
-  clients: [
-    {
-      clientId: "claude",
-      clientSecret: process.env.MCP_CLIENT_SECRET || "mcp-secret-change-me",
-      scopes: ["add_word"],
-    },
-  ],
-});
+// Static client verifier for direct API access (base64 clientId:clientSecret)
+function verifyStaticToken(bearerToken: string): AuthInfo | undefined {
+  const clientId = "claude";
+  const clientSecret = process.env.MCP_CLIENT_SECRET || "mcp-secret-change-me";
+
+  // Method 1: Check base64 encoded "clientId:clientSecret"
+  const expectedBase64 = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
+  if (bearerToken === expectedBase64) {
+    return { token: bearerToken, clientId, scopes: ["add_word"] };
+  }
+
+  // Method 2: Check if token is just the secret
+  if (bearerToken === clientSecret) {
+    return { token: bearerToken, clientId, scopes: ["add_word"] };
+  }
+
+  // Method 3: Try to decode base64 token
+  try {
+    const decoded = Buffer.from(bearerToken, "base64").toString("utf-8");
+    const [tokenClientId, tokenSecret] = decoded.split(":");
+    if (tokenClientId === clientId && tokenSecret === clientSecret) {
+      return { token: bearerToken, clientId, scopes: ["add_word"] };
+    }
+  } catch {
+    // Not valid base64
+  }
+
+  return undefined;
+}
+
+// Combined verifier: tries OAuth tokens first, then static tokens
+const verifyClient = async (_req: Request, bearerToken?: string): Promise<AuthInfo | undefined> => {
+  console.log("[MCP Auth] bearerToken received:", bearerToken ? `"${bearerToken.substring(0, 20)}..."` : "undefined");
+
+  if (!bearerToken) return undefined;
+
+  // Try OAuth token first
+  const oauthResult = verifyOAuthToken(bearerToken);
+  if (oauthResult) {
+    console.log("[MCP Auth] Validated OAuth access token for client:", oauthResult.clientId);
+    return oauthResult;
+  }
+
+  // Try static token
+  const staticResult = verifyStaticToken(bearerToken);
+  if (staticResult) {
+    console.log("[MCP Auth] Validated static token for client:", staticResult.clientId);
+    return staticResult;
+  }
+
+  console.log("[MCP Auth] No valid token found");
+  return undefined;
+};
 
 // Helper to make authenticated API requests
 async function apiRequest(
@@ -101,6 +113,281 @@ async function apiRequest(
 
 const baseHandler = createMcpHandler(
   (server) => {
+    // Resource: Instructions for adding words
+    server.resource(
+      "instructions",
+      "instructions://add-words",
+      async () => {
+        return {
+          contents: [
+            {
+              uri: "instructions://add-words",
+              mimeType: "text/plain",
+              text: `# How to Add Arabic Vocabulary Words
+
+## Word Format
+- arabic_word: The Arabic word in Arabic script (e.g., "كتاب")
+- english_translation: The English meaning (e.g., "book")
+- notes (optional): Additional context, example sentences, or grammar notes
+
+## Best Practices
+1. Always use Arabic script for the arabic_word, not transliteration
+2. Keep translations concise but clear
+3. Add notes for words with multiple meanings or special usage
+4. Group related words in the same deck
+
+## Available Decks
+Use the "decks" resource to see all available decks and their IDs.
+The default deck is "Learning with Claude" (ID: 15).
+
+## Example
+To add the word "مرحبا" (hello):
+- arabic_word: "مرحبا"
+- english_translation: "hello"
+- notes: "Common greeting, can be used formally and informally"
+- deck_id: 15 (or omit to use default)
+`,
+            },
+          ],
+        };
+      }
+    );
+
+    // Resource: List of all decks with names and IDs
+    server.resource(
+      "decks",
+      "decks://list",
+      async () => {
+        try {
+          const response = await apiRequest("/api/decks");
+          if (!response.ok) {
+            return {
+              contents: [
+                {
+                  uri: "decks://list",
+                  mimeType: "application/json",
+                  text: JSON.stringify({ error: "Failed to fetch decks" }),
+                },
+              ],
+            };
+          }
+          const decks = await response.json();
+          const deckList = decks.map((deck: { id: number; name: string }) => ({
+            id: deck.id,
+            name: deck.name,
+          }));
+          return {
+            contents: [
+              {
+                uri: "decks://list",
+                mimeType: "application/json",
+                text: JSON.stringify(deckList, null, 2),
+              },
+            ],
+          };
+        } catch (error) {
+          return {
+            contents: [
+              {
+                uri: "decks://list",
+                mimeType: "application/json",
+                text: JSON.stringify({ error: String(error) }),
+              },
+            ],
+          };
+        }
+      }
+    );
+
+    server.tool(
+      "get_learning_words",
+      "Get words that are new, still being learned, or difficult (forgotten multiple times)",
+      {
+        deck_id: z.number().optional().describe("Filter by deck ID (optional, defaults to all decks)"),
+        include_difficult: z.boolean().optional().default(true).describe("Include words marked 'again' 2+ times"),
+      },
+      async ({ deck_id, include_difficult }) => {
+        try {
+          // Get all cards from the review endpoint or specific deck
+          const endpoint = deck_id ? `/api/decks/${deck_id}/cards` : "/api/review";
+          const response = await apiRequest(endpoint);
+          if (!response.ok) {
+            return {
+              content: [
+                {
+                  type: "text" as const,
+                  text: `Failed to fetch words: ${response.status}`,
+                },
+              ],
+              isError: true,
+            };
+          }
+          const allCards = await response.json();
+
+          // Filter for learning words:
+          // - state 0 = new (never reviewed)
+          // - state 1 = learning (still in initial learning phase)
+          // - lapses >= 2 = difficult (marked "again" multiple times)
+          const learningCards = allCards.filter((card: {
+            state: number;
+            lapses: number;
+          }) =>
+            card.state === 0 ||
+            card.state === 1 ||
+            (include_difficult && card.lapses >= 2)
+          );
+
+          if (learningCards.length === 0) {
+            return {
+              content: [
+                {
+                  type: "text" as const,
+                  text: "No new or learning words found. All words have been learned!",
+                },
+              ],
+            };
+          }
+
+          // Group by category
+          const newWords = learningCards.filter((c: { state: number }) => c.state === 0);
+          const inProgress = learningCards.filter((c: { state: number; lapses: number }) => c.state === 1 && c.lapses < 2);
+          const difficult = learningCards.filter((c: { lapses: number }) => c.lapses >= 2);
+
+          const formatWord = (card: { front: string; back: string; notes?: string; lapses: number }) =>
+            `  - ${card.front} (${card.back})${card.lapses >= 2 ? ` [difficult - ${card.lapses} lapses]` : ""}`;
+
+          let result = "";
+
+          if (newWords.length > 0) {
+            result += `📚 New words (${newWords.length}):\n`;
+            result += newWords.map(formatWord).join("\n") + "\n\n";
+          }
+
+          if (inProgress.length > 0) {
+            result += `📖 Learning in progress (${inProgress.length}):\n`;
+            result += inProgress.map(formatWord).join("\n") + "\n\n";
+          }
+
+          if (difficult.length > 0 && include_difficult) {
+            result += `⚠️ Difficult words (${difficult.length}):\n`;
+            result += difficult.map(formatWord).join("\n");
+          }
+
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: result.trim(),
+              },
+            ],
+          };
+        } catch (error) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: `Error fetching words: ${error instanceof Error ? error.message : String(error)}`,
+              },
+            ],
+            isError: true,
+          };
+        }
+      }
+    );
+
+    server.tool(
+      "list_decks",
+      "List all available decks with their IDs and names",
+      {},
+      async () => {
+        try {
+          const response = await apiRequest("/api/decks");
+          if (!response.ok) {
+            return {
+              content: [
+                {
+                  type: "text" as const,
+                  text: `Failed to fetch decks: ${response.status}`,
+                },
+              ],
+              isError: true,
+            };
+          }
+          const decks = await response.json();
+          const deckList = decks
+            .map((deck: { id: number; name: string }) => `- ID ${deck.id}: ${deck.name}`)
+            .join("\n");
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: `Available decks:\n${deckList}`,
+              },
+            ],
+          };
+        } catch (error) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: `Error fetching decks: ${error instanceof Error ? error.message : String(error)}`,
+              },
+            ],
+            isError: true,
+          };
+        }
+      }
+    );
+
+    server.tool(
+      "create_deck",
+      "Create a new deck for organizing vocabulary",
+      {
+        name: z.string().describe("The name of the new deck"),
+      },
+      async ({ name }) => {
+        try {
+          const response = await apiRequest("/api/decks", {
+            method: "POST",
+            body: JSON.stringify({ name }),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            return {
+              content: [
+                {
+                  type: "text" as const,
+                  text: `Failed to create deck: ${response.status} ${errorText}`,
+                },
+              ],
+              isError: true,
+            };
+          }
+
+          const result = await response.json();
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: `Successfully created deck "${name}" with ID: ${result.id}`,
+              },
+            ],
+          };
+        } catch (error) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: `Error creating deck: ${error instanceof Error ? error.message : String(error)}`,
+              },
+            ],
+            isError: true,
+          };
+        }
+      }
+    );
+
     server.tool(
       "add_word",
       "Add a new Arabic vocabulary word to a deck",
@@ -167,9 +454,41 @@ const baseHandler = createMcpHandler(
   }
 );
 
+// CORS headers for browser-based MCP clients
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, Accept",
+};
+
 // Wrap with auth
-const handler = withMcpAuth(baseHandler, verifyClient, {
+const authHandler = withMcpAuth(baseHandler, verifyClient, {
   required: true,
 });
 
-export { handler as GET, handler as POST };
+// Add CORS headers to responses
+async function handler(req: Request): Promise<Response> {
+  const response = await authHandler(req);
+
+  // Clone response and add CORS headers
+  const newHeaders = new Headers(response.headers);
+  Object.entries(corsHeaders).forEach(([key, value]) => {
+    newHeaders.set(key, value);
+  });
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: newHeaders,
+  });
+}
+
+// Handle CORS preflight requests
+function OPTIONS() {
+  return new Response(null, {
+    status: 204,
+    headers: corsHeaders,
+  });
+}
+
+export { handler as GET, handler as POST, OPTIONS };

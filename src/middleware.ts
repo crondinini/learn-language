@@ -4,8 +4,12 @@ import type { NextRequest } from 'next/server'
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Allow access to login page, auth API, and MCP endpoint
-  if (pathname.startsWith('/login') || pathname.startsWith('/api/auth') || pathname.startsWith('/api/mcp')) {
+  // Allow access to login page, auth API, MCP endpoint, and OAuth endpoints
+  if (pathname.startsWith('/login') ||
+      pathname.startsWith('/api/auth') ||
+      pathname.startsWith('/api/mcp') ||
+      pathname.startsWith('/oauth') ||
+      pathname.startsWith('/.well-known')) {
     return NextResponse.next()
   }
 

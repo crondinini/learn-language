@@ -122,6 +122,26 @@ function getDb(): Database.Database {
     CREATE INDEX IF NOT EXISTS idx_texts_category ON texts(category);
     CREATE INDEX IF NOT EXISTS idx_text_cards_text_id ON text_cards(text_id);
     CREATE INDEX IF NOT EXISTS idx_text_cards_card_id ON text_cards(card_id);
+
+    -- OAuth access tokens table: persist access tokens across restarts
+    CREATE TABLE IF NOT EXISTS oauth_tokens (
+      token TEXT PRIMARY KEY,
+      client_id TEXT NOT NULL,
+      expires_at INTEGER NOT NULL,  -- Unix timestamp in milliseconds
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_oauth_tokens_expires_at ON oauth_tokens(expires_at);
+
+    -- OAuth refresh tokens table: long-lived tokens for getting new access tokens
+    CREATE TABLE IF NOT EXISTS oauth_refresh_tokens (
+      token TEXT PRIMARY KEY,
+      client_id TEXT NOT NULL,
+      expires_at INTEGER NOT NULL,  -- Unix timestamp in milliseconds
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_oauth_refresh_tokens_expires_at ON oauth_refresh_tokens(expires_at);
   `);
 
   // Migration: Add image_url column if it doesn't exist (for existing databases)
@@ -255,5 +275,13 @@ export interface TextCard {
   id: number;
   text_id: number;
   card_id: number;
+  created_at: string;
+}
+
+// OAuth token interface
+export interface OAuthToken {
+  token: string;
+  client_id: string;
+  expires_at: number;  // Unix timestamp in milliseconds
   created_at: string;
 }
