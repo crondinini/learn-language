@@ -27,6 +27,7 @@ services:
 
   otel-collector:
     image: otel/opentelemetry-collector-contrib:latest
+    user: "0:0"  # Run as root to access Docker logs
     volumes:
       - ./otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
