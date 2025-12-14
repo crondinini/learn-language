@@ -1,4 +1,5 @@
 import { createMcpHandler, withMcpAuth } from "mcp-handler";
+import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { accessTokens } from "../../oauth/token/route";
 import logger from "@/lib/logger";
@@ -195,6 +196,46 @@ To add the word "مرحبا" (hello):
             ],
           };
         }
+      }
+    );
+
+    // Resource Template: Individual deck instruction - "Use Deck X"
+    const useDeckTemplate = new ResourceTemplate("deck://{deckId}", {
+      list: async () => {
+        try {
+          const response = await apiRequest("/api/decks");
+          if (!response.ok) {
+            return { resources: [] };
+          }
+          const decks = await response.json();
+          return {
+            resources: decks.map((deck: { id: number; name: string }) => ({
+              uri: `deck://${deck.id}`,
+              name: `Use Deck ${deck.id}`,
+              description: deck.name,
+            })),
+          };
+        } catch {
+          return { resources: [] };
+        }
+      },
+    });
+
+    server.resource(
+      "use-deck",
+      useDeckTemplate,
+      async (uri: URL, variables: { deckId?: string }) => {
+        const deckId = variables.deckId || "unknown";
+
+        return {
+          contents: [
+            {
+              uri: uri.href,
+              mimeType: "text/plain",
+              text: `Use Deck with ID ${deckId} for whatever action you are taking`,
+            },
+          ],
+        };
       }
     );
 
