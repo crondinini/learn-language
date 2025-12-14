@@ -7,6 +7,7 @@ import Header from "@/components/Header";
 
 interface Card {
   id: number;
+  deck_id: number;
   front: string;
   back: string;
   notes: string | null;
@@ -15,6 +16,11 @@ interface Card {
   state: number;
   reps: number;
   due: string;
+}
+
+interface DeckOption {
+  id: number;
+  name: string;
 }
 
 interface Deck {
@@ -41,12 +47,23 @@ export default function DeckPage({ params }: { params: Promise<{ id: string }> }
   const [previewCard, setPreviewCard] = useState<Card | null>(null);
   const [previewFlipped, setPreviewFlipped] = useState(false);
   const [previewIndex, setPreviewIndex] = useState(0);
+  const [allDecks, setAllDecks] = useState<DeckOption[]>([]);
+  const [selectedDeckId, setSelectedDeckId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchDeck();
     fetchCards();
     fetchTotalDueCount();
+    fetchAllDecks();
   }, [id]);
+
+  async function fetchAllDecks() {
+    const res = await fetch("/api/decks");
+    if (res.ok) {
+      const decks = await res.json();
+      setAllDecks(decks.map((d: Deck) => ({ id: d.id, name: d.name })));
+    }
+  }
 
   // Keyboard navigation for preview modal
   useEffect(() => {
@@ -122,6 +139,9 @@ export default function DeckPage({ params }: { params: Promise<{ id: string }> }
     e.preventDefault();
     if (!editingCard) return;
 
+    const newDeckId = selectedDeckId ?? editingCard.deck_id;
+    const movedToDifferentDeck = newDeckId !== parseInt(id);
+
     await fetch(`/api/cards/${editingCard.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -129,11 +149,16 @@ export default function DeckPage({ params }: { params: Promise<{ id: string }> }
         front: editingCard.front,
         back: editingCard.back,
         notes: editingCard.notes,
+        deck_id: newDeckId,
       }),
     });
 
     setEditingCard(null);
+    setSelectedDeckId(null);
     fetchCards();
+    if (movedToDifferentDeck) {
+      fetchDeck(); // Update card counts
+    }
   }
 
   async function deleteCard(cardId: number) {
@@ -472,6 +497,22 @@ export default function DeckPage({ params }: { params: Promise<{ id: string }> }
                   onChange={(e) => setEditingCard({ ...editingCard, notes: e.target.value })}
                   className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Deck
+                </label>
+                <select
+                  value={selectedDeckId ?? editingCard.deck_id}
+                  onChange={(e) => setSelectedDeckId(parseInt(e.target.value))}
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                >
+                  {allDecks.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">

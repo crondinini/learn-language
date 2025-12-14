@@ -44,13 +44,9 @@ exporters:
       max_days: 7
       max_backups: 3
 
-  # Also output to console for debugging
-  debug:
-    verbosity: basic
-
 service:
   pipelines:
     logs:
       receivers: [otlp, filelog]
       processors: [batch, resource]
-      exporters: [file, debug]
+      exporters: [file]
