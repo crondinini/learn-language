@@ -16,4 +16,20 @@ services:
       - ./tts:/app/tts:ro
     environment:
       - NODE_ENV=production
+    depends_on:
+      - otel-collector
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./data/logs:/logs
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
     restart: unless-stopped

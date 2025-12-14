@@ -1,6 +1,7 @@
 import { createMcpHandler, withMcpAuth } from "mcp-handler";
 import { z } from "zod";
 import { accessTokens } from "../../oauth/token/route";
+import logger from "@/lib/logger";
 
 const API_BASE_URL = "https://learn.rocksbythesea.uk";
 const API_TOKEN = "EGfYvc4Fm4vzD4QBqouEyLoW";
@@ -12,15 +13,6 @@ interface AuthInfo {
   scopes: string[];
 }
 
-// Helper to format expiry time for logging
-function formatExpiry(expiresAt: number): string {
-  const now = Date.now();
-  const remainingMs = expiresAt - now;
-  const remainingHours = Math.round(remainingMs / 1000 / 60 / 60 * 10) / 10;
-  const expiryDate = new Date(expiresAt).toISOString();
-  return `${expiryDate} (${remainingHours}h remaining)`;
-}
-
 // OAuth token verifier - checks access tokens issued by our OAuth flow
 function verifyOAuthToken(bearerToken: string): AuthInfo | undefined {
   const tokenData = accessTokens.get(bearerToken);
@@ -30,12 +22,19 @@ function verifyOAuthToken(bearerToken: string): AuthInfo | undefined {
 
   // Check if token is expired
   if (tokenData.expiresAt < Date.now()) {
-    console.log(`[MCP Auth] Token expired at ${formatExpiry(tokenData.expiresAt)}`);
+    logger.warn("mcp_token_expired", {
+      clientId: tokenData.clientId,
+      expiresAt: new Date(tokenData.expiresAt).toISOString(),
+    });
     accessTokens.delete(bearerToken);
     return undefined;
   }
 
-  console.log(`[MCP Auth] Token valid, expires: ${formatExpiry(tokenData.expiresAt)}`);
+  logger.info("mcp_token_valid", {
+    clientId: tokenData.clientId,
+    expiresAt: new Date(tokenData.expiresAt).toISOString(),
+    expiresInHours: Math.round((tokenData.expiresAt - Date.now()) / 1000 / 60 / 60 * 10) / 10,
+  });
   return {
     token: bearerToken,
     clientId: tokenData.clientId,
@@ -75,25 +74,25 @@ function verifyStaticToken(bearerToken: string): AuthInfo | undefined {
 
 // Combined verifier: tries OAuth tokens first, then static tokens
 const verifyClient = async (_req: Request, bearerToken?: string): Promise<AuthInfo | undefined> => {
-  console.log("[MCP Auth] bearerToken received:", bearerToken ? `"${bearerToken.substring(0, 20)}..."` : "undefined");
+  logger.debug("mcp_auth_request", { hasToken: !!bearerToken });
 
   if (!bearerToken) return undefined;
 
   // Try OAuth token first
   const oauthResult = verifyOAuthToken(bearerToken);
   if (oauthResult) {
-    console.log("[MCP Auth] Validated OAuth access token for client:", oauthResult.clientId);
+    logger.info("mcp_auth_oauth_valid", { clientId: oauthResult.clientId });
     return oauthResult;
   }
 
   // Try static token
   const staticResult = verifyStaticToken(bearerToken);
   if (staticResult) {
-    console.log("[MCP Auth] Validated static token for client:", staticResult.clientId);
+    logger.info("mcp_auth_static_valid", { clientId: staticResult.clientId });
     return staticResult;
   }
 
-  console.log("[MCP Auth] No valid token found");
+  logger.warn("mcp_auth_failed");
   return undefined;
 };
 

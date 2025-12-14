@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import db from "@/lib/db";
+import logger from "@/lib/logger";
 
 // Import the shared auth codes store
 import { authCodes } from "../authorize/route";
@@ -11,15 +12,6 @@ const CLIENT_SECRET = process.env.MCP_CLIENT_SECRET || "mcp-secret-change-me";
 // Token expiration times
 const ACCESS_TOKEN_EXPIRES_IN = 30 * 24 * 60 * 60; // 30 days in seconds
 const REFRESH_TOKEN_EXPIRES_IN = 30 * 24 * 60 * 60; // 30 days in seconds
-
-// Helper to format expiry time for logging
-function formatExpiry(expiresAt: number): string {
-  const now = Date.now();
-  const remainingMs = expiresAt - now;
-  const remainingHours = Math.round(remainingMs / 1000 / 60 / 60 * 10) / 10;
-  const expiryDate = new Date(expiresAt).toISOString();
-  return `${expiryDate} (${remainingHours}h remaining)`;
-}
 
 // SQLite-backed token store that mimics the Map interface
 const accessTokens = {
@@ -36,7 +28,11 @@ const accessTokens = {
     db.prepare(
       "INSERT OR REPLACE INTO oauth_tokens (token, client_id, expires_at) VALUES (?, ?, ?)"
     ).run(token, data.clientId, data.expiresAt);
-    console.log(`[OAuth Token] Stored token for ${data.clientId}, expires: ${formatExpiry(data.expiresAt)}`);
+    logger.info("stored_access_token", {
+      clientId: data.clientId,
+      expiresAt: new Date(data.expiresAt).toISOString(),
+      expiresInHours: Math.round((data.expiresAt - Date.now()) / 1000 / 60 / 60 * 10) / 10,
+    });
   },
 
   delete(token: string): void {
@@ -62,7 +58,11 @@ const refreshTokens = {
     db.prepare(
       "INSERT OR REPLACE INTO oauth_refresh_tokens (token, client_id, expires_at) VALUES (?, ?, ?)"
     ).run(token, data.clientId, data.expiresAt);
-    console.log(`[OAuth Token] Stored refresh token for ${data.clientId}, expires: ${formatExpiry(data.expiresAt)}`);
+    logger.info("stored_refresh_token", {
+      clientId: data.clientId,
+      expiresAt: new Date(data.expiresAt).toISOString(),
+      expiresInHours: Math.round((data.expiresAt - Date.now()) / 1000 / 60 / 60 * 10) / 10,
+    });
   },
 
   delete(token: string): void {
@@ -76,7 +76,10 @@ function cleanupExpiredTokens() {
   const accessResult = db.prepare("DELETE FROM oauth_tokens WHERE expires_at < ?").run(now);
   const refreshResult = db.prepare("DELETE FROM oauth_refresh_tokens WHERE expires_at < ?").run(now);
   if (accessResult.changes > 0 || refreshResult.changes > 0) {
-    console.log(`[OAuth Token] Cleaned up ${accessResult.changes} expired access tokens, ${refreshResult.changes} expired refresh tokens`);
+    logger.info("cleaned_up_expired_tokens", {
+      accessTokens: accessResult.changes,
+      refreshTokens: refreshResult.changes,
+    });
   }
 }
 
@@ -111,8 +114,11 @@ export async function POST(request: NextRequest) {
     body = Object.fromEntries(new URLSearchParams(text));
   }
 
-  console.log("[OAuth Token] Request body:", { ...body, client_secret: body.client_secret || "NOT PROVIDED" });
-  console.log("[OAuth Token] Expected client_secret:", CLIENT_SECRET);
+  logger.info("token_request", {
+    grantType: body.grant_type,
+    clientId: body.client_id,
+    hasClientSecret: !!body.client_secret,
+  });
 
   const { grant_type, code, redirect_uri, client_id, client_secret, code_verifier, refresh_token } = body;
 
@@ -135,7 +141,7 @@ export async function POST(request: NextRequest) {
 
     const tokenData = refreshTokens.get(refresh_token);
     if (!tokenData) {
-      console.log("[OAuth Token] Invalid refresh token");
+      logger.warn("invalid_refresh_token");
       return NextResponse.json(
         { error: "invalid_grant", error_description: "Invalid refresh token" },
         { status: 400, headers: corsHeaders }
@@ -145,7 +151,7 @@ export async function POST(request: NextRequest) {
     // Check if refresh token is expired
     if (tokenData.expiresAt < Date.now()) {
       refreshTokens.delete(refresh_token);
-      console.log("[OAuth Token] Refresh token expired");
+      logger.warn("refresh_token_expired", { clientId: tokenData.clientId });
       return NextResponse.json(
         { error: "invalid_grant", error_description: "Refresh token expired" },
         { status: 400, headers: corsHeaders }
@@ -170,7 +176,7 @@ export async function POST(request: NextRequest) {
       expiresAt: Date.now() + REFRESH_TOKEN_EXPIRES_IN * 1000,
     });
 
-    console.log("[OAuth Token] Refreshed tokens for client:", tokenData.clientId);
+    logger.info("refreshed_tokens", { clientId: tokenData.clientId });
 
     return NextResponse.json(
       {
@@ -186,7 +192,7 @@ export async function POST(request: NextRequest) {
   // Handle authorization_code grant
   // Validate client_id
   if (client_id !== ALLOWED_CLIENT_ID) {
-    console.log("[OAuth Token] Invalid client_id:", client_id);
+    logger.warn("invalid_client_id", { clientId: client_id });
     return NextResponse.json(
       { error: "invalid_client" },
       { status: 401, headers: corsHeaders }
@@ -195,14 +201,11 @@ export async function POST(request: NextRequest) {
 
   // Note: We don't validate client_secret for public clients like Claude.ai
   // PKCE (code_verifier) provides sufficient security
-  if (client_secret) {
-    console.log("[OAuth Token] client_secret provided (ignoring for public client)");
-  }
 
   // Validate authorization code
   const codeData = authCodes.get(code);
   if (!codeData) {
-    console.log("[OAuth Token] Invalid or expired code");
+    logger.warn("invalid_auth_code");
     return NextResponse.json(
       { error: "invalid_grant", error_description: "Invalid or expired authorization code" },
       { status: 400, headers: corsHeaders }
@@ -220,7 +223,7 @@ export async function POST(request: NextRequest) {
 
   // Validate redirect_uri matches
   if (redirect_uri && redirect_uri !== codeData.redirectUri) {
-    console.log("[OAuth Token] redirect_uri mismatch");
+    logger.warn("redirect_uri_mismatch");
     return NextResponse.json(
       { error: "invalid_grant", error_description: "redirect_uri mismatch" },
       { status: 400, headers: corsHeaders }
@@ -241,7 +244,7 @@ export async function POST(request: NextRequest) {
     const computedChallenge = hash.toString("base64url");
 
     if (computedChallenge !== codeData.codeChallenge) {
-      console.log("[OAuth Token] PKCE verification failed");
+      logger.warn("pkce_verification_failed");
       return NextResponse.json(
         { error: "invalid_grant", error_description: "PKCE verification failed" },
         { status: 400, headers: corsHeaders }
@@ -268,7 +271,7 @@ export async function POST(request: NextRequest) {
     expiresAt: Date.now() + REFRESH_TOKEN_EXPIRES_IN * 1000,
   });
 
-  console.log("[OAuth Token] Issued access token and refresh token for client:", client_id);
+  logger.info("issued_tokens", { clientId: client_id });
 
   return NextResponse.json(
     {
