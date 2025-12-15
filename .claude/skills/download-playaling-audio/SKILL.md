@@ -106,20 +106,26 @@ Or with a specific name:
 rsync /tmp/word-audio.mp3 pi:~/learn-language/data/audio/card-123-word.mp3
 ```
 
-### Step 7: Update Card Database
+### Step 7: Update Card Database (REQUIRED)
 
-After uploading the audio file, update the card's `audio_url` in the database via the API so the app knows where to find it:
+**IMPORTANT: This step is MANDATORY. The task is NOT complete until the card is updated in the database.**
+
+After uploading the audio file, update the card's `audio_url` in the database via the API:
 
 ```bash
 curl -X PATCH "https://learn.rocksbythesea.uk/api/cards/CARD_ID" \
-  -H "Authorization: Bearer API_TOKEN" \
+  -H "Authorization: Bearer EGfYvc4Fm4vzD4QBqouEyLoW" \
   -H "Content-Type: application/json" \
   -d '{"audio_url": "/audio/card-CARD_ID-word.mp3"}'
 ```
 
 The `audio_url` should match the filename you used when uploading (without the full path, just `/audio/filename.mp3`).
 
-Get the API token from `.env.local` (look for `API_TOKEN`).
+### Step 8: Verify Update
+
+Confirm the card was updated by checking the API response. The response should include the updated `audio_url` field. If the update fails, retry or report the error.
+
+**The task is only complete when the API returns a successful response with the updated audio_url.**
 
 ## Complete Example
 
@@ -131,8 +137,9 @@ For the word "كتاب" (book) on card 42:
 4. Click MSA button
 5. Check network requests for `msa.mp3`
 6. Download: `curl -o /tmp/card-42-kitaab.mp3 "https://api.playaling.com/upload/audio/HASH/msa.mp3"`
-7. Upload: `rsync /tmp/card-42-kitaab.mp3 pi:~/learn-language/data/audio/` (Docker maps this to /app/public/audio)
-8. Update DB: `curl -X PATCH "https://learn.rocksbythesea.uk/api/cards/42" -H "Authorization: Bearer API_TOKEN" -H "Content-Type: application/json" -d '{"audio_url": "/audio/card-42-kitaab.mp3"}'`
+7. Upload: `rsync /tmp/card-42-kitaab.mp3 pi:~/learn-language/data/audio/`
+8. **Update DB (REQUIRED)**: `curl -X PATCH "https://learn.rocksbythesea.uk/api/cards/42" -H "Authorization: Bearer EGfYvc4Fm4vzD4QBqouEyLoW" -H "Content-Type: application/json" -d '{"audio_url": "/audio/card-42-kitaab.mp3"}'`
+9. **Verify**: Check that the API response includes `"audio_url": "/audio/card-42-kitaab.mp3"`
 
 ## Available Dialects
 
@@ -164,6 +171,26 @@ uid=X_107 ignored
 
 The actual play button images are typically inside the row for each vocabulary entry, not next to the dialect labels. Look for `image` elements under each vocabulary row in the results.
 
+## Finding Cards in the Database
+
+Before downloading audio, you need to find the card ID. Use the vocab API:
+
+```bash
+curl -s "https://learn.rocksbythesea.uk/api/vocab" -H "Authorization: Bearer EGfYvc4Fm4vzD4QBqouEyLoW" | jq '.vocabulary[] | select(.front) | select(.front | test("ARABIC_WORD")) | {id, front, back, audio_url}'
+```
+
+If searching by Arabic text doesn't work (due to diacritics), search by English translation:
+
+```bash
+curl -s "https://learn.rocksbythesea.uk/api/vocab" -H "Authorization: Bearer EGfYvc4Fm4vzD4QBqouEyLoW" | jq '.vocabulary[] | select(.back) | select(.back | test("ENGLISH_WORD"; "i")) | {id, front, back, audio_url}'
+```
+
+**Tips:**
+- The vocab API returns `{stats: {...}, vocabulary: [...]}` structure
+- Use `.vocabulary[]` to iterate over cards
+- Arabic text may have diacritics (tashkeel) - search by English if Arabic doesn't match
+- Use `"i"` flag for case-insensitive English search
+
 ## Notes
 
 - The audio files are MP3 format
@@ -171,3 +198,4 @@ The actual play button images are typically inside the row for each vocabulary e
 - Some words may not have all dialect pronunciations available
 - The user must be logged into Playaling for this to work
 - Audio URLs include a timestamp parameter `?h=` which can be omitted
+- Use `/api/media/audio/filename.mp3` format for audio_url (not `/audio/`)
