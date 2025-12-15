@@ -211,8 +211,8 @@ To add the word "مرحبا" (hello):
           return {
             resources: decks.map((deck: { id: number; name: string }) => ({
               uri: `deck://${deck.id}`,
-              name: `Use Deck ${deck.id}`,
-              description: deck.name,
+              name: `Use Deck ${deck.name}`,
+              description: `Deck ID: ${deck.id}`,
             })),
           };
         } catch {
