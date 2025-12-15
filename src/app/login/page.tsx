@@ -41,7 +41,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
         <div className="flex justify-center mb-6">
-          <Image src="/logo.png" alt="Learn a Language" width={120} height={64} />
+          <Image src="/logo.png" alt="Learn" width={120} height={64} unoptimized />
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

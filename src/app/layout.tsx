@@ -19,7 +19,7 @@ const notoSansArabic = Noto_Sans_Arabic({
 });
 
 export const metadata: Metadata = {
-  title: "Learn a Language",
+  title: "Learn",
   description: "Language learning flashcard app",
 };
 

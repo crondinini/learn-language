@@ -32,8 +32,8 @@ export default function Header({ actions }: HeaderProps) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center">
-              <Image src="/logo.png" alt="Learn a Language" width={60} height={32} className="dark:hidden" />
-              <Image src="/logo-white.png" alt="Learn a Language" width={60} height={32} className="hidden dark:block" />
+              <Image src="/logo.png" alt="Learn" width={60} height={32} className="dark:hidden" unoptimized />
+              <Image src="/logo-white.png" alt="Learn" width={60} height={32} className="hidden dark:block" unoptimized />
             </Link>
             <nav className="flex items-center gap-6">
               {navItems.map((item) => (
