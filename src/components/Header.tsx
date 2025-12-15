@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
@@ -30,9 +31,8 @@ export default function Header({ actions }: HeaderProps) {
       <div className="mx-auto max-w-5xl px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-8">
-            <Link href="/" className="text-2xl font-bold text-slate-800 dark:text-white">
-              تعلم
-              <span className="ml-2 text-sm font-normal text-slate-500">Learn Arabic</span>
+            <Link href="/" className="flex items-center">
+              <Image src="/logo.png" alt="Learn a Language" width={60} height={32} className="dark:invert" />
             </Link>
             <nav className="flex items-center gap-6">
               {navItems.map((item) => (
