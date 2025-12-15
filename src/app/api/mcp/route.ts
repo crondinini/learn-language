@@ -486,6 +486,70 @@ To add the word "مرحبا" (hello):
         }
       }
     );
+
+    server.tool(
+      "add_words",
+      "Add multiple Arabic vocabulary words to a deck at once",
+      {
+        words: z.array(z.object({
+          arabic_word: z.string().describe("The Arabic word"),
+          english_translation: z.string().describe("The English translation"),
+          notes: z.string().optional().describe("Optional notes for the card"),
+        })).describe("Array of words to add"),
+        deck_id: z.number().optional().default(15).describe("The deck ID to add the cards to. Defaults to 15 (Learning with Claude)"),
+      },
+      async ({ words, deck_id }) => {
+        try {
+          const cardData = words.map((word) => ({
+            front: word.arabic_word,
+            back: word.english_translation,
+            ...(word.notes && { notes: word.notes }),
+          }));
+
+          const response = await apiRequest(`/api/decks/${deck_id}/cards`, {
+            method: "POST",
+            body: JSON.stringify(cardData),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            return {
+              content: [
+                {
+                  type: "text" as const,
+                  text: `Failed to add words: ${response.status} ${errorText}`,
+                },
+              ],
+              isError: true,
+            };
+          }
+
+          const result = await response.json();
+          const addedWords = words.map((w, i) =>
+            `- ${w.arabic_word} (${w.english_translation}) [ID: ${result[i]?.id || "unknown"}]`
+          ).join("\n");
+
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: `Successfully added ${words.length} words to deck ${deck_id}:\n${addedWords}`,
+              },
+            ],
+          };
+        } catch (error) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: `Error adding words: ${error instanceof Error ? error.message : String(error)}`,
+              },
+            ],
+            isError: true,
+          };
+        }
+      }
+    );
   },
   {},
   {
