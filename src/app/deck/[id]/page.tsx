@@ -4,6 +4,7 @@ import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import SpeakerButton from "@/components/SpeakerButton";
 import Header from "@/components/Header";
+import { MarkdownNotes } from "@/components/MarkdownNotes";
 
 interface Card {
   id: number;
@@ -350,7 +351,7 @@ export default function DeckPage({ params }: { params: Promise<{ id: string }> }
                   <div className="flex-1">
                     <span className="text-lg text-slate-600 dark:text-slate-300">{card.back}</span>
                     {card.notes && (
-                      <p className="mt-0.5 text-sm text-slate-400">{card.notes}</p>
+                      <MarkdownNotes content={card.notes} className="mt-0.5 text-sm text-slate-400" />
                     )}
                   </div>
 
@@ -710,9 +711,10 @@ export default function DeckPage({ params }: { params: Promise<{ id: string }> }
                       {previewCard.back}
                     </p>
                     {previewCard.notes && (
-                      <p className="mt-4 text-base text-slate-500 dark:text-slate-400">
-                        {previewCard.notes}
-                      </p>
+                      <MarkdownNotes
+                        content={previewCard.notes}
+                        className="mt-4 text-base text-slate-500 dark:text-slate-400"
+                      />
                     )}
                     <p className="mt-4 text-sm text-slate-400">
                       Click to flip back

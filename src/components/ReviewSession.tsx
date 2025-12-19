@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { schedulingCards, formatInterval } from "@/lib/fsrs";
 import SpeakerButton from "@/components/SpeakerButton";
+import { MarkdownNotes } from "@/components/MarkdownNotes";
 
 interface Card {
   id: number;
@@ -429,9 +430,10 @@ export default function ReviewSession({ deckId, backUrl, backLabel }: ReviewSess
                     {currentCard.back}
                   </p>
                   {currentCard.notes && (
-                    <p className="mt-4 text-lg text-slate-500 dark:text-slate-400">
-                      {currentCard.notes}
-                    </p>
+                    <MarkdownNotes
+                      content={currentCard.notes}
+                      className="mt-4 text-lg text-slate-500 dark:text-slate-400"
+                    />
                   )}
                 </div>
               </div>
