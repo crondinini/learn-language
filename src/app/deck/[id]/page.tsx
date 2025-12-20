@@ -50,6 +50,9 @@ export default function DeckPage({ params }: { params: Promise<{ id: string }> }
   const [previewIndex, setPreviewIndex] = useState(0);
   const [allDecks, setAllDecks] = useState<DeckOption[]>([]);
   const [selectedDeckId, setSelectedDeckId] = useState<number | null>(null);
+  const [editingDeck, setEditingDeck] = useState(false);
+  const [editDeckName, setEditDeckName] = useState("");
+  const [editDeckDescription, setEditDeckDescription] = useState("");
 
   useEffect(() => {
     fetchDeck();
@@ -112,6 +115,32 @@ export default function DeckPage({ params }: { params: Promise<{ id: string }> }
       setCards(await res.json());
     }
     setIsLoading(false);
+  }
+
+  function openEditDeck() {
+    if (!deck) return;
+    setEditDeckName(deck.name);
+    setEditDeckDescription(deck.description || "");
+    setEditingDeck(true);
+  }
+
+  async function saveDeck(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editDeckName.trim()) return;
+
+    const res = await fetch(`/api/decks/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: editDeckName,
+        description: editDeckDescription || null,
+      }),
+    });
+
+    if (res.ok) {
+      setEditingDeck(false);
+      fetchDeck();
+    }
   }
 
   async function addCard(e: React.FormEvent) {
@@ -264,11 +293,22 @@ export default function DeckPage({ params }: { params: Promise<{ id: string }> }
 
         {/* Page Title */}
         <div className="mb-6 flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800 dark:text-white">{deck.name}</h1>
-            {deck.description && (
-              <p className="mt-1 text-slate-500">{deck.description}</p>
-            )}
+          <div className="flex items-start gap-2">
+            <div>
+              <h1 className="text-2xl font-bold text-slate-800 dark:text-white">{deck.name}</h1>
+              {deck.description && (
+                <p className="mt-1 text-slate-500">{deck.description}</p>
+              )}
+            </div>
+            <button
+              onClick={openEditDeck}
+              className="mt-1 rounded-full p-1.5 text-slate-400 transition hover:bg-slate-200 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-300"
+              title="Edit deck"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+            </button>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex gap-4 text-sm">
@@ -736,6 +776,57 @@ export default function DeckPage({ params }: { params: Promise<{ id: string }> }
                 Edit Card
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Deck Modal */}
+      {editingDeck && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800">
+            <h2 className="mb-4 text-xl font-bold text-slate-800 dark:text-white">Edit Deck</h2>
+            <form onSubmit={saveDeck}>
+              <div className="mb-4">
+                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Name
+                </label>
+                <input
+                  type="text"
+                  value={editDeckName}
+                  onChange={(e) => setEditDeckName(e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                  placeholder="Deck name"
+                  autoFocus
+                />
+              </div>
+              <div className="mb-6">
+                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Description (optional)
+                </label>
+                <textarea
+                  value={editDeckDescription}
+                  onChange={(e) => setEditDeckDescription(e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                  placeholder="Deck description"
+                  rows={3}
+                />
+              </div>
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingDeck(false)}
+                  className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
+                >
+                  Save
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
