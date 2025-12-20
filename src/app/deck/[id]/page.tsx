@@ -256,21 +256,17 @@ export default function DeckPage({ params }: { params: Promise<{ id: string }> }
       <Header
         actions={
           <>
-            {totalDueCount > 0 ? (
+            {totalDueCount > 0 && (
               <Link
                 href="/review"
-                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
+                className="rounded-lg bg-blue-600 px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-white transition hover:bg-blue-700"
               >
-                Study Now ({totalDueCount})
+                Study ({totalDueCount})
               </Link>
-            ) : (
-              <span className="rounded-lg bg-slate-200 px-4 py-2 text-sm font-medium text-slate-400 dark:bg-slate-700 dark:text-slate-500">
-                Study Now (0)
-              </span>
             )}
             <Link
               href="/"
-              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
+              className="hidden sm:block rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
             >
               + New Deck
             </Link>
@@ -279,7 +275,7 @@ export default function DeckPage({ params }: { params: Promise<{ id: string }> }
       />
 
       {/* Main Content */}
-      <main className="mx-auto max-w-5xl px-6 py-8">
+      <main className="mx-auto max-w-5xl px-4 sm:px-6 py-6 sm:py-8 overflow-hidden">
         {/* Breadcrumb */}
         <nav className="mb-4 flex items-center gap-2 text-sm">
           <Link href="/" className="text-slate-500 hover:text-emerald-600 dark:text-slate-400">
@@ -292,17 +288,13 @@ export default function DeckPage({ params }: { params: Promise<{ id: string }> }
         </nav>
 
         {/* Page Title */}
-        <div className="mb-6 flex items-start justify-between">
+        <div className="mb-6">
+          {/* Title row */}
           <div className="flex items-start gap-2">
-            <div>
-              <h1 className="text-2xl font-bold text-slate-800 dark:text-white">{deck.name}</h1>
-              {deck.description && (
-                <p className="mt-1 text-slate-500">{deck.description}</p>
-              )}
-            </div>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white">{deck.name}</h1>
             <button
               onClick={openEditDeck}
-              className="mt-1 rounded-full p-1.5 text-slate-400 transition hover:bg-slate-200 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-300"
+              className="mt-0.5 rounded-full p-1.5 text-slate-400 transition hover:bg-slate-200 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-300"
               title="Edit deck"
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -310,7 +302,12 @@ export default function DeckPage({ params }: { params: Promise<{ id: string }> }
               </svg>
             </button>
           </div>
-          <div className="flex items-center gap-3">
+          {deck.description && (
+            <p className="mt-1 text-sm sm:text-base text-slate-500">{deck.description}</p>
+          )}
+
+          {/* Stats and actions row - stacks on mobile */}
+          <div className="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex gap-4 text-sm">
               <span className="text-slate-500">
                 <strong className="text-amber-600">{deck.due_cards}</strong> due
@@ -319,20 +316,22 @@ export default function DeckPage({ params }: { params: Promise<{ id: string }> }
                 <strong className="text-emerald-600">{deck.new_cards}</strong> new
               </span>
             </div>
-            {deck.due_cards > 0 && (
-              <Link
-                href={`/deck/${id}/review`}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
+            <div className="flex gap-2">
+              {deck.due_cards > 0 && (
+                <Link
+                  href={`/deck/${id}/review`}
+                  className="flex-1 sm:flex-none rounded-lg bg-blue-600 px-3 sm:px-4 py-2 text-center text-sm font-medium text-white transition hover:bg-blue-700"
+                >
+                  Study Now
+                </Link>
+              )}
+              <button
+                onClick={() => setShowAddCard(true)}
+                className="flex-1 sm:flex-none rounded-lg bg-emerald-600 px-3 sm:px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
               >
-                Study Now
-              </Link>
-            )}
-            <button
-              onClick={() => setShowAddCard(true)}
-              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
-            >
-              + Add Card
-            </button>
+                + Add Card
+              </button>
+            </div>
           </div>
         </div>
         {cards.length === 0 ? (
@@ -351,7 +350,7 @@ export default function DeckPage({ params }: { params: Promise<{ id: string }> }
             {cards.map((card) => (
               <div
                 key={card.id}
-                className="group flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md dark:border-slate-700 dark:bg-slate-800"
+                className="group cursor-pointer rounded-xl border border-slate-200 bg-white p-3 sm:p-4 shadow-sm transition hover:shadow-md dark:border-slate-700 dark:bg-slate-800"
                 onClick={() => {
                   const index = cards.findIndex(c => c.id === card.id);
                   setPreviewIndex(index);
@@ -359,74 +358,87 @@ export default function DeckPage({ params }: { params: Promise<{ id: string }> }
                   setPreviewFlipped(false);
                 }}
               >
-                <div className="flex flex-1 items-center gap-6">
-                  {/* Image thumbnail */}
-                  {card.image_url && (
-                    <img
-                      src={card.image_url}
-                      alt=""
-                      className="h-10 w-10 rounded object-cover flex-shrink-0"
-                    />
-                  )}
+                {/* Mobile: Stack vertically, Desktop: Horizontal */}
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-6">
+                  {/* Top row on mobile / Left section on desktop */}
+                  <div className="flex items-center gap-3 sm:gap-6">
+                    {/* Image thumbnail */}
+                    {card.image_url && (
+                      <img
+                        src={card.image_url}
+                        alt=""
+                        className="h-10 w-10 rounded object-cover flex-shrink-0"
+                      />
+                    )}
 
-                  {/* Arabic (front) */}
-                  <div className="flex min-w-[120px] items-center justify-end gap-2" dir="rtl">
-                    <span className="text-xl font-medium text-slate-800 dark:text-white">
-                      {card.front}
+                    {/* Arabic (front) */}
+                    <div className="flex items-center gap-2" dir="rtl">
+                      <span className="text-lg sm:text-xl font-medium text-slate-800 dark:text-white">
+                        {card.front}
+                      </span>
+                      <SpeakerButton
+                        text={card.front}
+                        cardId={card.id}
+                        audioUrl={card.audio_url}
+                        size="sm"
+                      />
+                    </div>
+
+                    {/* Arrow - hidden on mobile */}
+                    <svg className="hidden sm:block h-4 w-4 flex-shrink-0 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+
+                    {/* State badge - shown inline on mobile */}
+                    <span
+                      className={`sm:hidden ml-auto rounded-full px-2 py-0.5 text-xs font-medium bg-${stateColors[card.state]}-100 text-${stateColors[card.state]}-700 dark:bg-${stateColors[card.state]}-900/30 dark:text-${stateColors[card.state]}-400`}
+                    >
+                      {stateLabels[card.state]}
                     </span>
-                    <SpeakerButton
-                      text={card.front}
-                      cardId={card.id}
-                      audioUrl={card.audio_url}
-                      size="sm"
-                    />
                   </div>
 
-                  {/* Arrow */}
-                  <svg className="h-4 w-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                  </svg>
-
-                  {/* English (back) */}
-                  <div className="flex-1">
-                    <span className="text-lg text-slate-600 dark:text-slate-300">{card.back}</span>
+                  {/* English (back) - truncated on mobile */}
+                  <div className="flex-1 min-w-0">
+                    <span className="block truncate text-base sm:text-lg text-slate-600 dark:text-slate-300">{card.back}</span>
+                    {/* Notes hidden on mobile - tap to see in preview */}
                     {card.notes && (
-                      <MarkdownNotes content={card.notes} className="mt-0.5 text-sm text-slate-400" />
+                      <div className="hidden sm:block">
+                        <MarkdownNotes content={card.notes} className="mt-0.5 text-sm text-slate-400 line-clamp-2" />
+                      </div>
                     )}
                   </div>
 
-                  {/* State badge */}
+                  {/* State badge - desktop only (positioned at end) */}
                   <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium bg-${stateColors[card.state]}-100 text-${stateColors[card.state]}-700 dark:bg-${stateColors[card.state]}-900/30 dark:text-${stateColors[card.state]}-400`}
+                    className={`hidden sm:block flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium bg-${stateColors[card.state]}-100 text-${stateColors[card.state]}-700 dark:bg-${stateColors[card.state]}-900/30 dark:text-${stateColors[card.state]}-400`}
                   >
                     {stateLabels[card.state]}
                   </span>
-                </div>
-
-                {/* Actions */}
-                <div className="ml-4 flex gap-1 opacity-0 transition group-hover:opacity-100">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setEditingCard(card);
-                    }}
-                    className="rounded p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700"
-                  >
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteCard(card.id);
-                    }}
-                    className="rounded p-2 text-slate-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
-                  >
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
+                  {/* Actions - hidden on mobile, shown on hover for desktop */}
+                  <div className="hidden sm:flex flex-shrink-0 gap-1 opacity-0 transition group-hover:opacity-100">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingCard(card);
+                      }}
+                      className="rounded p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700"
+                    >
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteCard(card.id);
+                      }}
+                      className="rounded p-2 text-slate-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
+                    >
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
