@@ -550,6 +550,139 @@ To add the word "مرحبا" (hello):
         }
       }
     );
+
+    server.tool(
+      "update_deck",
+      "Update a deck's name and/or description",
+      {
+        deck_id: z.number().describe("The ID of the deck to update"),
+        name: z.string().optional().describe("The new name for the deck"),
+        description: z.string().optional().describe("The new description for the deck"),
+      },
+      async ({ deck_id, name, description }) => {
+        try {
+          if (!name && !description) {
+            return {
+              content: [
+                {
+                  type: "text" as const,
+                  text: "Please provide at least a name or description to update",
+                },
+              ],
+              isError: true,
+            };
+          }
+
+          const response = await apiRequest(`/api/decks/${deck_id}`, {
+            method: "PATCH",
+            body: JSON.stringify({ name, description }),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            return {
+              content: [
+                {
+                  type: "text" as const,
+                  text: `Failed to update deck: ${response.status} ${errorText}`,
+                },
+              ],
+              isError: true,
+            };
+          }
+
+          const result = await response.json();
+          const updates = [];
+          if (name) updates.push(`name: "${result.name}"`);
+          if (description) updates.push(`description: "${result.description}"`);
+
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: `Successfully updated deck ${deck_id}: ${updates.join(", ")}`,
+              },
+            ],
+          };
+        } catch (error) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: `Error updating deck: ${error instanceof Error ? error.message : String(error)}`,
+              },
+            ],
+            isError: true,
+          };
+        }
+      }
+    );
+
+    server.tool(
+      "move_word",
+      "Move a word (card) from one deck to another",
+      {
+        card_id: z.number().describe("The ID of the card/word to move"),
+        target_deck_id: z.number().describe("The ID of the deck to move the card to"),
+      },
+      async ({ card_id, target_deck_id }) => {
+        try {
+          // First get the card to show what we're moving
+          const getResponse = await apiRequest(`/api/cards/${card_id}`);
+          if (!getResponse.ok) {
+            return {
+              content: [
+                {
+                  type: "text" as const,
+                  text: `Card not found: ${card_id}`,
+                },
+              ],
+              isError: true,
+            };
+          }
+          const card = await getResponse.json();
+          const sourceDeckId = card.deck_id;
+
+          // Move the card by updating its deck_id
+          const response = await apiRequest(`/api/cards/${card_id}`, {
+            method: "PATCH",
+            body: JSON.stringify({ deck_id: target_deck_id }),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            return {
+              content: [
+                {
+                  type: "text" as const,
+                  text: `Failed to move card: ${response.status} ${errorText}`,
+                },
+              ],
+              isError: true,
+            };
+          }
+
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: `Successfully moved "${card.front}" (${card.back}) from deck ${sourceDeckId} to deck ${target_deck_id}`,
+              },
+            ],
+          };
+        } catch (error) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: `Error moving card: ${error instanceof Error ? error.message : String(error)}`,
+              },
+            ],
+            isError: true,
+          };
+        }
+      }
+    );
   },
   {},
   {

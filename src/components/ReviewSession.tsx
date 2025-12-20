@@ -390,14 +390,15 @@ export default function ReviewSession({ deckId, backUrl, backLabel }: ReviewSess
 
               {/* Back */}
               <div
-                className="absolute inset-0 flex items-center justify-center rounded-2xl border border-slate-200 bg-white p-12 shadow-xl dark:border-slate-700 dark:bg-slate-800"
+                className="absolute inset-0 flex flex-col rounded-2xl border border-slate-200 bg-white p-8 shadow-xl dark:border-slate-700 dark:bg-slate-800"
                 style={{
                   backfaceVisibility: "hidden",
                   transform: "rotateY(180deg)",
                 }}
               >
-                <div className="w-full text-center">
-                  <div className="mb-4 flex items-center justify-center gap-2" dir="rtl">
+                {/* Fixed header: Arabic + English */}
+                <div className="flex-shrink-0 text-center">
+                  <div className="mb-3 flex items-center justify-center gap-2" dir="rtl">
                     <span className="text-2xl text-slate-400 dark:text-slate-500">
                       {currentCard.front}
                     </span>
@@ -429,13 +430,16 @@ export default function ReviewSession({ deckId, backUrl, backLabel }: ReviewSess
                   <p className="text-4xl font-medium text-slate-800 dark:text-white">
                     {currentCard.back}
                   </p>
-                  {currentCard.notes && (
+                </div>
+                {/* Scrollable notes section */}
+                {currentCard.notes && (
+                  <div className="mt-4 flex-1 overflow-y-auto">
                     <MarkdownNotes
                       content={currentCard.notes}
-                      className="mt-4 text-lg text-slate-500 dark:text-slate-400"
+                      className="text-lg text-slate-500 dark:text-slate-400"
                     />
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
