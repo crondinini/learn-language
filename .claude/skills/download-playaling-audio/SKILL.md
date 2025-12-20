@@ -114,7 +114,7 @@ After uploading the audio file, update the card's `audio_url` in the database vi
 
 ```bash
 curl -X PATCH "https://learn.rocksbythesea.uk/api/cards/CARD_ID" \
-  -H "Authorization: Bearer EGfYvc4Fm4vzD4QBqouEyLoW" \
+  -H "Authorization: Bearer $API_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"audio_url": "/audio/card-CARD_ID-word.mp3"}'
 ```
@@ -138,7 +138,7 @@ For the word "كتاب" (book) on card 42:
 5. Check network requests for `msa.mp3`
 6. Download: `curl -o /tmp/card-42-kitaab.mp3 "https://api.playaling.com/upload/audio/HASH/msa.mp3"`
 7. Upload: `rsync /tmp/card-42-kitaab.mp3 pi:~/learn-language/data/audio/`
-8. **Update DB (REQUIRED)**: `curl -X PATCH "https://learn.rocksbythesea.uk/api/cards/42" -H "Authorization: Bearer EGfYvc4Fm4vzD4QBqouEyLoW" -H "Content-Type: application/json" -d '{"audio_url": "/audio/card-42-kitaab.mp3"}'`
+8. **Update DB (REQUIRED)**: `curl -X PATCH "https://learn.rocksbythesea.uk/api/cards/42" -H "Authorization: Bearer $API_TOKEN" -H "Content-Type: application/json" -d '{"audio_url": "/audio/card-42-kitaab.mp3"}'`
 9. **Verify**: Check that the API response includes `"audio_url": "/audio/card-42-kitaab.mp3"`
 
 ## Available Dialects
@@ -176,13 +176,13 @@ The actual play button images are typically inside the row for each vocabulary e
 Before downloading audio, you need to find the card ID. Use the vocab API:
 
 ```bash
-curl -s "https://learn.rocksbythesea.uk/api/vocab" -H "Authorization: Bearer EGfYvc4Fm4vzD4QBqouEyLoW" | jq '.vocabulary[] | select(.front) | select(.front | test("ARABIC_WORD")) | {id, front, back, audio_url}'
+curl -s "https://learn.rocksbythesea.uk/api/vocab" -H "Authorization: Bearer $API_TOKEN" | jq '.vocabulary[] | select(.front) | select(.front | test("ARABIC_WORD")) | {id, front, back, audio_url}'
 ```
 
 If searching by Arabic text doesn't work (due to diacritics), search by English translation:
 
 ```bash
-curl -s "https://learn.rocksbythesea.uk/api/vocab" -H "Authorization: Bearer EGfYvc4Fm4vzD4QBqouEyLoW" | jq '.vocabulary[] | select(.back) | select(.back | test("ENGLISH_WORD"; "i")) | {id, front, back, audio_url}'
+curl -s "https://learn.rocksbythesea.uk/api/vocab" -H "Authorization: Bearer $API_TOKEN" | jq '.vocabulary[] | select(.back) | select(.back | test("ENGLISH_WORD"; "i")) | {id, front, back, audio_url}'
 ```
 
 **Tips:**

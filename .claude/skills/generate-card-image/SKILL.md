@@ -10,8 +10,8 @@ This skill downloads images for vocabulary cards using the Unsplash API.
 ## API Configuration
 
 - **Base URL:** `https://learn.rocksbythesea.uk`
-- **API Token:** `EGfYvc4Fm4vzD4QBqouEyLoW`
-- All API requests must include: `-H "Authorization: Bearer EGfYvc4Fm4vzD4QBqouEyLoW"`
+- **API Token:** Get from `.env.local` (`API_TOKEN`)
+- All API requests must include: `-H "Authorization: Bearer $API_TOKEN"`
 
 ## Workflow
 
@@ -26,14 +26,14 @@ This skill downloads images for vocabulary cards using the Unsplash API.
 Get the card by searching for the Arabic word:
 
 ```bash
-curl -s -H "Authorization: Bearer EGfYvc4Fm4vzD4QBqouEyLoW" https://learn.rocksbythesea.uk/api/decks | jq -r '.[].id' | while read id; do
-  curl -s -H "Authorization: Bearer EGfYvc4Fm4vzD4QBqouEyLoW" "https://learn.rocksbythesea.uk/api/decks/$id/cards" | jq '.[] | select(.front | contains("WORD")) | {id, front, back, image_url}'
+curl -s -H "Authorization: Bearer $API_TOKEN" https://learn.rocksbythesea.uk/api/decks | jq -r '.[].id' | while read id; do
+  curl -s -H "Authorization: Bearer $API_TOKEN" "https://learn.rocksbythesea.uk/api/decks/$id/cards" | jq '.[] | select(.front | contains("WORD")) | {id, front, back, image_url}'
 done
 ```
 
 Or get a specific card by ID:
 ```bash
-curl -s -H "Authorization: Bearer EGfYvc4Fm4vzD4QBqouEyLoW" https://learn.rocksbythesea.uk/api/cards/{card_id} | jq '{id, front, back, image_url}'
+curl -s -H "Authorization: Bearer $API_TOKEN" https://learn.rocksbythesea.uk/api/cards/{card_id} | jq '{id, front, back, image_url}'
 ```
 
 ## Step 2: Create a Query
@@ -90,7 +90,7 @@ ssh pi "cd ~/learn-language && docker compose restart"
 User: add image to مُفتاح
 
 1. Find card:
-   curl -s -H "Authorization: Bearer EGfYvc4Fm4vzD4QBqouEyLoW" https://learn.rocksbythesea.uk/api/cards/24 | jq '{id, front, back}'
+   curl -s -H "Authorization: Bearer $API_TOKEN" https://learn.rocksbythesea.uk/api/cards/24 | jq '{id, front, back}'
    → {id: 24, front: "مُفتاح", back: "key"}
 
 2. Query: "key" (or "metal key" for better results)
@@ -133,7 +133,7 @@ Unsplash free tier: **50 requests/hour**
 
 - Requires in .env.local:
   - `API_URL=https://learn.rocksbythesea.uk`
-  - `API_TOKEN=EGfYvc4Fm4vzD4QBqouEyLoW`
+  - `API_TOKEN=<your-api-token>`
   - `UNSPLASH_ACCESS_KEY=...`
 - Images saved locally to `public/images/card-{id}-{word}.jpg`
 - Must sync to Pi: `~/learn-language/data/images/`

@@ -19,8 +19,8 @@ This skill adds individual Arabic words to the flashcard system on demand.
 ## API Configuration
 
 - **Base URL:** `https://learn.rocksbythesea.uk`
-- **API Token:** `EGfYvc4Fm4vzD4QBqouEyLoW`
-- All API requests must include the header: `-H "Authorization: Bearer EGfYvc4Fm4vzD4QBqouEyLoW"`
+- **API Token:** Get from `.env.local` (`API_TOKEN`)
+- All API requests must include the header: `-H "Authorization: Bearer $API_TOKEN"`
 
 ## Step 1: Check for Duplicates
 
@@ -28,8 +28,8 @@ Search all cards to see if the word already exists:
 
 ```bash
 # Get all deck IDs, then check each deck's cards for the word
-for id in $(curl -s -H "Authorization: Bearer EGfYvc4Fm4vzD4QBqouEyLoW" https://learn.rocksbythesea.uk/api/decks | jq -r '.[].id'); do
-  curl -s -H "Authorization: Bearer EGfYvc4Fm4vzD4QBqouEyLoW" "https://learn.rocksbythesea.uk/api/decks/$id/cards" | jq -r --arg word "WORD" '.[] | select(.front | contains($word)) | "\(.front) -> \(.back) (deck: \(.deck_id))"'
+for id in $(curl -s -H "Authorization: Bearer $API_TOKEN" https://learn.rocksbythesea.uk/api/decks | jq -r '.[].id'); do
+  curl -s -H "Authorization: Bearer $API_TOKEN" "https://learn.rocksbythesea.uk/api/decks/$id/cards" | jq -r --arg word "WORD" '.[] | select(.front | contains($word)) | "\(.front) -> \(.back) (deck: \(.deck_id))"'
 done
 ```
 
@@ -54,7 +54,7 @@ Example search: "Arabic word كلب meaning English translation"
 ## Step 3: Fetch Available Decks
 
 ```bash
-curl -s -H "Authorization: Bearer EGfYvc4Fm4vzD4QBqouEyLoW" https://learn.rocksbythesea.uk/api/decks
+curl -s -H "Authorization: Bearer $API_TOKEN" https://learn.rocksbythesea.uk/api/decks
 ```
 
 List the decks with their card counts to help decide placement.
@@ -93,7 +93,7 @@ Add this word? Or choose a different deck:
 ```bash
 curl -X POST "https://learn.rocksbythesea.uk/api/decks/{deck_id}/cards" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer EGfYvc4Fm4vzD4QBqouEyLoW" \
+  -H "Authorization: Bearer $API_TOKEN" \
   -d '[{"front": "كتاب", "back": "book"}]'
 ```
 
@@ -147,14 +147,14 @@ The API doesn't support changing a card's deck_id directly. To move a card:
 1. Delete the card from the original deck:
 ```bash
 curl -X DELETE "https://learn.rocksbythesea.uk/api/cards/{card_id}" \
-  -H "Authorization: Bearer EGfYvc4Fm4vzD4QBqouEyLoW"
+  -H "Authorization: Bearer $API_TOKEN"
 ```
 
 2. Recreate it in the new deck:
 ```bash
 curl -X POST "https://learn.rocksbythesea.uk/api/decks/{new_deck_id}/cards" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer EGfYvc4Fm4vzD4QBqouEyLoW" \
+  -H "Authorization: Bearer $API_TOKEN" \
   -d '[{"front": "...", "back": "...", "notes": "..."}]'
 ```
 

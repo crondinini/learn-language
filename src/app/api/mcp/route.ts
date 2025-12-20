@@ -239,6 +239,60 @@ To add the word "مرحبا" (hello):
       }
     );
 
+    // Resource: All Words - all vocabulary with difficulty levels
+    server.resource(
+      "all-words",
+      "words://all",
+      async () => {
+        try {
+          const response = await apiRequest("/api/vocab");
+          if (!response.ok) {
+            return {
+              contents: [
+                {
+                  uri: "words://all",
+                  mimeType: "application/json",
+                  text: JSON.stringify({ error: "Failed to fetch words" }),
+                },
+              ],
+            };
+          }
+          const data = await response.json();
+          const allCards = data.vocabulary || [];
+
+          const words = allCards.map((card: {
+            front: string;
+            back: string;
+            difficulty: number;
+          }) => ({
+            arabic: card.front,
+            meaning: card.back,
+            difficulty: card.difficulty <= 3 ? "easy" : card.difficulty <= 6 ? "medium" : "hard",
+          }));
+
+          return {
+            contents: [
+              {
+                uri: "words://all",
+                mimeType: "application/json",
+                text: JSON.stringify(words, null, 2),
+              },
+            ],
+          };
+        } catch (error) {
+          return {
+            contents: [
+              {
+                uri: "words://all",
+                mimeType: "application/json",
+                text: JSON.stringify({ error: String(error) }),
+              },
+            ],
+          };
+        }
+      }
+    );
+
     server.tool(
       "get_learning_words",
       "Get words that are new, still being learned, or difficult (forgotten multiple times)",

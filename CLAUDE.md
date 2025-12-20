@@ -10,4 +10,4 @@
 - **generate-card-image**: Download an image for a vocabulary card using Unsplash
 - **download-playaling-audio**: Download MSA audio pronunciation from Playaling
 - **deploy-to-pi**: Deploy code changes to the Raspberry Pi
-- when I ask to make a change, check if you can use the API in https://learn.rocksbythesea.uk using the bearer token EGfYvc4Fm4vzD4QBqouEyLoW
+- when I ask to make a change, check if you can use the API in https://learn.rocksbythesea.uk using the bearer token from `.env.local` (`API_TOKEN`)

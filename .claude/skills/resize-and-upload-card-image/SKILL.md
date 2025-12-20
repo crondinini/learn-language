@@ -18,7 +18,7 @@ This skill resizes and uploads images for vocabulary cards on the Pi.
 ## API Configuration
 
 - **Base URL:** `https://learn.rocksbythesea.uk`
-- **API Token:** `EGfYvc4Fm4vzD4QBqouEyLoW`
+- **API Token:** Get from `.env.local` (`API_TOKEN`)
 - **Pi Host:** `pi` (ssh alias)
 - **Pi Images Path:** `~/learn-language/data/images/`
 
@@ -50,14 +50,14 @@ If image is named `behind.png`, search for a card with "behind" in the back:
 
 ```bash
 # Search all decks for a word
-for id in $(curl -s -H "Authorization: Bearer EGfYvc4Fm4vzD4QBqouEyLoW" https://learn.rocksbythesea.uk/api/decks | jq -r '.[].id'); do
-  curl -s -H "Authorization: Bearer EGfYvc4Fm4vzD4QBqouEyLoW" "https://learn.rocksbythesea.uk/api/decks/$id/cards" | jq -r --arg word "behind" '.[] | select(.back | ascii_downcase | contains($word | ascii_downcase)) | "\(.id) - \(.back)"'
+for id in $(curl -s -H "Authorization: Bearer $API_TOKEN" https://learn.rocksbythesea.uk/api/decks | jq -r '.[].id'); do
+  curl -s -H "Authorization: Bearer $API_TOKEN" "https://learn.rocksbythesea.uk/api/decks/$id/cards" | jq -r --arg word "behind" '.[] | select(.back | ascii_downcase | contains($word | ascii_downcase)) | "\(.id) - \(.back)"'
 done
 ```
 
 ### Option C: List cards in a deck for user to choose
 ```bash
-curl -s -H "Authorization: Bearer EGfYvc4Fm4vzD4QBqouEyLoW" "https://learn.rocksbythesea.uk/api/decks/{deck_id}/cards" | jq -r '.[] | "\(.id) - \(.back)"'
+curl -s -H "Authorization: Bearer $API_TOKEN" "https://learn.rocksbythesea.uk/api/decks/{deck_id}/cards" | jq -r '.[] | "\(.id) - \(.back)"'
 ```
 
 ## Step 3: Resize Image
@@ -91,7 +91,7 @@ rsync -avz /Users/camilarondinini/Documents/project/learn-language/new-image-inp
 
 ```bash
 curl -s -X PATCH \
-  -H "Authorization: Bearer EGfYvc4Fm4vzD4QBqouEyLoW" \
+  -H "Authorization: Bearer $API_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"image_url":"/api/media/images/card-{id}-{word}.jpg"}' \
   "https://learn.rocksbythesea.uk/api/cards/{id}"
