@@ -445,53 +445,53 @@ export default function ReviewSession({ deckId, backUrl, backLabel }: ReviewSess
           </div>
 
           {isFlipped && schedulingInfo && (
-            <div className="mt-8 grid grid-cols-4 gap-3">
+            <div className="mt-8 grid grid-cols-4 gap-1.5 sm:gap-3">
               <button
                 onClick={() => submitReview(1)}
                 disabled={isSubmitting}
-                className="group relative rounded-xl border-2 border-red-200 bg-red-50 p-4 transition hover:border-red-300 hover:bg-red-100 disabled:opacity-50 dark:border-red-900/50 dark:bg-red-900/20 dark:hover:bg-red-900/30"
+                className="group relative rounded-xl border-2 border-red-200 bg-red-50 p-2 sm:p-4 transition hover:border-red-300 hover:bg-red-100 disabled:opacity-50 dark:border-red-900/50 dark:bg-red-900/20 dark:hover:bg-red-900/30"
               >
-                <div className="mb-2 text-2xl font-bold text-red-600">Again</div>
-                <div className="text-sm font-medium text-red-500">
+                <div className="mb-1 sm:mb-2 text-base sm:text-2xl font-bold text-red-600">Again</div>
+                <div className="text-xs sm:text-sm font-medium text-red-500">
                   {formatInterval(schedulingInfo.again.card.scheduled_days)}
                 </div>
-                <div className="mt-1 text-xs text-slate-400">Press 1</div>
+                <div className="mt-1 text-xs text-slate-400 hidden sm:block">Press 1</div>
               </button>
 
               <button
                 onClick={() => submitReview(2)}
                 disabled={isSubmitting}
-                className="group relative rounded-xl border-2 border-amber-200 bg-amber-50 p-4 transition hover:border-amber-300 hover:bg-amber-100 disabled:opacity-50 dark:border-amber-900/50 dark:bg-amber-900/20 dark:hover:bg-amber-900/30"
+                className="group relative rounded-xl border-2 border-amber-200 bg-amber-50 p-2 sm:p-4 transition hover:border-amber-300 hover:bg-amber-100 disabled:opacity-50 dark:border-amber-900/50 dark:bg-amber-900/20 dark:hover:bg-amber-900/30"
               >
-                <div className="mb-2 text-2xl font-bold text-amber-600">Hard</div>
-                <div className="text-sm font-medium text-amber-500">
+                <div className="mb-1 sm:mb-2 text-base sm:text-2xl font-bold text-amber-600">Hard</div>
+                <div className="text-xs sm:text-sm font-medium text-amber-500">
                   {formatInterval(schedulingInfo.hard.card.scheduled_days)}
                 </div>
-                <div className="mt-1 text-xs text-slate-400">Press 2</div>
+                <div className="mt-1 text-xs text-slate-400 hidden sm:block">Press 2</div>
               </button>
 
               <button
                 onClick={() => submitReview(3)}
                 disabled={isSubmitting}
-                className="group relative rounded-xl border-2 border-emerald-200 bg-emerald-50 p-4 transition hover:border-emerald-300 hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-900/50 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/30"
+                className="group relative rounded-xl border-2 border-emerald-200 bg-emerald-50 p-2 sm:p-4 transition hover:border-emerald-300 hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-900/50 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/30"
               >
-                <div className="mb-2 text-2xl font-bold text-emerald-600">Good</div>
-                <div className="text-sm font-medium text-emerald-500">
+                <div className="mb-1 sm:mb-2 text-base sm:text-2xl font-bold text-emerald-600">Good</div>
+                <div className="text-xs sm:text-sm font-medium text-emerald-500">
                   {formatInterval(schedulingInfo.good.card.scheduled_days)}
                 </div>
-                <div className="mt-1 text-xs text-slate-400">Press 3</div>
+                <div className="mt-1 text-xs text-slate-400 hidden sm:block">Press 3</div>
               </button>
 
               <button
                 onClick={() => submitReview(4)}
                 disabled={isSubmitting}
-                className="group relative rounded-xl border-2 border-blue-200 bg-blue-50 p-4 transition hover:border-blue-300 hover:bg-blue-100 disabled:opacity-50 dark:border-blue-900/50 dark:bg-blue-900/20 dark:hover:bg-blue-900/30"
+                className="group relative rounded-xl border-2 border-blue-200 bg-blue-50 p-2 sm:p-4 transition hover:border-blue-300 hover:bg-blue-100 disabled:opacity-50 dark:border-blue-900/50 dark:bg-blue-900/20 dark:hover:bg-blue-900/30"
               >
-                <div className="mb-2 text-2xl font-bold text-blue-600">Easy</div>
-                <div className="text-sm font-medium text-blue-500">
+                <div className="mb-1 sm:mb-2 text-base sm:text-2xl font-bold text-blue-600">Easy</div>
+                <div className="text-xs sm:text-sm font-medium text-blue-500">
                   {formatInterval(schedulingInfo.easy.card.scheduled_days)}
                 </div>
-                <div className="mt-1 text-xs text-slate-400">Press 4</div>
+                <div className="mt-1 text-xs text-slate-400 hidden sm:block">Press 4</div>
               </button>
             </div>
           )}
