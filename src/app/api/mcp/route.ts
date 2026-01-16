@@ -5,7 +5,7 @@ import { accessTokens } from "../../oauth/token/route";
 import logger from "@/lib/logger";
 
 const API_BASE_URL = "https://learn.rocksbythesea.uk";
-const API_TOKEN = "EGfYvc4Fm4vzD4QBqouEyLoW";
+const API_TOKEN = process.env.API_TOKEN || "";
 
 // AuthInfo type for client verification
 interface AuthInfo {
