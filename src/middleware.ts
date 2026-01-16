@@ -7,7 +7,7 @@ export function middleware(request: NextRequest) {
   // Allow access to login page, auth API, MCP endpoint, and OAuth endpoints
   if (pathname.startsWith('/login') ||
       pathname.startsWith('/api/auth') ||
-      pathname.startsWith('/api/mcp') ||
+      pathname.startsWith('/mcp') ||
       pathname.startsWith('/oauth') ||
       pathname.startsWith('/.well-known')) {
     return NextResponse.next()
