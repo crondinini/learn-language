@@ -7,7 +7,7 @@ export async function GET(request: Request) {
   const baseUrl = `${protocol}://${host}`;
 
   return NextResponse.json({
-    resource: `${baseUrl}/api/mcp`,
+    resource: `${baseUrl}/mcp`,
     authorization_servers: [baseUrl],
   }, {
     headers: {
