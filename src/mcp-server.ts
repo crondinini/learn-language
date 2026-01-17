@@ -353,7 +353,10 @@ function createMcpServer(): McpServer {
         deck_id: z.number().optional().describe("Optional deck ID to filter cards"),
       },
       _meta: {
-        ui: { resourceUri: flashcardResourceUri },
+        ui: {
+          resourceUri: flashcardResourceUri,
+          visibility: ["model", "app"],
+        },
       },
     },
     async ({ deck_id }) => {
