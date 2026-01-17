@@ -1,7 +1,7 @@
 import express from "express";
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { RESOURCE_MIME_TYPE } from "@modelcontextprotocol/ext-apps/server";
+import { RESOURCE_MIME_TYPE, registerAppTool, registerAppResource } from "@modelcontextprotocol/ext-apps/server";
 import { z } from "zod";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -342,12 +342,19 @@ function createMcpServer(): McpServer {
   // ========== MCP App: Flashcard Review ==========
   const flashcardResourceUri = "ui://flashcards/mcp-app.html";
 
-  // Register the flashcard review app tool
-  server.tool(
+  // Register the flashcard review app tool using registerAppTool for proper _meta.ui linking
+  registerAppTool(
+    server,
     "review_flashcards",
-    "Open an interactive flashcard review UI for Arabic vocabulary",
     {
-      deck_id: z.number().optional().describe("Optional deck ID to filter cards"),
+      title: "Review Flashcards",
+      description: "Open an interactive flashcard review UI for Arabic vocabulary",
+      inputSchema: {
+        deck_id: z.number().optional().describe("Optional deck ID to filter cards"),
+      },
+      _meta: {
+        ui: { resourceUri: flashcardResourceUri },
+      },
     },
     async ({ deck_id }) => {
       try {
@@ -393,10 +400,14 @@ function createMcpServer(): McpServer {
     },
   );
 
-  // Register the flashcard UI resource
-  server.resource(
-    "flashcard-ui",
+  // Register the flashcard UI resource using registerAppResource
+  registerAppResource(
+    server,
+    "Flashcard Review UI",
     flashcardResourceUri,
+    {
+      description: "Interactive flashcard review interface for Arabic vocabulary",
+    },
     async () => {
       try {
         const html = await fs.readFile(path.join(MCP_APP_DIST_DIR, "mcp-app.html"), "utf-8");
