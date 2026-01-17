@@ -6,13 +6,19 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "build:mcp-app": "cross-env INPUT=mcp-app.html vite build --config vite.mcp-app.config.ts",
+    "watch:mcp-app": "cross-env INPUT=mcp-app.html vite build --config vite.mcp-app.config.ts --watch"
   },
   "dependencies": {
     "@google-cloud/speech": "^6.7.1",
     "@google-cloud/text-to-speech": "^6.4.0",
+    "@modelcontextprotocol/ext-apps": "^0.4.1",
     "@modelcontextprotocol/sdk": "^1.24.3",
+    "@vitejs/plugin-react": "^5.1.2",
     "better-sqlite3": "^12.5.0",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
     "express": "^5.2.1",
     "next": "16.0.7",
     "react": "19.2.0",
@@ -20,6 +26,7 @@
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
     "ts-fsrs": "^5.2.3",
+    "vite-plugin-singlefile": "^2.3.0",
     "winston": "^3.19.0",
     "zod": "^3.25.0"
   },
@@ -34,6 +41,7 @@
     "eslint-config-next": "16.0.7",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vite": "^7.3.1"
   }
 }

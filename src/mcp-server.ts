@@ -1,11 +1,17 @@
 import express from "express";
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { RESOURCE_MIME_TYPE } from "@modelcontextprotocol/ext-apps/server";
 import { z } from "zod";
+import fs from "node:fs/promises";
+import path from "node:path";
 
 const API_BASE_URL = "https://learn.rocksbythesea.uk";
 const API_TOKEN = process.env.API_TOKEN || "";
 const MCP_CLIENT_SECRET = process.env.MCP_CLIENT_SECRET || "mcp-secret-change-me";
+
+// MCP App dist directory - works from source or compiled
+const MCP_APP_DIST_DIR = path.join(process.cwd(), "dist-mcp-app");
 
 // Helper to make authenticated API requests
 async function apiRequest(path: string, options: RequestInit = {}): Promise<Response> {
@@ -294,6 +300,79 @@ function createMcpServer(): McpServer {
         return { content: [{ type: "text" as const, text: `Error: ${String(error)}` }], isError: true };
       }
     }
+  );
+
+  // ========== MCP App: Flashcard Review ==========
+  const flashcardResourceUri = "ui://flashcards/mcp-app.html";
+
+  // Register the flashcard review app tool
+  server.tool(
+    "review_flashcards",
+    "Open an interactive flashcard review UI for Arabic vocabulary",
+    {
+      deck_id: z.number().optional().describe("Optional deck ID to filter cards"),
+    },
+    async ({ deck_id }) => {
+      try {
+        // Fetch decks
+        const decksResponse = await apiRequest("/api/decks");
+        const decks = decksResponse.ok ? await decksResponse.json() : [];
+        const deckList = decks.map((d: { id: number; name: string }) => ({ id: d.id, name: d.name }));
+
+        // Fetch cards
+        const endpoint = deck_id ? `/api/decks/${deck_id}/cards` : "/api/vocab";
+        const cardsResponse = await apiRequest(endpoint);
+        if (!cardsResponse.ok) {
+          return { content: [{ type: "text" as const, text: JSON.stringify({ cards: [], decks: deckList, selectedDeckId: deck_id || null }) }] };
+        }
+
+        const rawCards = deck_id
+          ? await cardsResponse.json()
+          : (await cardsResponse.json()).vocabulary || [];
+
+        const cards = rawCards.map((card: { id: number; front: string; back: string; notes?: string; difficulty?: number; state?: number; lapses?: number }) => ({
+          id: card.id,
+          front: card.front,
+          back: card.back,
+          notes: card.notes,
+          difficulty: (card.difficulty ?? 5) <= 3 ? "easy" : (card.difficulty ?? 5) <= 6 ? "medium" : "hard",
+          state: card.state ?? 0,
+          lapses: card.lapses ?? 0,
+        }));
+
+        const data = {
+          cards,
+          decks: deckList,
+          selectedDeckId: deck_id || null,
+        };
+
+        return { content: [{ type: "text" as const, text: JSON.stringify(data) }] };
+      } catch (error) {
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify({ cards: [], decks: [], selectedDeckId: null, error: String(error) }) }],
+          isError: true,
+        };
+      }
+    },
+  );
+
+  // Register the flashcard UI resource
+  server.resource(
+    "flashcard-ui",
+    flashcardResourceUri,
+    async () => {
+      try {
+        const html = await fs.readFile(path.join(MCP_APP_DIST_DIR, "mcp-app.html"), "utf-8");
+        return {
+          contents: [{ uri: flashcardResourceUri, mimeType: RESOURCE_MIME_TYPE, text: html }],
+        };
+      } catch (error) {
+        const errorHtml = `<!DOCTYPE html><html><body><h1>Error</h1><p>MCP App not built. Run: npm run build:mcp-app</p><p>${String(error)}</p></body></html>`;
+        return {
+          contents: [{ uri: flashcardResourceUri, mimeType: RESOURCE_MIME_TYPE, text: errorHtml }],
+        };
+      }
+    },
   );
 
   return server;

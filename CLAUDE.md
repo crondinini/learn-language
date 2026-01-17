@@ -44,6 +44,7 @@ Client Request → Next.js (:3000) → Rewrite → Express MCP Server (:3001)
 | `add_words` | Add multiple words at once |
 | `move_word` | Move word to another deck |
 | `get_learning_words` | Get new/learning/difficult words |
+| `review_flashcards` | **MCP App** - Interactive flashcard review UI |
 
 ### Available Resources
 
@@ -70,3 +71,35 @@ curl -X POST https://learn.rocksbythesea.uk/mcp \
 Environment variables in `.env.local` on Pi:
 - `MCP_CLIENT_SECRET` - Secret for MCP client authentication
 - `API_TOKEN` - Token for backend API calls (used by MCP server internally)
+
+### MCP App (Flashcard Review UI)
+
+The MCP server includes an interactive flashcard review UI that runs inside MCP-enabled hosts like Claude Desktop.
+
+**Tool**: `review_flashcards`
+**Resource**: `ui://flashcards/mcp-app.html`
+
+**Features**:
+- Displays Arabic words with flip-to-reveal English translations
+- Keyboard navigation (Space/Enter to flip, Arrow keys to navigate)
+- Deck filtering
+- Difficulty indicators (easy/medium/hard)
+- Statistics summary
+
+**Building the MCP App**:
+```bash
+npm run build:mcp-app
+```
+
+The bundled single-file HTML is output to `dist-mcp-app/mcp-app.html`.
+
+**Development**:
+```bash
+npm run watch:mcp-app  # Watch mode for development
+```
+
+**Files**:
+- `src/mcp-app/flashcard-app.tsx` - React component
+- `src/mcp-app/flashcard-app.module.css` - Styles
+- `mcp-app.html` - Entry HTML
+- `vite.mcp-app.config.ts` - Vite build config
