@@ -5,6 +5,7 @@ import { RESOURCE_MIME_TYPE } from "@modelcontextprotocol/ext-apps/server";
 import { z } from "zod";
 import fs from "node:fs/promises";
 import path from "node:path";
+import Database from "better-sqlite3";
 
 const API_BASE_URL = "https://learn.rocksbythesea.uk";
 const API_TOKEN = process.env.API_TOKEN || "";
@@ -12,6 +13,18 @@ const MCP_CLIENT_SECRET = process.env.MCP_CLIENT_SECRET || "mcp-secret-change-me
 
 // MCP App dist directory - works from source or compiled
 const MCP_APP_DIST_DIR = path.join(process.cwd(), "dist-mcp-app");
+
+// Initialize database connection for OAuth token validation
+const dbPath = path.join(process.cwd(), "data", "learn-language.db");
+let db: Database.Database | null = null;
+
+function getDb(): Database.Database {
+  if (!db) {
+    db = new Database(dbPath);
+    db.pragma("journal_mode = WAL");
+  }
+  return db;
+}
 
 // Helper to make authenticated API requests
 async function apiRequest(path: string, options: RequestInit = {}): Promise<Response> {
@@ -24,13 +37,15 @@ async function apiRequest(path: string, options: RequestInit = {}): Promise<Resp
   return fetch(url, { ...options, headers });
 }
 
-// Auth verification
+// Auth verification - checks static secret and OAuth tokens from database
 function verifyAuth(authHeader: string | undefined): boolean {
   if (!authHeader?.startsWith("Bearer ")) return false;
   const token = authHeader.slice(7);
 
+  // Check against static MCP_CLIENT_SECRET
   if (token === MCP_CLIENT_SECRET) return true;
 
+  // Check base64-encoded client:secret format
   const expectedBase64 = Buffer.from(`claude:${MCP_CLIENT_SECRET}`).toString("base64");
   if (token === expectedBase64) return true;
 
@@ -40,6 +55,28 @@ function verifyAuth(authHeader: string | undefined): boolean {
     if (clientId === "claude" && secret === MCP_CLIENT_SECRET) return true;
   } catch {
     // Not valid base64
+  }
+
+  // Check OAuth access tokens from database
+  try {
+    const database = getDb();
+    const row = database.prepare(
+      "SELECT client_id, expires_at FROM oauth_tokens WHERE token = ?"
+    ).get(token) as { client_id: string; expires_at: number } | undefined;
+
+    if (row) {
+      // Check if token is still valid (not expired)
+      if (row.expires_at > Date.now()) {
+        console.log(`[MCP] OAuth token validated for client: ${row.client_id}`);
+        return true;
+      } else {
+        // Clean up expired token
+        database.prepare("DELETE FROM oauth_tokens WHERE token = ?").run(token);
+        console.log(`[MCP] OAuth token expired, removed from database`);
+      }
+    }
+  } catch (error) {
+    console.error("[MCP] Error checking OAuth token:", error);
   }
 
   return false;
@@ -387,11 +424,11 @@ export function startMcpServer(port: number = 3001) {
 
   // Handle /mcp endpoint
   app.all("/mcp", express.json(), async (req, res) => {
-    // CORS
+    // CORS - include mcp-protocol-version for browser-based MCP clients
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
-    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept, mcp-session-id");
-    res.header("Access-Control-Expose-Headers", "mcp-session-id");
+    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept, mcp-session-id, mcp-protocol-version");
+    res.header("Access-Control-Expose-Headers", "mcp-session-id, mcp-protocol-version");
 
     if (req.method === "OPTIONS") {
       return res.sendStatus(204);
