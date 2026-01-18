@@ -26,15 +26,17 @@ export async function POST(
       );
     }
 
-    if (!homework.recording_url) {
+    // Support both recording_url (for recording type) and audio_url (for listening type)
+    const audioUrl = homework.recording_url || homework.audio_url;
+    if (!audioUrl) {
       return NextResponse.json(
-        { error: "No recording to transcribe" },
+        { error: "No audio to transcribe" },
         { status: 400 }
       );
     }
 
     // Extract filename from URL (e.g., /api/media/homework/homework-1-123456.webm)
-    const filename = homework.recording_url.split("/").pop();
+    const filename = audioUrl.split("/").pop();
     if (!filename) {
       return NextResponse.json(
         { error: "Invalid recording URL" },
@@ -61,12 +63,32 @@ export async function POST(
     // Prepare the audio content (base64 encoded)
     const audioContent = audioBuffer.toString("base64");
 
+    // Determine encoding based on file extension
+    const ext = filename.split(".").pop()?.toLowerCase();
+    let encoding: "WEBM_OPUS" | "MP3" | "LINEAR16" | "FLAC" | "OGG_OPUS" = "WEBM_OPUS";
+    let sampleRateHertz = 48000;
+
+    if (ext === "mp3") {
+      encoding = "MP3";
+      sampleRateHertz = 44100; // Common MP3 sample rate
+    } else if (ext === "flac") {
+      encoding = "FLAC";
+      sampleRateHertz = 44100;
+    } else if (ext === "ogg") {
+      encoding = "OGG_OPUS";
+      sampleRateHertz = 48000;
+    } else if (ext === "wav") {
+      encoding = "LINEAR16";
+      sampleRateHertz = 44100;
+    }
+    // Default: webm -> WEBM_OPUS at 48000Hz
+
     // Configure the transcription request for Arabic
     const [response] = await client.recognize({
       audio: { content: audioContent },
       config: {
-        encoding: "WEBM_OPUS",
-        sampleRateHertz: 48000, // Default for WebM/Opus from MediaRecorder
+        encoding,
+        sampleRateHertz,
         languageCode: "ar-SA", // Arabic (Saudi Arabia) - can also use ar-EG, ar-AE, etc.
         alternativeLanguageCodes: ["ar-EG", "ar-AE"], // Fallback dialects
         enableAutomaticPunctuation: true,

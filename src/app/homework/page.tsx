@@ -27,7 +27,6 @@ export default function HomeworkPage() {
 
   // Listening homework creation state
   const [listeningAudio, setListeningAudio] = useState<File | null>(null);
-  const [listeningTranscription, setListeningTranscription] = useState("");
   const audioInputRef = useRef<HTMLInputElement | null>(null);
 
   // Listening exercise state (for viewing/answering)
@@ -84,7 +83,6 @@ export default function HomeworkPage() {
         body: JSON.stringify({
           description: newDescription,
           type: newType,
-          transcription: newType === "listening" ? listeningTranscription : undefined,
         }),
       });
 
@@ -104,7 +102,6 @@ export default function HomeworkPage() {
       setNewDescription("");
       setNewType("recording");
       setListeningAudio(null);
-      setListeningTranscription("");
       if (audioInputRef.current) {
         audioInputRef.current.value = "";
       }
@@ -594,8 +591,8 @@ export default function HomeworkPage() {
                         {/* Audio player */}
                         <audio src={hw.audio_url} controls className="h-10 w-full max-w-md" />
 
-                        {/* Transcription toggle */}
-                        {hw.transcription && (
+                        {/* Transcription section */}
+                        {hw.transcription ? (
                           <div>
                             <button
                               onClick={() => toggleTranscription(hw.id)}
@@ -622,6 +619,29 @@ export default function HomeworkPage() {
                               </div>
                             )}
                           </div>
+                        ) : (
+                          <button
+                            onClick={() => transcribeRecording(hw.id)}
+                            disabled={transcribingId === hw.id}
+                            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+                          >
+                            {transcribingId === hw.id ? (
+                              <>
+                                <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                </svg>
+                                Transcribing...
+                              </>
+                            ) : (
+                              <>
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                Transcribe Audio
+                              </>
+                            )}
+                          </button>
                         )}
 
                         {/* Response section */}
@@ -943,37 +963,24 @@ export default function HomeworkPage() {
 
               {/* Listening-specific fields */}
               {newType === "listening" && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                      Audio File
-                    </label>
-                    <input
-                      ref={audioInputRef}
-                      type="file"
-                      accept="audio/*"
-                      onChange={(e) => setListeningAudio(e.target.files?.[0] || null)}
-                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm file:mr-4 file:rounded file:border-0 file:bg-emerald-50 file:px-3 file:py-1 file:text-sm file:font-medium file:text-emerald-700 hover:file:bg-emerald-100 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:file:bg-emerald-900/30 dark:file:text-emerald-400"
-                    />
-                    {listeningAudio && (
-                      <p className="mt-1 text-xs text-slate-500">{listeningAudio.name}</p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                      Transcription (hidden answer)
-                    </label>
-                    <textarea
-                      value={listeningTranscription}
-                      onChange={(e) => setListeningTranscription(e.target.value)}
-                      placeholder="The correct transcription of the audio..."
-                      rows={3}
-                      dir="auto"
-                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                      style={{ fontFamily: "var(--font-arabic), sans-serif" }}
-                    />
-                  </div>
-                </>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Audio File
+                  </label>
+                  <input
+                    ref={audioInputRef}
+                    type="file"
+                    accept="audio/*"
+                    onChange={(e) => setListeningAudio(e.target.files?.[0] || null)}
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm file:mr-4 file:rounded file:border-0 file:bg-emerald-50 file:px-3 file:py-1 file:text-sm file:font-medium file:text-emerald-700 hover:file:bg-emerald-100 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:file:bg-emerald-900/30 dark:file:text-emerald-400"
+                  />
+                  {listeningAudio && (
+                    <p className="mt-1 text-xs text-slate-500">{listeningAudio.name}</p>
+                  )}
+                  <p className="mt-1 text-xs text-slate-400">
+                    The audio will be automatically transcribed after upload
+                  </p>
+                </div>
               )}
 
               <div className="flex gap-3 pt-2">
