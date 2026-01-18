@@ -6,12 +6,13 @@ import Header from "@/components/Header";
 interface Homework {
   id: number;
   description: string;
-  type: "recording" | "written";
+  type: "recording" | "written" | "listening";
   status: "pending" | "completed";
   recording_url: string | null;
   transcription: string | null;
   written_text: string | null;
   image_url: string | null;
+  audio_url: string | null;
   created_at: string;
   completed_at: string | null;
 }
@@ -21,8 +22,18 @@ export default function HomeworkPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [newDescription, setNewDescription] = useState("");
-  const [newType, setNewType] = useState<"recording" | "written">("recording");
+  const [newType, setNewType] = useState<"recording" | "written" | "listening">("recording");
   const [filter, setFilter] = useState<"all" | "pending" | "completed">("all");
+
+  // Listening homework creation state
+  const [listeningAudio, setListeningAudio] = useState<File | null>(null);
+  const [listeningTranscription, setListeningTranscription] = useState("");
+  const audioInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Listening exercise state (for viewing/answering)
+  const [showTranscription, setShowTranscription] = useState<{[id: number]: boolean}>({});
+  const [listeningResponse, setListeningResponse] = useState<{[id: number]: string}>({});
+  const [listeningId, setListeningId] = useState<number | null>(null);
 
   // Recording state
   const [recordingId, setRecordingId] = useState<number | null>(null);
@@ -59,16 +70,50 @@ export default function HomeworkPage() {
     e.preventDefault();
     if (!newDescription.trim()) return;
 
-    await fetch("/api/homework", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ description: newDescription, type: newType }),
-    });
+    // For listening type, require audio file
+    if (newType === "listening" && !listeningAudio) {
+      alert("Please upload an audio file for listening homework");
+      return;
+    }
 
-    setNewDescription("");
-    setNewType("recording");
-    setShowModal(false);
-    fetchHomework();
+    try {
+      // Create the homework
+      const res = await fetch("/api/homework", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          description: newDescription,
+          type: newType,
+          transcription: newType === "listening" ? listeningTranscription : undefined,
+        }),
+      });
+
+      const newHomework = await res.json();
+
+      // If listening type, upload the audio file
+      if (newType === "listening" && listeningAudio) {
+        const formData = new FormData();
+        formData.append("audio", listeningAudio);
+
+        await fetch(`/api/homework/${newHomework.id}/audio`, {
+          method: "POST",
+          body: formData,
+        });
+      }
+
+      setNewDescription("");
+      setNewType("recording");
+      setListeningAudio(null);
+      setListeningTranscription("");
+      if (audioInputRef.current) {
+        audioInputRef.current.value = "";
+      }
+      setShowModal(false);
+      fetchHomework();
+    } catch (error) {
+      console.error("Error creating homework:", error);
+      alert("Failed to create homework");
+    }
   }
 
   async function deleteHomework(id: number) {
@@ -277,6 +322,55 @@ export default function HomeworkPage() {
     }
   }
 
+  // Start listening exercise
+  function startListening(id: number) {
+    setListeningId(id);
+    setListeningResponse((prev) => ({ ...prev, [id]: prev[id] || "" }));
+  }
+
+  // Cancel listening exercise
+  function cancelListening() {
+    setListeningId(null);
+  }
+
+  // Toggle transcription visibility
+  function toggleTranscription(id: number) {
+    setShowTranscription((prev) => ({ ...prev, [id]: !prev[id] }));
+  }
+
+  // Submit listening response
+  async function submitListening(id: number) {
+    const response = listeningResponse[id];
+    if (!response?.trim()) {
+      alert("Please write your response");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(`/api/homework/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          written_text: response.trim(),
+          status: "completed",
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to submit response");
+      }
+
+      setListeningId(null);
+      fetchHomework();
+    } catch (error) {
+      console.error("Error submitting listening response:", error);
+      alert("Failed to submit response");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       <Header
@@ -347,6 +441,8 @@ export default function HomeworkPage() {
                         className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
                           hw.type === "recording"
                             ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                            : hw.type === "listening"
+                            ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
                             : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
                         }`}
                       >
@@ -487,6 +583,85 @@ export default function HomeworkPage() {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
                             Write Answer
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Listening UI - for listening type pending */}
+                    {hw.type === "listening" && hw.status === "pending" && hw.audio_url && (
+                      <div className="mt-4 space-y-4">
+                        {/* Audio player */}
+                        <audio src={hw.audio_url} controls className="h-10 w-full max-w-md" />
+
+                        {/* Transcription toggle */}
+                        {hw.transcription && (
+                          <div>
+                            <button
+                              onClick={() => toggleTranscription(hw.id)}
+                              className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+                            >
+                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                {showTranscription[hw.id] ? (
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                                ) : (
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                )}
+                              </svg>
+                              {showTranscription[hw.id] ? "Hide Transcription" : "Show Transcription"}
+                            </button>
+                            {showTranscription[hw.id] && (
+                              <div className="mt-3 rounded-lg bg-slate-50 p-4 dark:bg-slate-700/50">
+                                <p
+                                  dir="rtl"
+                                  className="text-xl leading-relaxed text-slate-700 dark:text-slate-300"
+                                  style={{ fontFamily: "var(--font-arabic), sans-serif" }}
+                                >
+                                  {hw.transcription}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Response section */}
+                        {listeningId === hw.id ? (
+                          <div className="space-y-3">
+                            <textarea
+                              value={listeningResponse[hw.id] || ""}
+                              onChange={(e) => setListeningResponse((prev) => ({ ...prev, [hw.id]: e.target.value }))}
+                              placeholder="Write your response..."
+                              rows={4}
+                              dir="auto"
+                              className="w-full rounded-lg border border-slate-300 px-4 py-3 text-xl leading-relaxed focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                              style={{ fontFamily: "var(--font-arabic), sans-serif" }}
+                            />
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => submitListening(hw.id)}
+                                disabled={isSubmitting}
+                                className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+                              >
+                                {isSubmitting ? "Submitting..." : "Submit"}
+                              </button>
+                              <button
+                                onClick={cancelListening}
+                                disabled={isSubmitting}
+                                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => startListening(hw.id)}
+                            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                          >
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                            Write Response
                           </button>
                         )}
                       </div>
@@ -668,6 +843,54 @@ export default function HomeworkPage() {
                         )}
                       </div>
                     )}
+
+                    {/* Display for completed listening homework */}
+                    {hw.type === "listening" && hw.status === "completed" && (
+                      <div className="mt-4 space-y-3">
+                        {/* Audio player */}
+                        {hw.audio_url && (
+                          <audio src={hw.audio_url} controls className="h-10 w-full max-w-md" />
+                        )}
+
+                        {/* Transcription (always visible when completed) */}
+                        {hw.transcription && (
+                          <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-700/50">
+                            <span className="mb-2 block text-xs font-medium text-slate-500 dark:text-slate-400">
+                              Transcription
+                            </span>
+                            <p
+                              dir="rtl"
+                              className="text-xl leading-relaxed text-slate-700 dark:text-slate-300"
+                              style={{ fontFamily: "var(--font-arabic), sans-serif" }}
+                            >
+                              {hw.transcription}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* User's response */}
+                        {hw.written_text && (
+                          <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
+                            <span className="mb-2 block text-xs font-medium text-blue-600 dark:text-blue-400">
+                              Your Response
+                            </span>
+                            <p
+                              dir="auto"
+                              className="whitespace-pre-wrap text-xl leading-relaxed text-slate-700 dark:text-slate-300"
+                              style={{ fontFamily: "var(--font-arabic), sans-serif" }}
+                            >
+                              {hw.written_text}
+                            </p>
+                          </div>
+                        )}
+
+                        {hw.completed_at && (
+                          <p className="text-xs text-slate-400">
+                            Completed {formatDate(hw.completed_at)}
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <button
                     onClick={() => deleteHomework(hw.id)}
@@ -709,13 +932,50 @@ export default function HomeworkPage() {
                 </label>
                 <select
                   value={newType}
-                  onChange={(e) => setNewType(e.target.value as "recording" | "written")}
+                  onChange={(e) => setNewType(e.target.value as "recording" | "written" | "listening")}
                   className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
                 >
                   <option value="recording">Recording</option>
                   <option value="written">Written</option>
+                  <option value="listening">Listening</option>
                 </select>
               </div>
+
+              {/* Listening-specific fields */}
+              {newType === "listening" && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                      Audio File
+                    </label>
+                    <input
+                      ref={audioInputRef}
+                      type="file"
+                      accept="audio/*"
+                      onChange={(e) => setListeningAudio(e.target.files?.[0] || null)}
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm file:mr-4 file:rounded file:border-0 file:bg-emerald-50 file:px-3 file:py-1 file:text-sm file:font-medium file:text-emerald-700 hover:file:bg-emerald-100 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:file:bg-emerald-900/30 dark:file:text-emerald-400"
+                    />
+                    {listeningAudio && (
+                      <p className="mt-1 text-xs text-slate-500">{listeningAudio.name}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                      Transcription (hidden answer)
+                    </label>
+                    <textarea
+                      value={listeningTranscription}
+                      onChange={(e) => setListeningTranscription(e.target.value)}
+                      placeholder="The correct transcription of the audio..."
+                      rows={3}
+                      dir="auto"
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                      style={{ fontFamily: "var(--font-arabic), sans-serif" }}
+                    />
+                  </div>
+                </>
+              )}
+
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"

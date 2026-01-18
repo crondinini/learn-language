@@ -156,7 +156,7 @@ function getDb(): Database.Database {
     _db.exec("ALTER TABLE texts ADD COLUMN recording_url TEXT");
   }
 
-  // Migration: Add written_text, image_url, and transcription columns to homework if they don't exist
+  // Migration: Add written_text, image_url, transcription, and audio_url columns to homework if they don't exist
   const homeworkColumns = _db.prepare("PRAGMA table_info(homework)").all() as { name: string }[];
   if (homeworkColumns.length > 0) {
     if (!homeworkColumns.some((col) => col.name === "written_text")) {
@@ -167,6 +167,9 @@ function getDb(): Database.Database {
     }
     if (!homeworkColumns.some((col) => col.name === "transcription")) {
       _db.exec("ALTER TABLE homework ADD COLUMN transcription TEXT");
+    }
+    if (!homeworkColumns.some((col) => col.name === "audio_url")) {
+      _db.exec("ALTER TABLE homework ADD COLUMN audio_url TEXT");
     }
   }
 
@@ -236,12 +239,13 @@ export const Rating = {
 export interface Homework {
   id: number;
   description: string;
-  type: 'recording' | 'written';
+  type: 'recording' | 'written' | 'listening';
   status: 'pending' | 'completed';
   recording_url: string | null;
   transcription: string | null;
   written_text: string | null;
   image_url: string | null;
+  audio_url: string | null;  // For listening type - uploaded audio file
   created_at: string;
   completed_at: string | null;
 }
@@ -250,6 +254,7 @@ export interface Homework {
 export const HomeworkType = {
   Recording: 'recording',
   Written: 'written',
+  Listening: 'listening',
 } as const;
 
 // Homework status enum

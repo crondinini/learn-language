@@ -34,7 +34,7 @@ export async function GET(
 
 /**
  * PUT /api/homework/[id]
- * Update a homework item (description, status, recording_url)
+ * Update a homework item (description, status, recording_url, written_text, image_url, audio_url, transcription)
  */
 export async function PUT(
   request: NextRequest,
@@ -43,7 +43,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { description, status, recording_url, written_text, image_url } = body;
+    const { description, status, recording_url, written_text, image_url, audio_url, transcription } = body;
 
     const existing = db
       .prepare("SELECT * FROM homework WHERE id = ?")
@@ -82,6 +82,14 @@ export async function PUT(
     if (image_url !== undefined) {
       updates.push("image_url = ?");
       values.push(image_url);
+    }
+    if (audio_url !== undefined) {
+      updates.push("audio_url = ?");
+      values.push(audio_url);
+    }
+    if (transcription !== undefined) {
+      updates.push("transcription = ?");
+      values.push(transcription);
     }
 
     if (updates.length === 0) {
@@ -148,6 +156,15 @@ export async function DELETE(
 
     if (existing.image_url) {
       const filepath = pathModule.join(process.cwd(), "public", existing.image_url);
+      try {
+        await fs.unlink(filepath);
+      } catch {
+        // File might not exist, that's ok
+      }
+    }
+
+    if (existing.audio_url) {
+      const filepath = pathModule.join(process.cwd(), "public", existing.audio_url);
       try {
         await fs.unlink(filepath);
       } catch {

@@ -37,12 +37,12 @@ export async function GET(request: NextRequest) {
 /**
  * POST /api/homework
  * Create a new homework assignment
- * Body: { description: string, type?: string }
+ * Body: { description: string, type?: string, transcription?: string }
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { description, type = "recording" } = body;
+    const { description, type = "recording", transcription } = body;
 
     if (!description?.trim()) {
       return NextResponse.json(
@@ -51,10 +51,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // For listening type, include transcription at creation time
     const stmt = db.prepare(
-      "INSERT INTO homework (description, type, status) VALUES (?, ?, 'pending')"
+      "INSERT INTO homework (description, type, status, transcription) VALUES (?, ?, 'pending', ?)"
     );
-    const result = stmt.run(description.trim(), type);
+    const result = stmt.run(description.trim(), type, transcription?.trim() || null);
 
     const newHomework = db
       .prepare("SELECT * FROM homework WHERE id = ?")
