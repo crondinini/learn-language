@@ -84,23 +84,45 @@ export async function POST(
     // Default: webm -> WEBM_OPUS at 48000Hz
 
     // Configure the transcription request for Arabic
-    const [response] = await client.recognize({
-      audio: { content: audioContent },
-      config: {
-        encoding,
-        sampleRateHertz,
-        languageCode: "ar-SA", // Arabic (Saudi Arabia) - can also use ar-EG, ar-AE, etc.
-        alternativeLanguageCodes: ["ar-EG", "ar-AE"], // Fallback dialects
-        enableAutomaticPunctuation: true,
-        model: "default",
-      },
-    });
+    const config = {
+      encoding,
+      sampleRateHertz,
+      languageCode: "ar-SA", // Arabic (Saudi Arabia) - can also use ar-EG, ar-AE, etc.
+      alternativeLanguageCodes: ["ar-EG", "ar-AE"], // Fallback dialects
+      enableAutomaticPunctuation: true,
+      model: "default",
+    };
 
-    // Extract transcription from response
-    const transcription = response.results
-      ?.map((result) => result.alternatives?.[0]?.transcript || "")
-      .join(" ")
-      .trim();
+    let transcription = "";
+
+    // Use longRunningRecognize for audio > 500KB (likely longer than 1 minute)
+    // Regular recognize has a 1-minute limit
+    if (audioBuffer.length > 500 * 1024) {
+      console.log(`Using longRunningRecognize for large audio file (${Math.round(audioBuffer.length / 1024)}KB)`);
+      const [operation] = await client.longRunningRecognize({
+        audio: { content: audioContent },
+        config,
+      });
+
+      // Wait for the operation to complete
+      const [response] = await operation.promise();
+
+      transcription = response.results
+        ?.map((result) => result.alternatives?.[0]?.transcript || "")
+        .join(" ")
+        .trim() || "";
+    } else {
+      // Use regular recognize for short audio
+      const [response] = await client.recognize({
+        audio: { content: audioContent },
+        config,
+      });
+
+      transcription = response.results
+        ?.map((result) => result.alternatives?.[0]?.transcript || "")
+        .join(" ")
+        .trim() || "";
+    }
 
     if (!transcription) {
       return NextResponse.json(
