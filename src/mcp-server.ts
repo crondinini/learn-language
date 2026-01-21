@@ -339,6 +339,79 @@ function createMcpServer(): McpServer {
     }
   );
 
+  // ========== Verb Conjugation Tools ==========
+
+  // Tool: List verbs
+  server.tool("list_verbs", "List all Arabic verbs with their practice stats", {}, async () => {
+    try {
+      const response = await apiRequest("/api/verbs");
+      if (!response.ok) {
+        return { content: [{ type: "text" as const, text: `Failed: ${response.status}` }], isError: true };
+      }
+      const verbs = await response.json();
+      if (verbs.length === 0) {
+        return { content: [{ type: "text" as const, text: "No verbs found. Add verbs with the add_verb tool." }] };
+      }
+      const verbList = verbs.map((v: { id: number; root: string; meaning: string; past_3ms: string; present_3ms: string; due_count: number; mastered_count: number; total_conjugations: number }) =>
+        `- ID ${v.id}: ${v.root} (${v.meaning}) - ${v.past_3ms}/${v.present_3ms} [${v.mastered_count}/${v.total_conjugations} mastered, ${v.due_count} due]`
+      ).join("\n");
+      return { content: [{ type: "text" as const, text: `Verbs:\n${verbList}` }] };
+    } catch (error) {
+      return { content: [{ type: "text" as const, text: `Error: ${String(error)}` }], isError: true };
+    }
+  });
+
+  // Tool: Add verb with conjugations
+  server.tool(
+    "add_verb",
+    "Add a new Arabic verb with its past tense conjugations",
+    {
+      root: z.string().describe("The Arabic root (e.g., ك-ت-ب)"),
+      root_transliteration: z.string().optional().describe("Transliteration (e.g., k-t-b)"),
+      form: z.number().optional().default(1).describe("Verb form (1-10, default 1)"),
+      meaning: z.string().describe("English meaning"),
+      past_3ms: z.string().describe("Past tense 3rd person masculine singular (e.g., كَتَبَ)"),
+      present_3ms: z.string().describe("Present tense 3rd person masculine singular (e.g., يَكْتُبُ)"),
+      masdar: z.string().optional().describe("Verbal noun/masdar"),
+      past_conjugations: z.object({
+        ana: z.string().describe("أنا - I"),
+        nahnu: z.string().describe("نحن - We"),
+        anta: z.string().describe("أنتَ - You (m.s.)"),
+        anti: z.string().describe("أنتِ - You (f.s.)"),
+        antum: z.string().describe("أنتم - You (m.pl.)"),
+        huwa: z.string().describe("هو - He"),
+        hiya: z.string().describe("هي - She"),
+        hum: z.string().describe("هم - They (m.pl.)"),
+        hunna: z.string().describe("هن - They (f.pl.)"),
+      }).describe("Past tense conjugations for all persons"),
+    },
+    async ({ root, root_transliteration, form, meaning, past_3ms, present_3ms, masdar, past_conjugations }) => {
+      try {
+        const response = await apiRequest("/api/verbs", {
+          method: "POST",
+          body: JSON.stringify({
+            root,
+            root_transliteration,
+            form,
+            meaning,
+            past_3ms,
+            present_3ms,
+            masdar,
+            past_conjugations,
+          }),
+        });
+        if (!response.ok) {
+          const error = await response.text();
+          return { content: [{ type: "text" as const, text: `Failed: ${response.status} - ${error}` }], isError: true };
+        }
+        const verb = await response.json();
+        return { content: [{ type: "text" as const, text: `Added verb "${root}" (${meaning}) with ID: ${verb.id}\nPast: ${past_3ms}, Present: ${present_3ms}\n${Object.keys(past_conjugations).length} conjugations created.` }] };
+      } catch (error) {
+        return { content: [{ type: "text" as const, text: `Error: ${String(error)}` }], isError: true };
+      }
+    }
+  );
+
   // ========== MCP App: Flashcard Review ==========
   const flashcardResourceUri = "ui://flashcards/mcp-app.html";
 
