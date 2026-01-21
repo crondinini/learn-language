@@ -166,7 +166,7 @@ function getDb(): Database.Database {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       verb_id INTEGER NOT NULL,
       tense TEXT NOT NULL,                   -- 'past', 'present', 'subjunctive', 'jussive', 'imperative'
-      person TEXT NOT NULL,                  -- 'ana', 'nahnu', 'anta', 'anti', 'antuma', 'antum', 'antunna', 'huwa', 'hiya', 'huma_m', 'huma_f', 'hum', 'hunna'
+      person TEXT NOT NULL,                  -- 'ana', 'nahnu', 'anta', 'anti', 'antum', 'huwa', 'hiya', 'hum', 'hunna'
       pronoun_arabic TEXT NOT NULL,          -- أنا
       conjugated_form TEXT NOT NULL,         -- كَتَبْتُ
       audio_url TEXT,
@@ -415,19 +415,15 @@ export interface ConjugationReview {
   state: number;
 }
 
-// Person codes for conjugation
+// Person codes for conjugation (simplified - no dual forms)
 export const ConjugationPerson = {
   Ana: 'ana',           // أنا - I
   Nahnu: 'nahnu',       // نحن - We
   Anta: 'anta',         // أنتَ - You (m.s.)
   Anti: 'anti',         // أنتِ - You (f.s.)
-  Antuma: 'antuma',     // أنتما - You (dual)
   Antum: 'antum',       // أنتم - You (m.pl.)
-  Antunna: 'antunna',   // أنتن - You (f.pl.)
   Huwa: 'huwa',         // هو - He
   Hiya: 'hiya',         // هي - She
-  Huma_m: 'huma_m',     // هما - They (dual m.)
-  Huma_f: 'huma_f',     // هما - They (dual f.)
   Hum: 'hum',           // هم - They (m.pl.)
   Hunna: 'hunna',       // هن - They (f.pl.)
 } as const;

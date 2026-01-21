@@ -179,13 +179,9 @@ function AddVerbModal({ onClose, onAdded }: { onClose: () => void; onAdded: () =
     nahnu: "",
     anta: "",
     anti: "",
-    antuma: "",
     antum: "",
-    antunna: "",
     huwa: "",
     hiya: "",
-    huma_m: "",
-    huma_f: "",
     hum: "",
     hunna: "",
   });

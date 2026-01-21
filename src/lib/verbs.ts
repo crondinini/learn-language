@@ -87,15 +87,11 @@ export function getVerbById(id: number): VerbWithConjugations | null {
         WHEN 'nahnu' THEN 2
         WHEN 'anta' THEN 3
         WHEN 'anti' THEN 4
-        WHEN 'antuma' THEN 5
-        WHEN 'antum' THEN 6
-        WHEN 'antunna' THEN 7
-        WHEN 'huwa' THEN 8
-        WHEN 'hiya' THEN 9
-        WHEN 'huma_m' THEN 10
-        WHEN 'huma_f' THEN 11
-        WHEN 'hum' THEN 12
-        WHEN 'hunna' THEN 13
+        WHEN 'antum' THEN 5
+        WHEN 'huwa' THEN 6
+        WHEN 'hiya' THEN 7
+        WHEN 'hum' THEN 8
+        WHEN 'hunna' THEN 9
       END
   `
     )
