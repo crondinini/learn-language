@@ -12,6 +12,7 @@ interface HeaderProps {
 const navItems = [
   { href: "/", label: "Decks" },
   { href: "/vocab", label: "Vocabulary" },
+  { href: "/conjugation", label: "Conjugation" },
   { href: "/reading", label: "Reading" },
   { href: "/homework", label: "Homework" },
 ];

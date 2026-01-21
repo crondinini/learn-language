@@ -142,6 +142,75 @@ function getDb(): Database.Database {
     );
 
     CREATE INDEX IF NOT EXISTS idx_oauth_refresh_tokens_expires_at ON oauth_refresh_tokens(expires_at);
+
+    -- Verbs table: master list of verbs with root and meaning
+    CREATE TABLE IF NOT EXISTS verbs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      root TEXT NOT NULL,                    -- 'ك ت ب' (the 3-letter root)
+      root_transliteration TEXT,             -- 'k-t-b'
+      form INTEGER DEFAULT 1,                -- Verb form I-X
+      meaning TEXT NOT NULL,                 -- 'to write'
+      past_3ms TEXT NOT NULL,                -- كَتَبَ (he wrote) - dictionary form
+      present_3ms TEXT NOT NULL,             -- يَكْتُبُ (he writes)
+      masdar TEXT,                           -- كِتَابَة (verbal noun)
+      active_participle TEXT,                -- كَاتِب
+      passive_participle TEXT,               -- مَكْتُوب
+      notes TEXT,
+      audio_url TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    );
+
+    -- Individual conjugation forms (one row per verb × tense × person)
+    CREATE TABLE IF NOT EXISTS verb_conjugations (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      verb_id INTEGER NOT NULL,
+      tense TEXT NOT NULL,                   -- 'past', 'present', 'subjunctive', 'jussive', 'imperative'
+      person TEXT NOT NULL,                  -- 'ana', 'nahnu', 'anta', 'anti', 'antuma', 'antum', 'antunna', 'huwa', 'hiya', 'huma_m', 'huma_f', 'hum', 'hunna'
+      pronoun_arabic TEXT NOT NULL,          -- أنا
+      conjugated_form TEXT NOT NULL,         -- كَتَبْتُ
+      audio_url TEXT,
+
+      FOREIGN KEY (verb_id) REFERENCES verbs(id) ON DELETE CASCADE,
+      UNIQUE(verb_id, tense, person)
+    );
+
+    -- FSRS progress tracking per conjugation
+    CREATE TABLE IF NOT EXISTS conjugation_progress (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      verb_conjugation_id INTEGER NOT NULL UNIQUE,
+
+      stability REAL DEFAULT 0,
+      difficulty REAL DEFAULT 0,
+      elapsed_days INTEGER DEFAULT 0,
+      scheduled_days INTEGER DEFAULT 0,
+      reps INTEGER DEFAULT 0,
+      lapses INTEGER DEFAULT 0,
+      state INTEGER DEFAULT 0,               -- 0=New, 1=Learning, 2=Review, 3=Relearning
+      due TEXT DEFAULT (datetime('now')),
+      last_review TEXT,
+
+      FOREIGN KEY (verb_conjugation_id) REFERENCES verb_conjugations(id) ON DELETE CASCADE
+    );
+
+    -- Review history for conjugations
+    CREATE TABLE IF NOT EXISTS conjugation_reviews (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      conjugation_progress_id INTEGER NOT NULL,
+      rating INTEGER NOT NULL,               -- 1=Again, 2=Hard, 3=Good, 4=Easy
+      review_time TEXT DEFAULT (datetime('now')),
+      elapsed_days INTEGER,
+      scheduled_days INTEGER,
+      state INTEGER,
+
+      FOREIGN KEY (conjugation_progress_id) REFERENCES conjugation_progress(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_verbs_root ON verbs(root);
+    CREATE INDEX IF NOT EXISTS idx_verb_conjugations_verb_id ON verb_conjugations(verb_id);
+    CREATE INDEX IF NOT EXISTS idx_verb_conjugations_tense ON verb_conjugations(tense);
+    CREATE INDEX IF NOT EXISTS idx_conjugation_progress_due ON conjugation_progress(due);
+    CREATE INDEX IF NOT EXISTS idx_conjugation_progress_state ON conjugation_progress(state);
   `);
 
   // Migration: Add image_url column if it doesn't exist (for existing databases)
@@ -290,3 +359,101 @@ export interface OAuthToken {
   expires_at: number;  // Unix timestamp in milliseconds
   created_at: string;
 }
+
+// Verb interface
+export interface Verb {
+  id: number;
+  root: string;
+  root_transliteration: string | null;
+  form: number;
+  meaning: string;
+  past_3ms: string;
+  present_3ms: string;
+  masdar: string | null;
+  active_participle: string | null;
+  passive_participle: string | null;
+  notes: string | null;
+  audio_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Verb conjugation interface
+export interface VerbConjugation {
+  id: number;
+  verb_id: number;
+  tense: string;
+  person: string;
+  pronoun_arabic: string;
+  conjugated_form: string;
+  audio_url: string | null;
+}
+
+// Conjugation progress (FSRS state) interface
+export interface ConjugationProgress {
+  id: number;
+  verb_conjugation_id: number;
+  stability: number;
+  difficulty: number;
+  elapsed_days: number;
+  scheduled_days: number;
+  reps: number;
+  lapses: number;
+  state: number;
+  due: string;
+  last_review: string | null;
+}
+
+// Conjugation review history interface
+export interface ConjugationReview {
+  id: number;
+  conjugation_progress_id: number;
+  rating: number;
+  review_time: string;
+  elapsed_days: number;
+  scheduled_days: number;
+  state: number;
+}
+
+// Person codes for conjugation
+export const ConjugationPerson = {
+  Ana: 'ana',           // أنا - I
+  Nahnu: 'nahnu',       // نحن - We
+  Anta: 'anta',         // أنتَ - You (m.s.)
+  Anti: 'anti',         // أنتِ - You (f.s.)
+  Antuma: 'antuma',     // أنتما - You (dual)
+  Antum: 'antum',       // أنتم - You (m.pl.)
+  Antunna: 'antunna',   // أنتن - You (f.pl.)
+  Huwa: 'huwa',         // هو - He
+  Hiya: 'hiya',         // هي - She
+  Huma_m: 'huma_m',     // هما - They (dual m.)
+  Huma_f: 'huma_f',     // هما - They (dual f.)
+  Hum: 'hum',           // هم - They (m.pl.)
+  Hunna: 'hunna',       // هن - They (f.pl.)
+} as const;
+
+// Tense codes
+export const ConjugationTense = {
+  Past: 'past',
+  Present: 'present',
+  Subjunctive: 'subjunctive',
+  Jussive: 'jussive',
+  Imperative: 'imperative',
+} as const;
+
+// Person display order and Arabic pronouns
+export const PersonInfo: Record<string, { arabic: string; english: string; order: number }> = {
+  ana: { arabic: 'أنا', english: 'I', order: 1 },
+  nahnu: { arabic: 'نحن', english: 'We', order: 2 },
+  anta: { arabic: 'أنتَ', english: 'You (m.s.)', order: 3 },
+  anti: { arabic: 'أنتِ', english: 'You (f.s.)', order: 4 },
+  antuma: { arabic: 'أنتما', english: 'You (dual)', order: 5 },
+  antum: { arabic: 'أنتم', english: 'You (m.pl.)', order: 6 },
+  antunna: { arabic: 'أنتن', english: 'You (f.pl.)', order: 7 },
+  huwa: { arabic: 'هو', english: 'He', order: 8 },
+  hiya: { arabic: 'هي', english: 'She', order: 9 },
+  huma_m: { arabic: 'هما', english: 'They (dual m.)', order: 10 },
+  huma_f: { arabic: 'هما', english: 'They (dual f.)', order: 11 },
+  hum: { arabic: 'هم', english: 'They (m.pl.)', order: 12 },
+  hunna: { arabic: 'هن', english: 'They (f.pl.)', order: 13 },
+};
