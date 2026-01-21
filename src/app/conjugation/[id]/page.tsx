@@ -3,7 +3,7 @@
 import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
-import { PersonInfo } from "@/lib/db";
+import { PersonInfo } from "@/lib/constants";
 
 interface VerbConjugation {
   id: number;
