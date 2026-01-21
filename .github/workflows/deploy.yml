@@ -1,0 +1,115 @@
+name: Deploy to Hetzner
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  VOLUME_PATH: /mnt/HC_Volume_104464186/learn-language
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=
+            type=raw,value=latest
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Copy config files to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: ${{ secrets.HETZNER_USER }}
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          source: "docker-compose.hetzner.yml,otel-collector-config.yaml"
+          target: ~/learn-language
+          overwrite: true
+
+      - name: Deploy to Hetzner
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: ${{ secrets.HETZNER_USER }}
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          script: |
+            set -e
+
+            VOLUME_PATH="/mnt/HC_Volume_104464186/learn-language"
+            APP_DIR=~/learn-language
+
+            # Create directories if they don't exist
+            mkdir -p $VOLUME_PATH/{data/backups,data/audio,data/images,data/homework,data/logs,tts}
+
+            # Rename docker-compose file
+            mv $APP_DIR/docker-compose.hetzner.yml $APP_DIR/docker-compose.yml 2>/dev/null || true
+
+            cd $APP_DIR
+
+            # Check .env.local exists (must be created manually once)
+            if [ ! -f $VOLUME_PATH/.env.local ]; then
+              echo "✗ Error: $VOLUME_PATH/.env.local not found. Create it manually first."
+              exit 1
+            fi
+
+            # Backup database before deployment
+            if [ -f $VOLUME_PATH/data/learn-language.db ]; then
+              cp $VOLUME_PATH/data/learn-language.db $VOLUME_PATH/data/backups/learn-language-$(date +%Y%m%d-%H%M%S).db
+              echo "✓ Database backed up"
+            fi
+
+            # Login to GitHub Container Registry
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            # Pull the latest image
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+            # Restart containers
+            docker compose up -d
+
+            # Clean up old images
+            docker image prune -f
+
+            # Verify deployment
+            sleep 5
+            if curl -sf http://localhost:3000/login > /dev/null; then
+              echo "✓ Deployment successful!"
+            else
+              echo "✗ Health check failed"
+              exit 1
+            fi

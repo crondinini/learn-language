@@ -1,0 +1,36 @@
+services:
+  app:
+    image: ghcr.io/crondinini/learn-language:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      # Persist database and data directory on Hetzner volume
+      - /mnt/HC_Volume_104464186/learn-language/data:/app/data
+      # Persist media files
+      - /mnt/HC_Volume_104464186/learn-language/data/audio:/app/public/audio
+      - /mnt/HC_Volume_104464186/learn-language/data/homework:/app/public/homework
+      - /mnt/HC_Volume_104464186/learn-language/data/images:/app/public/images
+      # Persist env file
+      - /mnt/HC_Volume_104464186/learn-language/.env.local:/app/.env.local:ro
+      # Google TTS credentials
+      - /mnt/HC_Volume_104464186/learn-language/tts:/app/tts:ro
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - otel-collector
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    user: "0:0"
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /mnt/HC_Volume_104464186/learn-language/data/logs:/logs
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    restart: unless-stopped
