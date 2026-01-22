@@ -1,6 +1,8 @@
 services:
   app:
-    image: ghcr.io/crondinini/learn-language:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "3000:3000"
     volumes:
