@@ -1,0 +1,80 @@
+name: Cleanup PR Preview
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  cleanup-preview:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Cleanup Preview on Hetzner
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: ${{ secrets.HETZNER_USER }}
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          envs: PR_NUMBER
+          script: |
+            set -e
+
+            PREVIEW_DIR="/tmp/preview-pr-${PR_NUMBER}"
+            PREVIEW_DATA_DIR="/tmp/preview-data-${PR_NUMBER}"
+            PORTS_FILE="/var/lib/preview-ports.json"
+            CONTAINER_NAME="preview-pr-${PR_NUMBER}"
+            NGINX_CONF="/etc/nginx/sites-enabled/preview-pr-${PR_NUMBER}.conf"
+
+            echo "=== Cleaning up preview for PR #${PR_NUMBER} ==="
+
+            # Stop and remove container
+            if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
+              docker stop "$CONTAINER_NAME" 2>/dev/null || true
+              docker rm "$CONTAINER_NAME" 2>/dev/null || true
+              echo "✓ Removed container"
+            else
+              echo "- Container not found (already removed)"
+            fi
+
+            # Remove Docker image
+            if docker images --format '{{.Repository}}' | grep -q "^preview-pr-${PR_NUMBER}$"; then
+              docker rmi "preview-pr-${PR_NUMBER}" 2>/dev/null || true
+              echo "✓ Removed Docker image"
+            fi
+
+            # Remove nginx config
+            if [ -f "$NGINX_CONF" ]; then
+              sudo rm "$NGINX_CONF"
+              sudo nginx -t && sudo nginx -s reload
+              echo "✓ Removed nginx config and reloaded"
+            else
+              echo "- Nginx config not found (already removed)"
+            fi
+
+            # Remove port allocation
+            if [ -f "$PORTS_FILE" ]; then
+              jq "del(.\"${PR_NUMBER}\")" "$PORTS_FILE" | sudo tee "$PORTS_FILE.tmp" > /dev/null
+              sudo mv "$PORTS_FILE.tmp" "$PORTS_FILE"
+              echo "✓ Freed port allocation"
+            fi
+
+            # Remove preview directory
+            if [ -d "$PREVIEW_DIR" ]; then
+              rm -rf "$PREVIEW_DIR"
+              echo "✓ Removed preview directory"
+            fi
+
+            # Remove preview data directory
+            if [ -d "$PREVIEW_DATA_DIR" ]; then
+              rm -rf "$PREVIEW_DATA_DIR"
+              echo "✓ Removed preview data directory"
+            fi
+
+            # Prune unused Docker resources
+            docker image prune -f > /dev/null
+            echo "✓ Pruned unused Docker images"
+
+            echo ""
+            echo "=== Preview cleanup complete ==="

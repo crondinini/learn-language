@@ -24,6 +24,67 @@ docker compose -f docker-compose.hetzner.yml up -d
 - Audio: `/mnt/HC_Volume_104464186/learn-language/data/audio/`
 - Env file: `/mnt/HC_Volume_104464186/learn-language/.env.local`
 
+### PR Preview URLs
+
+Every pull request automatically gets a preview deployment at `https://pr-{number}.learn.rocksbythesea.uk`.
+
+**How it works:**
+- GitHub Action triggers on PR open/sync/reopen
+- Clones PR branch to `/tmp/preview-pr-{number}`
+- Copies production database to `/tmp/preview-data-{number}` (isolated copy)
+- Builds and runs Docker container on dynamically allocated port
+- Creates nginx config for routing
+- Comments on PR with the preview URL
+
+**Cleanup:**
+- When PR is closed (merged or not), cleanup workflow removes container, nginx config, and temp files
+
+**Port allocation:**
+- Ports tracked in `/var/lib/preview-ports.json`
+- Starting from port 3002, each preview gets the next available port
+
+**One-time server setup (already done):**
+```bash
+# Install nginx
+sudo apt install nginx
+
+# Create main site config
+sudo tee /etc/nginx/sites-enabled/learn-language.conf > /dev/null <<'EOF'
+server {
+    listen 80;
+    server_name learn.rocksbythesea.uk;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+EOF
+
+# Update Cloudflare Tunnel config to use wildcard
+# Edit ~/.cloudflared/config.yml:
+#   ingress:
+#     - hostname: "*.learn.rocksbythesea.uk"
+#       service: http://localhost:80
+#     - service: http_status:404
+
+# Restart tunnel
+sudo systemctl restart cloudflared
+
+# Reload nginx
+sudo nginx -t && sudo nginx -s reload
+
+# Initialize ports file
+echo "{}" | sudo tee /var/lib/preview-ports.json
+```
+
 ## Available Skills
 
 - **add-word**: Add a single Arabic word to the flashcard system

@@ -1,0 +1,181 @@
+name: Deploy PR Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  deploy-preview:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy Preview to Hetzner
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_BRANCH: ${{ github.head_ref }}
+          REPO: ${{ github.repository }}
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: ${{ secrets.HETZNER_USER }}
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          envs: PR_NUMBER,PR_BRANCH,REPO
+          script: |
+            set -e
+
+            VOLUME_PATH="/mnt/HC_Volume_104464186/learn-language"
+            PREVIEW_DIR="/tmp/preview-pr-${PR_NUMBER}"
+            PORTS_FILE="/var/lib/preview-ports.json"
+            CONTAINER_NAME="preview-pr-${PR_NUMBER}"
+
+            echo "=== Deploying preview for PR #${PR_NUMBER} ==="
+
+            # Initialize ports file if it doesn't exist
+            if [ ! -f "$PORTS_FILE" ]; then
+              echo "{}" | sudo tee "$PORTS_FILE" > /dev/null
+            fi
+
+            # Check if this PR already has a port allocated
+            EXISTING_PORT=$(jq -r ".\"${PR_NUMBER}\" // empty" "$PORTS_FILE")
+
+            if [ -n "$EXISTING_PORT" ]; then
+              PORT=$EXISTING_PORT
+              echo "✓ Reusing existing port: $PORT"
+            else
+              # Find the next available port starting from 3002
+              PORT=3002
+              while jq -e "to_entries | map(.value) | index($PORT)" "$PORTS_FILE" > /dev/null 2>&1; do
+                PORT=$((PORT + 1))
+              done
+              echo "✓ Allocated new port: $PORT"
+
+              # Save the port allocation
+              jq ". + {\"${PR_NUMBER}\": $PORT}" "$PORTS_FILE" | sudo tee "$PORTS_FILE.tmp" > /dev/null
+              sudo mv "$PORTS_FILE.tmp" "$PORTS_FILE"
+            fi
+
+            # Clone or update the PR branch
+            if [ -d "$PREVIEW_DIR/.git" ]; then
+              cd "$PREVIEW_DIR"
+              git fetch origin
+              git reset --hard "origin/${PR_BRANCH}"
+              echo "✓ Updated existing preview directory"
+            else
+              rm -rf "$PREVIEW_DIR"
+              git clone --branch "$PR_BRANCH" "git@github.com:${REPO}.git" "$PREVIEW_DIR"
+              echo "✓ Cloned PR branch"
+            fi
+
+            cd "$PREVIEW_DIR"
+
+            # Create preview data directory
+            PREVIEW_DATA_DIR="/tmp/preview-data-${PR_NUMBER}"
+            mkdir -p "$PREVIEW_DATA_DIR"
+
+            # Copy database from production (if exists and not already copied)
+            if [ ! -f "$PREVIEW_DATA_DIR/learn-language.db" ] && [ -f "$VOLUME_PATH/data/learn-language.db" ]; then
+              cp "$VOLUME_PATH/data/learn-language.db" "$PREVIEW_DATA_DIR/learn-language.db"
+              echo "✓ Copied production database"
+            fi
+
+            # Stop existing container if running
+            docker stop "$CONTAINER_NAME" 2>/dev/null || true
+            docker rm "$CONTAINER_NAME" 2>/dev/null || true
+
+            # Build the image
+            docker build -t "preview-pr-${PR_NUMBER}" .
+            echo "✓ Built Docker image"
+
+            # Run the container
+            docker run -d \
+              --name "$CONTAINER_NAME" \
+              -p "${PORT}:3000" \
+              -v "$PREVIEW_DATA_DIR:/app/data" \
+              -v "$VOLUME_PATH/data/audio:/app/public/audio:ro" \
+              -v "$VOLUME_PATH/data/images:/app/public/images:ro" \
+              -v "$VOLUME_PATH/.env.local:/app/.env.local:ro" \
+              -v "$VOLUME_PATH/tts:/app/tts:ro" \
+              -e NODE_ENV=production \
+              --restart unless-stopped \
+              "preview-pr-${PR_NUMBER}"
+            echo "✓ Started container on port $PORT"
+
+            # Create/update nginx config
+            NGINX_CONF="/etc/nginx/sites-enabled/preview-pr-${PR_NUMBER}.conf"
+            sudo tee "$NGINX_CONF" > /dev/null <<EOF
+            server {
+                listen 80;
+                server_name pr-${PR_NUMBER}.learn.rocksbythesea.uk;
+
+                location / {
+                    proxy_pass http://localhost:${PORT};
+                    proxy_http_version 1.1;
+                    proxy_set_header Upgrade \$http_upgrade;
+                    proxy_set_header Connection 'upgrade';
+                    proxy_set_header Host \$host;
+                    proxy_set_header X-Real-IP \$remote_addr;
+                    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto \$scheme;
+                    proxy_cache_bypass \$http_upgrade;
+                }
+            }
+            EOF
+            echo "✓ Created nginx config"
+
+            # Reload nginx
+            sudo nginx -t && sudo nginx -s reload
+            echo "✓ Reloaded nginx"
+
+            # Wait for app to be ready
+            sleep 10
+            if curl -sf "http://localhost:${PORT}/login" > /dev/null; then
+              echo "✓ Preview is healthy!"
+            else
+              echo "⚠ Health check failed, but container is running"
+            fi
+
+            echo ""
+            echo "=== Preview deployed ==="
+            echo "URL: https://pr-${PR_NUMBER}.learn.rocksbythesea.uk"
+
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const previewUrl = `https://pr-${prNumber}.learn.rocksbythesea.uk`;
+
+            // Check if we already commented
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber
+            });
+
+            const botComment = comments.data.find(c =>
+              c.user.type === 'Bot' && c.body.includes('Preview deployment')
+            );
+
+            const body = `## 🔍 Preview deployment
+
+            | Status | URL |
+            |--------|-----|
+            | ✅ Ready | [${previewUrl}](${previewUrl}) |
+
+            _Updated: ${new Date().toISOString()}_`;
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body
+              });
+            }
