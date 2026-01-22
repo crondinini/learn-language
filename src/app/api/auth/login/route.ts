@@ -12,10 +12,14 @@ export async function POST(request: Request) {
     // Create a simple session token (in production, use proper JWT)
     const token = Buffer.from(`${email}:${Date.now()}:${secret}`).toString('base64')
 
+    // Only use Secure flag if accessed via HTTPS
+    const isHttps = request.headers.get('x-forwarded-proto') === 'https' ||
+                    request.url.startsWith('https://')
+
     const cookieStore = await cookies()
     cookieStore.set('auth-token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: isHttps,
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 30, // 30 days
       path: '/',
