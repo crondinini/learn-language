@@ -1,7 +1,28 @@
-- for this project, the code should be changed in this host, but the deployment, database and running of the app needs to happen in the raspberry (using ssh pi)
-- **IMPORTANT**: Whenever there is a new feature or code change, read the deploy-to-pi skill to know how to deploy. Always commit before deploying.
-- Images on Pi are at ~/learn-language/data/images/
-- Audio on Pi is at ~/learn-language/data/audio/
+## Deployment
+
+The app is deployed on a **Hetzner server** and automatically deploys on push to `main` via GitHub Actions.
+
+- **URL**: https://learn.rocksbythesea.uk
+- **Deployment**: Automatic via GitHub Actions on push to `main`
+- **How it works**: GitHub Action SSHs to Hetzner, pulls latest code, builds Docker image locally, restarts containers
+- **Database**: SQLite on Hetzner volume at `/mnt/HC_Volume_104464186/learn-language/data/`
+- **HTTPS**: Cloudflare Tunnel (runs as systemd service)
+
+### Manual deployment (if needed)
+
+SSH to the server and run:
+```bash
+cd ~/learn-language
+git pull
+docker compose -f docker-compose.hetzner.yml build
+docker compose -f docker-compose.hetzner.yml up -d
+```
+
+### Data locations on Hetzner
+- Database: `/mnt/HC_Volume_104464186/learn-language/data/learn-language.db`
+- Images: `/mnt/HC_Volume_104464186/learn-language/data/images/`
+- Audio: `/mnt/HC_Volume_104464186/learn-language/data/audio/`
+- Env file: `/mnt/HC_Volume_104464186/learn-language/.env.local`
 
 ## Available Skills
 
@@ -9,7 +30,6 @@
 - **import-vocabulary**: Import vocabulary from Word documents (.docx)
 - **generate-card-image**: Download an image for a vocabulary card using Unsplash
 - **download-playaling-audio**: Download MSA audio pronunciation from Playaling
-- **deploy-to-pi**: Deploy code changes to the Raspberry Pi
 - when I ask to make a change, check if you can use the API in https://learn.rocksbythesea.uk using the bearer token from `.env.local` (`API_TOKEN`)
 
 ## MCP Server
@@ -68,7 +88,7 @@ curl -X POST https://learn.rocksbythesea.uk/mcp \
 
 ### Configuration
 
-Environment variables in `.env.local` on Pi:
+Environment variables in `.env.local` on Hetzner:
 - `MCP_CLIENT_SECRET` - Secret for MCP client authentication
 - `API_TOKEN` - Token for backend API calls (used by MCP server internally)
 

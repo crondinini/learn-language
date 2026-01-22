@@ -31,6 +31,51 @@ This app addresses common frustrations with existing flashcard apps:
 - npm or yarn
 - Google Cloud TTS credentials OR ElevenLabs API key (optional, for audio)
 
+## Deployment
+
+The app is deployed on a Hetzner server with automatic deployments via GitHub Actions.
+
+**Live URL**: https://learn.rocksbythesea.uk
+
+### How it works
+
+1. Push to `main` branch triggers GitHub Action
+2. Action SSHs to Hetzner server
+3. Server pulls latest code via git (using deploy key)
+4. Docker image is built locally on server (fast, uses cache)
+5. Containers are restarted with new image
+
+### Infrastructure
+
+| Component | Details |
+|-----------|---------|
+| Server | Hetzner Cloud (Debian) |
+| Storage | Hetzner Volume mounted at `/mnt/HC_Volume_104464186/` |
+| HTTPS | Cloudflare Tunnel (systemd service) |
+| Database | SQLite on persistent volume |
+| Container | Docker Compose |
+
+### GitHub Secrets Required
+
+| Secret | Description |
+|--------|-------------|
+| `HETZNER_HOST` | Server IP address |
+| `HETZNER_USER` | SSH username (root) |
+| `HETZNER_SSH_KEY` | Private SSH key for authentication |
+
+### Manual Deployment
+
+```bash
+# SSH to server
+ssh root@<HETZNER_HOST>
+
+# Deploy
+cd ~/learn-language
+git pull
+docker compose -f docker-compose.hetzner.yml build
+docker compose -f docker-compose.hetzner.yml up -d
+```
+
 ## Getting Started
 
 ```bash
