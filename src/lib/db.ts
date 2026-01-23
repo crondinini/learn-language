@@ -211,6 +211,16 @@ function getDb(): Database.Database {
     CREATE INDEX IF NOT EXISTS idx_verb_conjugations_tense ON verb_conjugations(tense);
     CREATE INDEX IF NOT EXISTS idx_conjugation_progress_due ON conjugation_progress(due);
     CREATE INDEX IF NOT EXISTS idx_conjugation_progress_state ON conjugation_progress(state);
+
+    -- Resources table: useful websites and links
+    CREATE TABLE IF NOT EXISTS resources (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      url TEXT NOT NULL,
+      title TEXT NOT NULL,
+      description TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    );
   `);
 
   // Migration: Add image_url column if it doesn't exist (for existing databases)
@@ -439,3 +449,13 @@ export const ConjugationTense = {
 
 // Re-export PersonInfo from constants for backwards compatibility
 export { PersonInfo } from './constants';
+
+// Resource interface for useful websites
+export interface Resource {
+  id: number;
+  url: string;
+  title: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+}

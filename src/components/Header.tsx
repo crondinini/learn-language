@@ -15,6 +15,7 @@ const navItems = [
   { href: "/conjugation", label: "Conjugation" },
   { href: "/reading", label: "Reading" },
   { href: "/homework", label: "Homework" },
+  { href: "/resources", label: "Resources" },
 ];
 
 export default function Header({ actions }: HeaderProps) {
