@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
+import SpeakerButton from "@/components/SpeakerButton";
 
 interface ConjugationItem {
   conjugation_id: number;
@@ -18,6 +19,7 @@ interface ConjugationItem {
   conjugated_form: string;
   state: number;
   reps: number;
+  verb_audio_url: string | null;
 }
 
 type ReviewState = "prompt" | "checking" | "result";
@@ -285,8 +287,15 @@ function ConjugationReviewContent() {
             <div className="mb-2 text-sm text-slate-500 dark:text-slate-400">
               {currentItem.meaning}
             </div>
-            <div dir="rtl" className="mb-4 text-2xl font-bold text-slate-800 dark:text-white">
-              {currentItem.past_3ms}
+            <div className="mb-4 flex items-center justify-center gap-2">
+              <div dir="rtl" className="text-2xl font-bold text-slate-800 dark:text-white">
+                {currentItem.past_3ms}
+              </div>
+              <SpeakerButton
+                text={currentItem.past_3ms}
+                audioUrl={currentItem.verb_audio_url}
+                size="md"
+              />
             </div>
 
             {/* Prompt */}

@@ -132,38 +132,48 @@ export default function VerbDetailPage({ params }: { params: Promise<{ id: strin
             >
               Practice This Verb {dueCount > 0 ? `(${dueCount} due)` : newCount > 0 ? `(${newCount} new)` : ""}
             </Link>
-            <button
-              onClick={() => setShowEditModal(true)}
-              className="rounded-lg bg-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
-            >
-              Edit
-            </button>
-            <button
-              onClick={handleDelete}
-              className="rounded-lg bg-red-100 px-4 py-2 text-sm font-medium text-red-700 transition hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
-            >
-              Delete
-            </button>
           </>
         }
       />
 
       <main className="mx-auto max-w-5xl px-6 py-8">
         {/* Breadcrumb */}
-        <nav className="mb-4 flex items-center gap-2 text-sm">
-          <Link href="/" className="text-slate-500 hover:text-emerald-600 dark:text-slate-400">
-            Home
-          </Link>
-          <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-          <Link href="/conjugation" className="text-slate-500 hover:text-emerald-600 dark:text-slate-400">
-            Conjugation
-          </Link>
-          <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-          <span className="text-slate-700 dark:text-slate-200">{verb.meaning}</span>
+        <nav className="mb-4 flex items-center justify-between text-sm">
+          <div className="flex items-center gap-2">
+            <Link href="/" className="text-slate-500 hover:text-emerald-600 dark:text-slate-400">
+              Home
+            </Link>
+            <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+            <Link href="/conjugation" className="text-slate-500 hover:text-emerald-600 dark:text-slate-400">
+              Conjugation
+            </Link>
+            <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+            <span className="text-slate-700 dark:text-slate-200">{verb.meaning}</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowEditModal(true)}
+              className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
+              title="Edit verb"
+            >
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
+            <button
+              onClick={handleDelete}
+              className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+              title="Delete verb"
+            >
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
         </nav>
 
         {/* Verb Header */}
