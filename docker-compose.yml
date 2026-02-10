@@ -16,14 +16,92 @@ services:
       - ./tts:/app/tts:ro
     environment:
       - NODE_ENV=production
+      - TEMPORAL_ADDRESS=temporal:7233
     depends_on:
       - otel-collector
+      - temporal
     logging:
       driver: json-file
       options:
         max-size: "10m"
         max-file: "3"
     restart: unless-stopped
+
+  # ─── Temporal Infrastructure ─────────────────────────────────────────────
+
+  temporal-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: temporal
+      POSTGRES_PASSWORD: temporal
+    volumes:
+      - temporal-db-data:/var/lib/postgresql/data
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+
+  temporal:
+    image: temporalio/auto-setup:latest
+    depends_on:
+      - temporal-db
+    environment:
+      - DB=postgres12
+      - DB_PORT=5432
+      - POSTGRES_USER=temporal
+      - POSTGRES_PWD=temporal
+      - POSTGRES_SEEDS=temporal-db
+    ports:
+      - "7233:7233"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+
+  temporal-ui:
+    image: temporalio/ui:latest
+    depends_on:
+      - temporal
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+    ports:
+      - "8080:8080"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+
+  temporal-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.temporal-worker
+    volumes:
+      - ./data:/app/data
+      - ./data/audio:/app/public/audio
+      - ./data/homework:/app/public/homework
+      - ./data/images:/app/public/images
+      - ./.env.local:/app/.env.local:ro
+      - ./tts:/app/tts:ro
+    environment:
+      - NODE_ENV=production
+      - TEMPORAL_ADDRESS=temporal:7233
+    depends_on:
+      - temporal
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+
+  # ─── Observability ───────────────────────────────────────────────────────
 
   otel-collector:
     image: otel/opentelemetry-collector-contrib:latest
@@ -34,3 +112,6 @@ services:
       - ./data/logs:/logs
     command: ["--config=/etc/otelcol-contrib/config.yaml"]
     restart: unless-stopped
+
+volumes:
+  temporal-db-data:

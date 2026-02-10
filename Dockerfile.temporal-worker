@@ -1,0 +1,34 @@
+# syntax=docker/dockerfile:1
+
+# Stage 1: Install dependencies
+FROM node:20-slim AS deps
+
+WORKDIR /app
+
+# Install build dependencies for better-sqlite3 and temporal native modules
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY package*.json ./
+RUN npm ci
+
+# Stage 2: Production worker image
+FROM node:20-slim
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Copy node_modules (includes temporal SDK and native modules)
+COPY --from=deps /app/node_modules ./node_modules
+
+# Copy source files needed by the worker
+COPY package.json ./
+COPY tsconfig.json ./
+COPY src/temporal ./src/temporal
+COPY src/lib ./src/lib
+
+CMD ["./node_modules/.bin/tsx", "src/temporal/worker.ts"]

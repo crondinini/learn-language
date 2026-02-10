@@ -8,13 +8,19 @@
     "start": "next start",
     "lint": "eslint",
     "build:mcp-app": "cross-env INPUT=mcp-app.html vite build --config vite.mcp-app.config.ts",
-    "watch:mcp-app": "cross-env INPUT=mcp-app.html vite build --config vite.mcp-app.config.ts --watch"
+    "watch:mcp-app": "cross-env INPUT=mcp-app.html vite build --config vite.mcp-app.config.ts --watch",
+    "temporal:worker": "tsx src/temporal/worker.ts",
+    "temporal:dev": "concurrently \"next dev\" \"tsx src/temporal/worker.ts\""
   },
   "dependencies": {
     "@google-cloud/speech": "^6.7.1",
     "@google-cloud/text-to-speech": "^6.4.0",
     "@modelcontextprotocol/ext-apps": "^0.4.1",
     "@modelcontextprotocol/sdk": "^1.24.3",
+    "@temporalio/activity": "^1.14.1",
+    "@temporalio/client": "^1.14.1",
+    "@temporalio/worker": "^1.14.1",
+    "@temporalio/workflow": "^1.14.1",
     "@vitejs/plugin-react": "^5.1.2",
     "better-sqlite3": "^12.5.0",
     "concurrently": "^9.2.1",
