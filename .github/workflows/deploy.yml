@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'projects/learn-language-web-app/**'
+      - '.github/workflows/deploy.yml'
 
 jobs:
   deploy:
@@ -21,6 +24,7 @@ jobs:
 
             VOLUME_PATH="/mnt/HC_Volume_104464186/learn-language"
             APP_DIR=~/learn-language
+            WEB_APP_DIR=$APP_DIR/projects/learn-language-web-app
 
             # Clone or pull latest code
             if [ ! -d "$APP_DIR/.git" ]; then
@@ -31,7 +35,7 @@ jobs:
               git reset --hard origin/main
             fi
 
-            cd $APP_DIR
+            cd $WEB_APP_DIR
 
             # Create data directories if they don't exist
             mkdir -p $VOLUME_PATH/{data/backups,data/audio,data/images,data/homework,data/logs,tts}

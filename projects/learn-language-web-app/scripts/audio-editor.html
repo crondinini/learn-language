@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audio Editor - Cut Regions</title>
+  <script src="https://unpkg.com/wavesurfer.js@7"></script>
+  <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #1a1a2e;
+      color: #eee;
+      min-height: 100vh;
+    }
+
+    h1 {
+      text-align: center;
+      color: #fff;
+      margin-bottom: 30px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 14px;
+      cursor: pointer;
+      border: none;
+      border-radius: 6px;
+      background: #4a4a6a;
+      color: #fff;
+      transition: background 0.2s;
+    }
+
+    button:hover:not(:disabled) {
+      background: #5a5a8a;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    button.primary {
+      background: #6366f1;
+    }
+
+    button.primary:hover:not(:disabled) {
+      background: #818cf8;
+    }
+
+    button.danger {
+      background: #dc2626;
+    }
+
+    button.danger:hover:not(:disabled) {
+      background: #ef4444;
+    }
+
+    button.success {
+      background: #16a34a;
+    }
+
+    button.success:hover:not(:disabled) {
+      background: #22c55e;
+    }
+
+    .drop-zone {
+      border: 3px dashed #4a4a6a;
+      border-radius: 12px;
+      padding: 60px 20px;
+      text-align: center;
+      margin-bottom: 20px;
+      transition: all 0.3s;
+      background: #16162a;
+    }
+
+    .drop-zone.dragover {
+      border-color: #6366f1;
+      background: #1e1e3a;
+    }
+
+    .drop-zone p {
+      margin: 0 0 15px 0;
+      font-size: 18px;
+      color: #888;
+    }
+
+    #waveform-container {
+      display: none;
+    }
+
+    #waveform {
+      background: #16162a;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .time-display {
+      text-align: center;
+      font-size: 24px;
+      font-family: monospace;
+      margin-bottom: 20px;
+      color: #6366f1;
+    }
+
+    .regions-panel {
+      background: #16162a;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .regions-panel h3 {
+      margin: 0 0 15px 0;
+      color: #fff;
+    }
+
+    .region-list {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .region-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      background: #1a1a2e;
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+
+    .region-item span {
+      font-family: monospace;
+    }
+
+    .region-item .region-color {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      margin-right: 10px;
+    }
+
+    .region-info {
+      display: flex;
+      align-items: center;
+    }
+
+    .no-regions {
+      color: #666;
+      font-style: italic;
+    }
+
+    .instructions {
+      background: #16162a;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .instructions h3 {
+      margin: 0 0 10px 0;
+    }
+
+    .instructions ul {
+      margin: 0;
+      padding-left: 20px;
+      color: #aaa;
+    }
+
+    .instructions li {
+      margin-bottom: 5px;
+    }
+
+    .zoom-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .zoom-controls input[type="range"] {
+      width: 150px;
+    }
+
+    .file-info {
+      color: #888;
+      font-size: 14px;
+      margin-left: auto;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <h1>Audio Editor</h1>
+
+  <div id="drop-zone" class="drop-zone">
+    <p>Drag & drop an audio file here</p>
+    <p style="font-size: 14px; color: #666;">or</p>
+    <input type="file" id="file-input" accept="audio/*" style="display: none;">
+    <button class="primary" onclick="document.getElementById('file-input').click()">Choose File</button>
+    <p style="font-size: 12px; color: #555; margin-top: 15px;">Supports: .opus, .mp3, .wav, .m4a, .ogg, .webm</p>
+  </div>
+
+  <div id="waveform-container">
+    <div class="controls">
+      <button id="play-btn" class="primary" disabled>Play</button>
+      <button id="stop-btn" disabled>Stop</button>
+      <div class="zoom-controls">
+        <span>Zoom:</span>
+        <input type="range" id="zoom" min="10" max="500" value="50">
+      </div>
+      <button onclick="document.getElementById('file-input').click()">Load Different File</button>
+      <span class="file-info" id="file-info"></span>
+    </div>
+
+    <div id="waveform"></div>
+
+    <div class="time-display">
+      <span id="current-time">0:00.00</span> / <span id="duration">0:00.00</span>
+    </div>
+
+    <div class="instructions">
+      <h3>How to use:</h3>
+      <ul>
+        <li><strong>Click and drag</strong> on the waveform to create a region to cut</li>
+        <li><strong>Playback skips</strong> marked regions automatically - preview your edit in real-time!</li>
+        <li><strong>Click a region</strong> to play just that section (to verify what you're cutting)</li>
+        <li><strong>Double-click</strong> anywhere to start playback from that point</li>
+        <li>Click <strong>"Cut All Regions"</strong> to permanently remove them from the waveform</li>
+        <li>Click <strong>"Export WAV"</strong> to download the edited audio</li>
+      </ul>
+    </div>
+
+    <div class="regions-panel">
+      <h3>Regions to Cut <span id="region-count">(0)</span></h3>
+      <div id="region-list" class="region-list">
+        <p class="no-regions">No regions selected. Click and drag on the waveform to mark regions to cut.</p>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="cut-btn" class="danger" disabled>Cut All Regions</button>
+      <button id="undo-btn" disabled>Undo Last Cut</button>
+      <button id="export-btn" class="success" disabled>Export WAV</button>
+    </div>
+  </div>
+
+  <script>
+    let wavesurfer = null;
+    let regions = null;
+    let audioBuffer = null;
+    let audioContext = null;
+    let originalBuffer = null;
+    let undoStack = [];
+    let currentFileName = 'edited-audio';
+
+    // Format time as M:SS.mm
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = (seconds % 60).toFixed(2).padStart(5, '0');
+      return `${mins}:${secs}`;
+    }
+
+    // Initialize WaveSurfer
+    function initWaveSurfer() {
+      if (wavesurfer) {
+        wavesurfer.destroy();
+      }
+
+      regions = WaveSurfer.Regions.create();
+
+      wavesurfer = WaveSurfer.create({
+        container: '#waveform',
+        waveColor: '#4a4a6a',
+        progressColor: '#6366f1',
+        cursorColor: '#fff',
+        height: 150,
+        normalize: true,
+        plugins: [regions],
+      });
+
+      // Enable region creation by dragging
+      regions.enableDragSelection({
+        color: 'rgba(220, 38, 38, 0.3)',
+      });
+
+      // Update time display and skip over cut regions during playback
+      wavesurfer.on('timeupdate', (time) => {
+        document.getElementById('current-time').textContent = formatTime(time);
+
+        // Skip over marked regions during playback
+        if (wavesurfer.isPlaying()) {
+          const allRegions = regions.getRegions();
+          for (const region of allRegions) {
+            // If we're inside a cut region, skip to the end of it
+            if (time >= region.start && time < region.end) {
+              wavesurfer.setTime(region.end);
+              break;
+            }
+          }
+        }
+      });
+
+      wavesurfer.on('ready', () => {
+        document.getElementById('duration').textContent = formatTime(wavesurfer.getDuration());
+        document.getElementById('play-btn').disabled = false;
+        document.getElementById('stop-btn').disabled = false;
+        document.getElementById('export-btn').disabled = false;
+        document.getElementById('zoom').value = 50;
+      });
+
+      wavesurfer.on('play', () => {
+        document.getElementById('play-btn').textContent = 'Pause';
+      });
+
+      wavesurfer.on('pause', () => {
+        document.getElementById('play-btn').textContent = 'Play';
+      });
+
+      // Handle region events
+      regions.on('region-created', updateRegionList);
+      regions.on('region-updated', updateRegionList);
+
+      regions.on('region-clicked', (region, e) => {
+        e.stopPropagation();
+        region.play();
+      });
+    }
+
+    // Update the region list UI
+    function updateRegionList() {
+      const regionList = document.getElementById('region-list');
+      const allRegions = regions.getRegions();
+      const count = allRegions.length;
+
+      document.getElementById('region-count').textContent = `(${count})`;
+      document.getElementById('cut-btn').disabled = count === 0;
+
+      if (count === 0) {
+        regionList.innerHTML = '<p class="no-regions">No regions selected. Click and drag on the waveform to mark regions to cut.</p>';
+        return;
+      }
+
+      // Sort regions by start time
+      const sorted = [...allRegions].sort((a, b) => a.start - b.start);
+
+      regionList.innerHTML = sorted.map(region => `
+        <div class="region-item">
+          <div class="region-info">
+            <div class="region-color" style="background: ${region.color || 'rgba(220, 38, 38, 0.5)'}"></div>
+            <span>${formatTime(region.start)} - ${formatTime(region.end)}</span>
+          </div>
+          <button class="danger" onclick="removeRegion('${region.id}')">Remove</button>
+        </div>
+      `).join('');
+    }
+
+    // Remove a specific region
+    function removeRegion(id) {
+      const allRegions = regions.getRegions();
+      const region = allRegions.find(r => r.id === id);
+      if (region) {
+        region.remove();
+        updateRegionList();
+      }
+    }
+
+    // Load audio file
+    async function loadAudio(file) {
+      currentFileName = file.name.replace(/\.[^/.]+$/, '');
+      document.getElementById('file-info').textContent = file.name;
+      document.getElementById('drop-zone').classList.add('hidden');
+      document.getElementById('waveform-container').style.display = 'block';
+
+      initWaveSurfer();
+
+      // Create audio context and decode
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const arrayBuffer = await file.arrayBuffer();
+      audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+      originalBuffer = audioBuffer;
+      undoStack = [];
+      document.getElementById('undo-btn').disabled = true;
+
+      // Load into wavesurfer
+      wavesurfer.loadBlob(file);
+    }
+
+    // Cut all marked regions from the audio
+    async function cutRegions() {
+      const allRegions = regions.getRegions();
+      if (allRegions.length === 0) return;
+
+      // Save current state for undo
+      undoStack.push(audioBuffer);
+      document.getElementById('undo-btn').disabled = false;
+
+      // Sort regions by start time
+      const sorted = [...allRegions].sort((a, b) => a.start - b.start);
+
+      // Calculate new duration
+      const sampleRate = audioBuffer.sampleRate;
+      let totalCutSamples = 0;
+      for (const region of sorted) {
+        totalCutSamples += Math.floor((region.end - region.start) * sampleRate);
+      }
+
+      const newLength = audioBuffer.length - totalCutSamples;
+      if (newLength <= 0) {
+        alert('Cannot cut all audio!');
+        return;
+      }
+
+      // Create new buffer
+      const newBuffer = audioContext.createBuffer(
+        audioBuffer.numberOfChannels,
+        newLength,
+        sampleRate
+      );
+
+      // Copy audio data, skipping cut regions
+      for (let channel = 0; channel < audioBuffer.numberOfChannels; channel++) {
+        const oldData = audioBuffer.getChannelData(channel);
+        const newData = newBuffer.getChannelData(channel);
+
+        let readPos = 0;
+        let writePos = 0;
+
+        for (const region of sorted) {
+          const regionStart = Math.floor(region.start * sampleRate);
+          const regionEnd = Math.floor(region.end * sampleRate);
+
+          // Copy samples before this region
+          while (readPos < regionStart && writePos < newLength) {
+            newData[writePos++] = oldData[readPos++];
+          }
+
+          // Skip the region
+          readPos = regionEnd;
+        }
+
+        // Copy remaining samples after last region
+        while (readPos < oldData.length && writePos < newLength) {
+          newData[writePos++] = oldData[readPos++];
+        }
+      }
+
+      audioBuffer = newBuffer;
+
+      // Clear regions and reload waveform
+      const blob = bufferToWave(newBuffer);
+      wavesurfer.loadBlob(blob);
+    }
+
+    // Undo last cut
+    function undoCut() {
+      if (undoStack.length === 0) return;
+
+      audioBuffer = undoStack.pop();
+      document.getElementById('undo-btn').disabled = undoStack.length === 0;
+
+      const blob = bufferToWave(audioBuffer);
+      wavesurfer.loadBlob(blob);
+    }
+
+    // Convert AudioBuffer to WAV Blob
+    function bufferToWave(buffer) {
+      const numChannels = buffer.numberOfChannels;
+      const sampleRate = buffer.sampleRate;
+      const format = 1; // PCM
+      const bitDepth = 16;
+
+      const bytesPerSample = bitDepth / 8;
+      const blockAlign = numChannels * bytesPerSample;
+
+      const dataLength = buffer.length * blockAlign;
+      const headerLength = 44;
+      const totalLength = headerLength + dataLength;
+
+      const arrayBuffer = new ArrayBuffer(totalLength);
+      const view = new DataView(arrayBuffer);
+
+      // Write WAV header
+      writeString(view, 0, 'RIFF');
+      view.setUint32(4, totalLength - 8, true);
+      writeString(view, 8, 'WAVE');
+      writeString(view, 12, 'fmt ');
+      view.setUint32(16, 16, true); // fmt chunk size
+      view.setUint16(20, format, true);
+      view.setUint16(22, numChannels, true);
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, sampleRate * blockAlign, true);
+      view.setUint16(32, blockAlign, true);
+      view.setUint16(34, bitDepth, true);
+      writeString(view, 36, 'data');
+      view.setUint32(40, dataLength, true);
+
+      // Write audio data
+      const channels = [];
+      for (let i = 0; i < numChannels; i++) {
+        channels.push(buffer.getChannelData(i));
+      }
+
+      let offset = 44;
+      for (let i = 0; i < buffer.length; i++) {
+        for (let ch = 0; ch < numChannels; ch++) {
+          const sample = Math.max(-1, Math.min(1, channels[ch][i]));
+          const intSample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+          view.setInt16(offset, intSample, true);
+          offset += 2;
+        }
+      }
+
+      return new Blob([arrayBuffer], { type: 'audio/wav' });
+    }
+
+    function writeString(view, offset, string) {
+      for (let i = 0; i < string.length; i++) {
+        view.setUint8(offset + i, string.charCodeAt(i));
+      }
+    }
+
+    // Export audio as WAV
+    function exportAudio() {
+      const blob = bufferToWave(audioBuffer);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${currentFileName}-edited.wav`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Event listeners
+    document.getElementById('file-input').addEventListener('change', (e) => {
+      if (e.target.files[0]) {
+        loadAudio(e.target.files[0]);
+      }
+    });
+
+    document.getElementById('play-btn').addEventListener('click', () => {
+      wavesurfer.playPause();
+    });
+
+    document.getElementById('stop-btn').addEventListener('click', () => {
+      wavesurfer.stop();
+    });
+
+    document.getElementById('zoom').addEventListener('input', (e) => {
+      wavesurfer.zoom(Number(e.target.value));
+    });
+
+    document.getElementById('cut-btn').addEventListener('click', cutRegions);
+    document.getElementById('undo-btn').addEventListener('click', undoCut);
+    document.getElementById('export-btn').addEventListener('click', exportAudio);
+
+    // Drag and drop
+    const dropZone = document.getElementById('drop-zone');
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+      document.body.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+    });
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropZone.addEventListener(eventName, () => {
+        dropZone.classList.add('dragover');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, () => {
+        dropZone.classList.remove('dragover');
+      });
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('audio/')) {
+        loadAudio(file);
+      }
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (!wavesurfer) return;
+
+      if (e.code === 'Space') {
+        e.preventDefault();
+        wavesurfer.playPause();
+      }
+    });
+  </script>
+</body>
+</html>
