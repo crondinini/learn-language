@@ -339,6 +339,32 @@ function createMcpServer(): McpServer {
     }
   );
 
+  // Tool: Delete word
+  server.tool(
+    "delete_word",
+    "Delete a vocabulary word by its card ID",
+    { card_id: z.number().describe("The ID of the card to delete") },
+    async ({ card_id }) => {
+      try {
+        // First get the card to show what was deleted
+        const getResponse = await apiRequest(`/api/cards/${card_id}`);
+        if (!getResponse.ok) {
+          return { content: [{ type: "text" as const, text: `Card not found: ${card_id}` }], isError: true };
+        }
+        const card = await getResponse.json();
+
+        // Delete the card
+        const response = await apiRequest(`/api/cards/${card_id}`, { method: "DELETE" });
+        if (!response.ok) {
+          return { content: [{ type: "text" as const, text: `Failed to delete: ${response.status}` }], isError: true };
+        }
+        return { content: [{ type: "text" as const, text: `Deleted "${card.front}" (${card.back}) [ID: ${card_id}]` }] };
+      } catch (error) {
+        return { content: [{ type: "text" as const, text: `Error: ${String(error)}` }], isError: true };
+      }
+    }
+  );
+
   // ========== Verb Conjugation Tools ==========
 
   // Tool: List verbs

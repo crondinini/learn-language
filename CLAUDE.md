@@ -63,6 +63,7 @@ Client Request → Next.js (:3000) → Rewrite → Express MCP Server (:3001)
 | `add_word` | Add a single vocabulary word |
 | `add_words` | Add multiple words at once |
 | `move_word` | Move word to another deck |
+| `delete_word` | Delete a vocabulary word by card ID |
 | `get_learning_words` | Get new/learning/difficult words |
 | `review_flashcards` | **MCP App** - Interactive flashcard review UI |
 
