@@ -211,6 +211,19 @@ function getDb(): Database.Database {
     CREATE INDEX IF NOT EXISTS idx_verb_conjugations_tense ON verb_conjugations(tense);
     CREATE INDEX IF NOT EXISTS idx_conjugation_progress_due ON conjugation_progress(due);
     CREATE INDEX IF NOT EXISTS idx_conjugation_progress_state ON conjugation_progress(state);
+
+    -- Generations table: history of vocabulary generation sessions
+    CREATE TABLE IF NOT EXISTS generations (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      session_id TEXT NOT NULL,
+      input_words TEXT NOT NULL,       -- JSON array of input words
+      result TEXT,                     -- Claude's final result text
+      cost REAL,                       -- USD cost
+      duration INTEGER,                -- milliseconds
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_generations_created_at ON generations(created_at);
   `);
 
   // Migration: Add image_url column if it doesn't exist (for existing databases)
@@ -436,6 +449,17 @@ export const ConjugationTense = {
   Jussive: 'jussive',
   Imperative: 'imperative',
 } as const;
+
+// Generation interface
+export interface Generation {
+  id: number;
+  session_id: string;
+  input_words: string;   // JSON array
+  result: string | null;
+  cost: number | null;
+  duration: number | null;
+  created_at: string;
+}
 
 // Re-export PersonInfo from constants for backwards compatibility
 export { PersonInfo } from './constants';

@@ -21,6 +21,7 @@ Arabic flashcard web application with spaced repetition learning.
 | `/review` | Global review - cards due across all decks |
 | `/conjugation` | Arabic verb conjugation practice with FSRS |
 | `/homework` | Recording and written homework assignments |
+| `/generate` | Generate Arabic vocabulary from English words via Claude Code skill |
 | `/reading` | Arabic reading passages with linked vocabulary |
 
 ## MCP Server
@@ -55,11 +56,14 @@ Endpoint: `https://learn.rocksbythesea.uk/mcp`
 | `generate-card-image` | Download Unsplash images for cards |
 | `download-playaling-audio` | Get Arabic pronunciation from Playaling |
 | `resize-and-upload-card-image` | Process and upload card images |
+| `generate-words` | Generate Arabic vocabulary from English word lists |
 
 ## Recent Changes
 
 <!-- Keep only relevant/current changes. Remove entries that are superseded or no longer applicable. -->
 
+- **2026-02**: Added generation history - past generations are persisted in SQLite and shown on `/generate` page
+- **2026-02**: Added `/generate` page and `generate-words` skill for batch English-to-Arabic vocabulary generation
 - **2025-02**: Reorganized into monorepo structure under `projects/`
 - **2025-02**: Added `delete_word` MCP tool
 - **2025-02**: Added verb audio support, moved edit/delete buttons to breadcrumb
