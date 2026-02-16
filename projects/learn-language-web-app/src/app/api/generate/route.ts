@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { spawn } from "child_process";
+import { spawn, execSync } from "child_process";
 import { createGeneration } from "@/lib/generations";
 
 export async function POST(request: NextRequest) {
@@ -54,6 +54,17 @@ Follow these steps:
 
 Do NOT ask for confirmation. Just do it.`;
 
+  // Check if claude CLI is available before spawning
+  let claudePath = "claude";
+  try {
+    claudePath = execSync("which claude", { encoding: "utf-8" }).trim();
+  } catch {
+    return new Response(
+      JSON.stringify({ error: "Claude CLI is not installed. Install it with: npm install -g @anthropic-ai/claude-code" }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     start(controller) {
@@ -63,7 +74,7 @@ Do NOT ask for confirmation. Just do it.`;
       const TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
 
       const claude = spawn(
-        "claude",
+        claudePath,
         [
           "--print",
           "--verbose",

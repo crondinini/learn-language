@@ -146,7 +146,7 @@ export async function DELETE(
     const fs = await import("fs/promises");
 
     if (existing.recording_url) {
-      const filepath = pathModule.join(process.cwd(), "public", existing.recording_url);
+      const filepath = pathModule.join(process.cwd(), "public", existing.recording_url.replace("/api/media/", "/"));
       try {
         await fs.unlink(filepath);
       } catch {
@@ -155,7 +155,7 @@ export async function DELETE(
     }
 
     if (existing.image_url) {
-      const filepath = pathModule.join(process.cwd(), "public", existing.image_url);
+      const filepath = pathModule.join(process.cwd(), "public", existing.image_url.replace("/api/media/", "/"));
       try {
         await fs.unlink(filepath);
       } catch {
@@ -164,7 +164,7 @@ export async function DELETE(
     }
 
     if (existing.audio_url) {
-      const filepath = pathModule.join(process.cwd(), "public", existing.audio_url);
+      const filepath = pathModule.join(process.cwd(), "public", existing.audio_url.replace("/api/media/", "/"));
       try {
         await fs.unlink(filepath);
       } catch {

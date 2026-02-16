@@ -178,7 +178,7 @@ export async function DELETE(request: NextRequest) {
 
     // Delete file if exists
     if (card.audio_url) {
-      const filepath = path.join(process.cwd(), "public", card.audio_url);
+      const filepath = path.join(process.cwd(), "public", card.audio_url.replace("/api/media/", "/"));
       const { unlink } = await import("fs/promises");
       try {
         await unlink(filepath);

@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
 
     // Delete existing image if present
     if (card.image_url) {
-      const oldPath = path.join(process.cwd(), "public", card.image_url);
+      const oldPath = path.join(process.cwd(), "public", card.image_url.replace("/api/media/", "/"));
       try {
         await unlink(oldPath);
       } catch {
@@ -114,7 +114,7 @@ export async function DELETE(request: NextRequest) {
 
     // Delete file if exists
     if (card.image_url) {
-      const filepath = path.join(process.cwd(), "public", card.image_url);
+      const filepath = path.join(process.cwd(), "public", card.image_url.replace("/api/media/", "/"));
       try {
         await unlink(filepath);
       } catch {
