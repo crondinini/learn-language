@@ -17,8 +17,11 @@ services:
       - /mnt/HC_Volume_104464186/learn-language/.env.local:/app/.env.local:ro
       # Google TTS credentials
       - /mnt/HC_Volume_104464186/learn-language/tts:/app/tts:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       - NODE_ENV=production
+      - CLAUDE_PROXY_URL=http://host.docker.internal:9876
     depends_on:
       - otel-collector
     logging:

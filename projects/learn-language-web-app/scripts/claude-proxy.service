@@ -1,0 +1,13 @@
+[Unit]
+Description=Claude CLI Proxy for Learn Language App
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/node /root/learn-language/projects/learn-language-web-app/scripts/claude-proxy.js
+EnvironmentFile=/mnt/HC_Volume_104464186/learn-language/.env.local
+Restart=unless-stopped
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

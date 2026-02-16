@@ -1,5 +1,4 @@
 import { NextRequest } from "next/server";
-import { spawn, execSync } from "child_process";
 import { createGeneration } from "@/lib/generations";
 
 export async function POST(request: NextRequest) {
@@ -15,6 +14,7 @@ export async function POST(request: NextRequest) {
 
   const apiToken = process.env.API_TOKEN;
   const apiUrl = process.env.API_URL || "https://learn.rocksbythesea.uk";
+  const claudeProxyUrl = process.env.CLAUDE_PROXY_URL || "http://host.docker.internal:9876";
 
   const prompt = `You are a vocabulary generation assistant. Your task is to translate English words to Arabic (MSA) and add them to the flashcard system.
 ${instructions ? `\nAdditional instructions from the user:\n${instructions}\n` : ""}
@@ -54,61 +54,50 @@ Follow these steps:
 
 Do NOT ask for confirmation. Just do it.`;
 
-  // Check if claude CLI is available before spawning
-  let claudePath = "claude";
+  // Call the claude proxy running on the host machine
+  let proxyResponse: Response;
   try {
-    claudePath = execSync("which claude", { encoding: "utf-8" }).trim();
-  } catch {
+    proxyResponse = await fetch(claudeProxyUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiToken}`,
+      },
+      body: JSON.stringify({ prompt }),
+    });
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : "Unknown error";
     return new Response(
-      JSON.stringify({ error: "Claude CLI is not installed. Install it with: npm install -g @anthropic-ai/claude-code" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      JSON.stringify({
+        error: `Failed to connect to Claude proxy at ${claudeProxyUrl}. Is claude-proxy running on the host? Error: ${msg}`,
+      }),
+      { status: 502, headers: { "Content-Type": "application/json" } }
     );
   }
 
+  if (!proxyResponse.ok) {
+    const text = await proxyResponse.text();
+    return new Response(
+      JSON.stringify({ error: `Claude proxy error: ${proxyResponse.status} - ${text}` }),
+      { status: 502, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  if (!proxyResponse.body) {
+    return new Response(
+      JSON.stringify({ error: "No response body from Claude proxy" }),
+      { status: 502, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  // Stream the proxy response through to the client, processing events along the way
   const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
+  const reader = proxyResponse.body.getReader();
+  let capturedSessionId = "";
+
   const stream = new ReadableStream({
-    start(controller) {
-      const env = { ...process.env };
-      delete env.CLAUDECODE;
-
-      const TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
-
-      const claude = spawn(
-        claudePath,
-        [
-          "--print",
-          "--verbose",
-          "--dangerously-skip-permissions",
-          "--output-format",
-          "stream-json",
-          "--include-partial-messages",
-          "--model",
-          "sonnet",
-        ],
-        { env, stdio: ["pipe", "pipe", "pipe"] }
-      );
-
-      // Pass prompt via stdin
-      claude.stdin.write(prompt);
-      claude.stdin.end();
-
-      const timeout = setTimeout(() => {
-        claude.kill();
-        controller.enqueue(
-          encoder.encode(
-            JSON.stringify({
-              type: "error",
-              content: "Process timed out after 10 minutes",
-            }) + "\n"
-          )
-        );
-        closeStream();
-      }, TIMEOUT_MS);
-
-      let buffer = "";
-      let closed = false;
-      let capturedSessionId = "";
-
+    async start(controller) {
       // Redact secrets from output sent to the browser
       const secrets = [apiToken].filter(Boolean) as string[];
       function redact(str: string): string {
@@ -118,6 +107,9 @@ Do NOT ask for confirmation. Just do it.`;
         }
         return result;
       }
+
+      let buffer = "";
+      let closed = false;
 
       function send(event: Record<string, unknown>) {
         if (closed) return;
@@ -132,100 +124,98 @@ Do NOT ask for confirmation. Just do it.`;
         controller.close();
       }
 
-      // Send an immediate status so the client knows we've started
       send({ type: "status", content: "Starting Claude..." });
 
-      claude.stdout.on("data", (data: Buffer) => {
-        buffer += data.toString();
-        const lines = buffer.split("\n");
-        buffer = lines.pop() || "";
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-        for (const line of lines) {
-          if (!line.trim()) continue;
-          try {
-            const event = JSON.parse(line);
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
 
-            // Init event - extract session_id
-            if (event.type === "system" && event.subtype === "init") {
-              capturedSessionId = event.session_id || "";
-              send({
-                type: "init",
-                sessionId: event.session_id,
-              });
-            }
-            // Real-time text streaming
-            else if (event.type === "stream_event") {
-              const se = event.event;
-              if (
-                se.type === "content_block_delta" &&
-                se.delta?.type === "text_delta"
-              ) {
-                send({ type: "delta", content: se.delta.text });
-              } else if (
-                se.type === "content_block_start" &&
-                se.content_block?.type === "tool_use"
-              ) {
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            try {
+              const event = JSON.parse(line);
+
+              // Init event - extract session_id
+              if (event.type === "system" && event.subtype === "init") {
+                capturedSessionId = event.session_id || "";
                 send({
-                  type: "tool_start",
-                  tool: se.content_block.name,
-                  toolId: se.content_block.id,
+                  type: "init",
+                  sessionId: event.session_id,
                 });
-              } else if (se.type === "content_block_stop") {
-                send({ type: "block_end" });
               }
-            }
-            // Complete assistant message (tool use details)
-            else if (event.type === "assistant" && event.message?.content) {
-              for (const block of event.message.content) {
-                if (block.type === "tool_use") {
+              // Real-time text streaming
+              else if (event.type === "stream_event") {
+                const se = event.event;
+                if (
+                  se.type === "content_block_delta" &&
+                  se.delta?.type === "text_delta"
+                ) {
+                  send({ type: "delta", content: se.delta.text });
+                } else if (
+                  se.type === "content_block_start" &&
+                  se.content_block?.type === "tool_use"
+                ) {
                   send({
-                    type: "tool",
-                    tool: block.name,
-                    input:
-                      typeof block.input === "string"
-                        ? block.input
-                        : JSON.stringify(block.input, null, 2),
+                    type: "tool_start",
+                    tool: se.content_block.name,
+                    toolId: se.content_block.id,
                   });
+                } else if (se.type === "content_block_stop") {
+                  send({ type: "block_end" });
                 }
               }
-            }
-            // Final result
-            else if (event.type === "result") {
-              send({
-                type: "result",
-                content: event.result,
-                sessionId: event.session_id,
-                cost: event.total_cost_usd,
-                duration: event.duration_ms,
-              });
-              try {
-                createGeneration({
-                  session_id: event.session_id || capturedSessionId,
-                  input_words: words,
-                  result: event.result,
+              // Complete assistant message (tool use details)
+              else if (event.type === "assistant" && event.message?.content) {
+                for (const block of event.message.content) {
+                  if (block.type === "tool_use") {
+                    send({
+                      type: "tool",
+                      tool: block.name,
+                      input:
+                        typeof block.input === "string"
+                          ? block.input
+                          : JSON.stringify(block.input, null, 2),
+                    });
+                  }
+                }
+              }
+              // Final result
+              else if (event.type === "result") {
+                send({
+                  type: "result",
+                  content: event.result,
+                  sessionId: event.session_id,
                   cost: event.total_cost_usd,
                   duration: event.duration_ms,
                 });
-              } catch (e) {
-                console.error("Failed to save generation:", e);
+                try {
+                  createGeneration({
+                    session_id: event.session_id || capturedSessionId,
+                    input_words: words,
+                    result: event.result,
+                    cost: event.total_cost_usd,
+                    duration: event.duration_ms,
+                  });
+                } catch (e) {
+                  console.error("Failed to save generation:", e);
+                }
               }
+              // Status/error events from proxy
+              else if (event.type === "status" || event.type === "error") {
+                send(event);
+              }
+            } catch {
+              // Not JSON, pass through
+              send({ type: "raw", content: line });
             }
-          } catch {
-            // Not JSON, pass through
-            send({ type: "raw", content: line });
           }
         }
-      });
 
-      claude.stderr.on("data", (data: Buffer) => {
-        const msg = data.toString().trim();
-        if (msg) {
-          send({ type: "status", content: msg });
-        }
-      });
-
-      claude.on("close", (code: number | null) => {
-        clearTimeout(timeout);
         // Flush remaining buffer
         if (buffer.trim()) {
           try {
@@ -254,15 +244,14 @@ Do NOT ask for confirmation. Just do it.`;
             send({ type: "raw", content: buffer });
           }
         }
-        send({ type: "done", code });
-        closeStream();
-      });
 
-      claude.on("error", (err: Error) => {
-        clearTimeout(timeout);
-        send({ type: "error", content: err.message });
+        send({ type: "done", code: 0 });
         closeStream();
-      });
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : "Stream error";
+        send({ type: "error", content: msg });
+        closeStream();
+      }
     },
   });
 

@@ -25,9 +25,6 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Install Claude CLI for the generate feature
-RUN npm install -g @anthropic-ai/claude-code
-
 # Copy only what's needed
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
