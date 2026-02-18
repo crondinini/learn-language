@@ -49,6 +49,7 @@ export default function VocabDashboard() {
   const [filter, setFilter] = useState<FilterType>("all");
   const [search, setSearch] = useState("");
   const [dueCount, setDueCount] = useState(0);
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     fetchVocabulary();
@@ -77,6 +78,36 @@ export default function VocabDashboard() {
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     fetchVocabulary();
+  }
+
+  async function handleExport() {
+    setIsExporting(true);
+    try {
+      const params = new URLSearchParams();
+      if (filter !== "all") params.set("filter", filter);
+      if (search) params.set("search", search);
+
+      const res = await fetch(`/api/vocab/export?${params}`);
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || "Export failed");
+        return;
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const disposition = res.headers.get("Content-Disposition");
+      const filenameMatch = disposition?.match(/filename="(.+)"/);
+      a.download = filenameMatch?.[1] || "arabic-vocabulary.apkg";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } finally {
+      setIsExporting(false);
+    }
   }
 
   function formatDate(dateStr: string | null): string {
@@ -196,22 +227,31 @@ export default function VocabDashboard() {
             ))}
           </div>
 
-          {/* Search */}
-          <form onSubmit={handleSearch} className="flex gap-2">
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search words..."
-              className="w-48 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
-            />
+          {/* Search and Export */}
+          <div className="flex gap-2">
+            <form onSubmit={handleSearch} className="flex gap-2">
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search words..."
+                className="w-48 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+              />
+              <button
+                type="submit"
+                className="rounded-lg bg-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
+              >
+                Search
+              </button>
+            </form>
             <button
-              type="submit"
-              className="rounded-lg bg-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
+              onClick={handleExport}
+              disabled={isExporting || vocabulary.length === 0}
+              className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Search
+              {isExporting ? "Exporting..." : "Export"}
             </button>
-          </form>
+          </div>
         </div>
 
         {/* Vocabulary List */}

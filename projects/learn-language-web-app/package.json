@@ -16,6 +16,7 @@
     "@modelcontextprotocol/ext-apps": "^0.4.1",
     "@modelcontextprotocol/sdk": "^1.24.3",
     "@vitejs/plugin-react": "^5.1.2",
+    "anki-apkg-export": "^4.0.3",
     "better-sqlite3": "^12.5.0",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
