@@ -25,8 +25,8 @@ SSH to the server and run:
 cd ~/learn-language && git pull
 cd projects/learn-language-web-app
 npm ci && NEXT_PHASE=phase-production-build npm run build && npm run build:mcp-app
-rm -rf /opt/learn-language && mkdir -p /opt/learn-language/.next
-cp -r .next/standalone/* /opt/learn-language/
+rm -rf /opt/learn-language
+cp -r .next/standalone /opt/learn-language
 cp -r .next/static /opt/learn-language/.next/static
 cp -r dist-mcp-app /opt/learn-language/dist-mcp-app
 # Re-create symlinks (see deploy.yml for full list)

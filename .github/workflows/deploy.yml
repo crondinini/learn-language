@@ -61,8 +61,7 @@ jobs:
 
             # Deploy standalone output to /opt/learn-language
             rm -rf $DEPLOY_DIR
-            mkdir -p $DEPLOY_DIR/.next
-            cp -r .next/standalone/* $DEPLOY_DIR/
+            cp -r .next/standalone $DEPLOY_DIR
             cp -r .next/static $DEPLOY_DIR/.next/static
             cp -r dist-mcp-app $DEPLOY_DIR/dist-mcp-app
 
