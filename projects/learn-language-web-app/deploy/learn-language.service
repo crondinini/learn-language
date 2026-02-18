@@ -8,6 +8,7 @@ WorkingDirectory=/opt/learn-language
 ExecStart=/usr/bin/node server.js
 EnvironmentFile=/mnt/HC_Volume_104464186/learn-language/.env.local
 Environment=NODE_ENV=production
+Environment=PATH=/root/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 Restart=on-failure
 StandardOutput=journal
 StandardError=journal
