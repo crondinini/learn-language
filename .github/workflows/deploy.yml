@@ -26,6 +26,7 @@ jobs:
             VOLUME_PATH="/mnt/HC_Volume_104464186/learn-language"
             APP_DIR=~/learn-language
             WEB_APP_DIR=$APP_DIR/projects/learn-language-web-app
+            DEPLOY_DIR=/opt/learn-language
 
             # Clone or pull latest code
             if [ ! -d "$APP_DIR/.git" ]; then
@@ -53,12 +54,32 @@ jobs:
               echo "✓ Database backed up"
             fi
 
-            # Build and restart (uses local cache)
-            docker compose -f docker-compose.hetzner.yml build
-            docker compose -f docker-compose.hetzner.yml up -d
+            # Build the application
+            npm ci
+            NEXT_PHASE=phase-production-build npm run build
+            npm run build:mcp-app
 
-            # Clean up old images
-            docker image prune -f
+            # Deploy standalone output to /opt/learn-language
+            rm -rf $DEPLOY_DIR
+            mkdir -p $DEPLOY_DIR/.next
+            cp -r .next/standalone/* $DEPLOY_DIR/
+            cp -r .next/static $DEPLOY_DIR/.next/static
+            cp -r dist-mcp-app $DEPLOY_DIR/dist-mcp-app
+
+            # Create symlinks for persistent data
+            ln -sfn $VOLUME_PATH/data $DEPLOY_DIR/data
+            ln -sfn $VOLUME_PATH/data/audio $DEPLOY_DIR/public/audio
+            ln -sfn $VOLUME_PATH/data/images $DEPLOY_DIR/public/images
+            ln -sfn $VOLUME_PATH/data/homework $DEPLOY_DIR/public/homework
+            ln -sfn $VOLUME_PATH/.env.local $DEPLOY_DIR/.env.local
+            ln -sfn $VOLUME_PATH/tts $DEPLOY_DIR/tts
+
+            # Copy systemd service file if changed
+            cp $WEB_APP_DIR/deploy/learn-language.service /etc/systemd/system/learn-language.service
+            systemctl daemon-reload
+
+            # Restart the service
+            systemctl restart learn-language
 
             # Verify deployment
             sleep 5
@@ -66,5 +87,6 @@ jobs:
               echo "✓ Deployment successful!"
             else
               echo "✗ Health check failed"
+              journalctl -u learn-language --no-pager -n 20
               exit 1
             fi

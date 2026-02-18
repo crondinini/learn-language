@@ -44,7 +44,7 @@ Endpoint: `https://learn.rocksbythesea.uk/mcp`
 - **Server**: Hetzner VPS (Debian)
 - **URL**: https://learn.rocksbythesea.uk
 - **HTTPS**: Cloudflare Tunnel
-- **Deploy**: Auto on push to `main` via GitHub Actions
+- **Deploy**: Auto on push to `main` via GitHub Actions (bare-metal systemd, no Docker)
 - **Data**: Hetzner volume at `/mnt/HC_Volume_104464186/learn-language/`
 
 ## Skills
@@ -62,6 +62,7 @@ Endpoint: `https://learn.rocksbythesea.uk/mcp`
 
 <!-- Keep only relevant/current changes. Remove entries that are superseded or no longer applicable. -->
 
+- **2026-02**: Migrated deployment from Docker to bare-metal systemd service (builds on server, runs as `/opt/learn-language/server.js`)
 - **2026-02**: Added generation history - past generations are persisted in SQLite and shown on `/generate` page
 - **2026-02**: Added `/generate` page and `generate-words` skill for batch English-to-Arabic vocabulary generation
 - **2025-02**: Reorganized into monorepo structure under `projects/`

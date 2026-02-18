@@ -1,21 +1,36 @@
 ## Deployment
 
-The app is deployed on a **Hetzner server** and automatically deploys on push to `main` via GitHub Actions.
+The app is deployed on a **Hetzner server** as a bare-metal systemd service, automatically deployed on push to `main` via GitHub Actions.
 
 - **URL**: https://learn.rocksbythesea.uk
 - **Deployment**: Automatic via GitHub Actions on push to `main`
-- **How it works**: GitHub Action SSHs to Hetzner, pulls latest code, builds Docker image locally, restarts containers
+- **How it works**: GitHub Action SSHs to Hetzner, pulls latest code, runs `npm ci && npm run build`, copies standalone output to `/opt/learn-language/`, restarts systemd service
 - **Database**: SQLite on Hetzner volume at `/mnt/HC_Volume_104464186/learn-language/data/`
 - **HTTPS**: Cloudflare Tunnel (runs as systemd service)
+- **Service**: `learn-language.service` (systemd unit in `deploy/`)
+
+### Useful commands (on server)
+
+```bash
+systemctl status learn-language    # Service status
+systemctl restart learn-language   # Restart
+journalctl -u learn-language -f    # Follow logs
+journalctl -u learn-language -n 50 # Last 50 log lines
+```
 
 ### Manual deployment (if needed)
 
 SSH to the server and run:
 ```bash
-cd ~/learn-language
-git pull
-docker compose -f docker-compose.hetzner.yml build
-docker compose -f docker-compose.hetzner.yml up -d
+cd ~/learn-language && git pull
+cd projects/learn-language-web-app
+npm ci && NEXT_PHASE=phase-production-build npm run build && npm run build:mcp-app
+rm -rf /opt/learn-language && mkdir -p /opt/learn-language/.next
+cp -r .next/standalone/* /opt/learn-language/
+cp -r .next/static /opt/learn-language/.next/static
+cp -r dist-mcp-app /opt/learn-language/dist-mcp-app
+# Re-create symlinks (see deploy.yml for full list)
+systemctl restart learn-language
 ```
 
 ### Data locations on Hetzner
