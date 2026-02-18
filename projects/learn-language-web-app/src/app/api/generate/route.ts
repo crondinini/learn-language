@@ -67,7 +67,8 @@ Do NOT ask for confirmation. Just do it.`;
         [
           "--print",
           "--verbose",
-          "--dangerously-skip-permissions",
+          "--allowedTools",
+          "Bash",
           "--output-format",
           "stream-json",
           "--include-partial-messages",
