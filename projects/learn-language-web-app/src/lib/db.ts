@@ -224,6 +224,34 @@ function getDb(): Database.Database {
     );
 
     CREATE INDEX IF NOT EXISTS idx_generations_created_at ON generations(created_at);
+
+    -- Lessons table: class sessions with transcripts and AI-generated summaries
+    CREATE TABLE IF NOT EXISTS lessons (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      lesson_date TEXT NOT NULL,
+      transcript TEXT NOT NULL DEFAULT '',
+      summary TEXT,
+      grammar_notes TEXT,
+      notes TEXT,
+      session_id TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    );
+
+    -- Join table: links cards to the lesson they were generated from
+    CREATE TABLE IF NOT EXISTS lesson_cards (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      lesson_id INTEGER NOT NULL,
+      card_id INTEGER NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE CASCADE,
+      FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE CASCADE,
+      UNIQUE(lesson_id, card_id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_lesson_cards_lesson_id ON lesson_cards(lesson_id);
+    CREATE INDEX IF NOT EXISTS idx_lesson_cards_card_id ON lesson_cards(card_id);
   `);
 
   // Migration: Add image_url column if it doesn't exist (for existing databases)
@@ -458,6 +486,28 @@ export interface Generation {
   result: string | null;
   cost: number | null;
   duration: number | null;
+  created_at: string;
+}
+
+// Lesson interface
+export interface Lesson {
+  id: number;
+  title: string;
+  lesson_date: string;
+  transcript: string;
+  summary: string | null;
+  grammar_notes: string | null;
+  notes: string | null;
+  session_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// LessonCard linking interface
+export interface LessonCard {
+  id: number;
+  lesson_id: number;
+  card_id: number;
   created_at: string;
 }
 

@@ -22,6 +22,8 @@ Arabic flashcard web application with spaced repetition learning.
 | `/conjugation` | Arabic verb conjugation practice with FSRS |
 | `/homework` | Recording and written homework assignments |
 | `/generate` | Generate Arabic vocabulary from English words via Claude Code skill |
+| `/lessons` | Class lessons with transcripts, AI summaries, and card generation |
+| `/lessons/[id]` | Lesson detail: transcript, summarize, generate cards, notes |
 | `/reading` | Arabic reading passages with linked vocabulary |
 
 ## MCP Server
@@ -62,6 +64,7 @@ Endpoint: `https://learn.rocksbythesea.uk/mcp`
 
 <!-- Keep only relevant/current changes. Remove entries that are superseded or no longer applicable. -->
 
+- **2026-02**: Added Lessons feature — class transcripts with AI summarization and card generation (continuable conversations via Claude `--resume`)
 - **2026-02**: Migrated deployment from Docker to bare-metal systemd service (builds on server, runs as `/opt/learn-language/server.js`)
 - **2026-02**: Added generation history - past generations are persisted in SQLite and shown on `/generate` page
 - **2026-02**: Added `/generate` page and `generate-words` skill for batch English-to-Arabic vocabulary generation
