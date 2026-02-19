@@ -16,15 +16,19 @@ Each project has a `STATE.md` file that captures the current state of the projec
 | Project | Description | State |
 |---------|-------------|-------|
 | [learn-language-web-app](./projects/learn-language-web-app) | Arabic flashcard app with spaced repetition | [STATE.md](./projects/learn-language-web-app/STATE.md) |
+| [audio-to-cards](./projects/audio-to-cards) | Local tools for extracting Arabic vocabulary from audio | [STATE.md](./projects/audio-to-cards/STATE.md) |
 
 ## Repository Structure
 
 ```
 .github/workflows/     # GitHub Actions for CI/CD
 projects/
-└── learn-language-web-app/    # Next.js web application
-    ├── CLAUDE.md              # Project-specific instructions
-    └── STATE.md               # Current state of project
+├── learn-language-web-app/    # Next.js web application
+│   ├── CLAUDE.md              # Project-specific instructions
+│   └── STATE.md               # Current state of project
+└── audio-to-cards/            # Python audio processing tools (local only)
+    ├── CLAUDE.md
+    └── STATE.md
 ```
 
 ## Infrastructure
