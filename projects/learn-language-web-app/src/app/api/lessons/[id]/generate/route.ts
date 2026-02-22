@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { spawn } from "child_process";
 import db from "@/lib/db";
-import { getLessonById, updateLesson, linkCardsToLesson, getLessonCardIds } from "@/lib/lessons";
+import { getLessonById, updateLesson, linkCardsToLesson } from "@/lib/lessons";
 
 export async function POST(
   request: NextRequest,
@@ -57,9 +57,11 @@ INSTRUCTIONS FOR CREATING CARDS:
    curl -X POST "${apiUrl}/api/decks/{deck_id}/cards" \\
      -H "Content-Type: application/json" \\
      -H "Authorization: Bearer ${apiToken}" \\
-     -d '[{"front": "Arabic word with diacritics", "back": "English translation", "notes": "optional context"}]'
+     -d '[{"front": "...", "back": "...", "notes": "optional context"}]'
 
-   Remember: front = Arabic, back = English.
+   CARD FORMAT RULES:
+   - Vocabulary cards: front = Arabic word with diacritics, back = English translation
+   - Grammar cards: front = English question that tests the grammar concept (e.g. "What case is used for the subject of a sentence?" or "What noun form do numbers 3-10 require?"), back = the answer with Arabic terms and examples. Do NOT put Arabic grammar terminology as the front — the student should be quizzed with an English question and recall the Arabic grammar rule.
 
 4. At the end, output a summary:
    SUMMARY:
@@ -73,8 +75,8 @@ Do NOT ask for confirmation. Just create the cards.`;
     prompt = message;
   }
 
-  // Track card IDs before generation to find new ones after
-  const cardIdsBefore = getLessonCardIds(lessonId);
+  // Snapshot ALL card IDs before generation so we can diff after to find newly created ones
+  const cardIdsBefore = getAllCardIds();
 
   const encoder = new TextEncoder();
   const secrets = [apiToken].filter(Boolean) as string[];
