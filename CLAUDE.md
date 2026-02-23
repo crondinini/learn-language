@@ -17,6 +17,7 @@ Each project has a `STATE.md` file that captures the current state of the projec
 |---------|-------------|-------|
 | [learn-language-web-app](./projects/learn-language-web-app) | Arabic flashcard app with spaced repetition | [STATE.md](./projects/learn-language-web-app/STATE.md) |
 | [audio-to-cards](./projects/audio-to-cards) | Local tools for extracting Arabic vocabulary from audio | [STATE.md](./projects/audio-to-cards/STATE.md) |
+| [period-tracker](./projects/period-tracker) | Period tracking app with partner sharing (Flutter + Hono API) | [STATE.md](./projects/period-tracker/STATE.md) |
 
 ## Repository Structure
 
@@ -26,7 +27,12 @@ projects/
 ├── learn-language-web-app/    # Next.js web application
 │   ├── CLAUDE.md              # Project-specific instructions
 │   └── STATE.md               # Current state of project
-└── audio-to-cards/            # Python audio processing tools (local only)
+├── audio-to-cards/            # Python audio processing tools (local only)
+│   ├── CLAUDE.md
+│   └── STATE.md
+└── period-tracker/            # Flutter + Hono period tracker with partner sharing
+    ├── api/                   # TypeScript backend
+    ├── app/                   # Flutter mobile app
     ├── CLAUDE.md
     └── STATE.md
 ```

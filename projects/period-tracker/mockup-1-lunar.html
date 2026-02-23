@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>in sync — lunar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0c0a1a;
+    --surface: #151228;
+    --surface-raised: #1c1836;
+    --plum: #6b3fa0;
+    --plum-light: #9a6dd7;
+    --gold: #d4a259;
+    --gold-dim: #8a6a3a;
+    --rose: #c4607a;
+    --rose-dim: rgba(196, 96, 122, 0.15);
+    --text: #e8e4f0;
+    --text-dim: #7a7490;
+    --text-mid: #a9a3bc;
+    --bleed: #2a1a4a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    max-width: 430px;
+    margin: 0 auto;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: -30%;
+    right: -40%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(107, 63, 160, 0.12) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -20%;
+    left: -30%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(212, 162, 89, 0.06) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app { position: relative; z-index: 1; padding: 0 20px 100px; }
+
+  /* Header */
+  .header {
+    padding: 50px 0 30px;
+    text-align: center;
+  }
+
+  .header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: 28px;
+    letter-spacing: 6px;
+    text-transform: lowercase;
+    color: var(--gold);
+    opacity: 0;
+    animation: fadeDown 0.8s ease forwards;
+  }
+
+  .header .subtitle {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-top: 6px;
+    opacity: 0;
+    animation: fadeDown 0.8s ease 0.15s forwards;
+  }
+
+  /* Moon Phase Cycle Viz */
+  .cycle-ring {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 30px 0 10px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.3s forwards;
+  }
+
+  .moon-container {
+    position: relative;
+    width: 200px;
+    height: 200px;
+  }
+
+  .moon-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 1px solid rgba(212, 162, 89, 0.15);
+  }
+
+  .moon-ring::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 50%;
+    border: 1px solid transparent;
+    border-top-color: var(--gold);
+    transform: rotate(-20deg);
+  }
+
+  .moon-progress {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: conic-gradient(
+      from 0deg,
+      var(--rose) 0deg,
+      var(--plum) 72deg,
+      transparent 72deg
+    );
+    mask: radial-gradient(circle, transparent 65%, black 66%);
+    -webkit-mask: radial-gradient(circle, transparent 65%, black 66%);
+    opacity: 0.6;
+  }
+
+  .moon-center {
+    position: absolute;
+    inset: 25%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 40%, var(--surface-raised), var(--bg));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 0 30px rgba(0,0,0,0.4), 0 0 40px rgba(107, 63, 160, 0.08);
+  }
+
+  .moon-center .day-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 42px;
+    font-weight: 300;
+    color: var(--gold);
+    line-height: 1;
+  }
+
+  .moon-center .day-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  .cycle-phase {
+    text-align: center;
+    margin-top: 16px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.45s forwards;
+  }
+
+  .cycle-phase .phase-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 400;
+    font-style: italic;
+    color: var(--rose);
+  }
+
+  .cycle-phase .phase-desc {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  /* Week Strip */
+  .week-section {
+    margin-top: 32px;
+    opacity: 0;
+    animation: fadeUp 0.7s ease 0.55s forwards;
+  }
+
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 14px;
+  }
+
+  .week-strip {
+    display: flex;
+    gap: 6px;
+  }
+
+  .week-day {
+    flex: 1;
+    text-align: center;
+    padding: 14px 0;
+    border-radius: 14px;
+    background: var(--surface);
+    border: 1px solid transparent;
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+
+  .week-day:hover {
+    background: var(--surface-raised);
+    transform: translateY(-2px);
+  }
+
+  .week-day.today {
+    background: var(--surface-raised);
+    border-color: var(--gold-dim);
+    box-shadow: 0 0 20px rgba(212, 162, 89, 0.08);
+  }
+
+  .week-day.period {
+    background: var(--rose-dim);
+    border-color: rgba(196, 96, 122, 0.25);
+  }
+
+  .week-day.period.today {
+    border-color: var(--rose);
+    box-shadow: 0 0 20px rgba(196, 96, 122, 0.15);
+  }
+
+  .week-day .day-name {
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+
+  .week-day .day-number {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--text);
+    margin-top: 4px;
+  }
+
+  .week-day.today .day-number { color: var(--gold); }
+  .week-day.period .day-number { color: var(--rose); }
+
+  .week-day .dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    margin: 6px auto 0;
+    background: transparent;
+  }
+
+  .week-day.period .dot { background: var(--rose); }
+  .week-day.today .dot { background: var(--gold); }
+  .week-day.period.today .dot {
+    background: var(--rose);
+    box-shadow: 0 0 6px var(--rose);
+  }
+
+  /* Me section */
+  .me-card {
+    margin-top: 28px;
+    padding: 22px;
+    background: var(--surface);
+    border-radius: 20px;
+    border: 1px solid rgba(107, 63, 160, 0.12);
+    opacity: 0;
+    animation: fadeUp 0.7s ease 0.65s forwards;
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .card-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--text);
+  }
+
+  .card-badge {
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: var(--rose-dim);
+    color: var(--rose);
+    border: 1px solid rgba(196, 96, 122, 0.2);
+  }
+
+  .symptoms-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+  }
+
+  .symptom-tag {
+    font-size: 12px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    background: var(--bleed);
+    color: var(--plum-light);
+    border: 1px solid rgba(107, 63, 160, 0.15);
+  }
+
+  .mood-bar {
+    margin-top: 16px;
+  }
+
+  .mood-bar .bar-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .bar-track {
+    height: 4px;
+    background: var(--surface-raised);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.6s ease;
+  }
+
+  .bar-fill.energy { background: linear-gradient(90deg, var(--plum), var(--plum-light)); width: 35%; }
+  .bar-fill.mood { background: linear-gradient(90deg, var(--gold-dim), var(--gold)); width: 55%; }
+
+  /* Partner Card */
+  .partner-card {
+    margin-top: 20px;
+    padding: 22px;
+    background: var(--surface);
+    border-radius: 20px;
+    border: 1px solid rgba(212, 162, 89, 0.1);
+    opacity: 0;
+    animation: fadeUp 0.7s ease 0.75s forwards;
+  }
+
+  .partner-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    color: var(--bg);
+    font-weight: 600;
+  }
+
+  .partner-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .partner-info .name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    color: var(--text);
+  }
+
+  .partner-info .status {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 1px;
+  }
+
+  .insight-box {
+    padding: 16px;
+    background: rgba(212, 162, 89, 0.05);
+    border-radius: 14px;
+    border: 1px solid rgba(212, 162, 89, 0.08);
+    margin-bottom: 14px;
+  }
+
+  .insight-box .insight-title {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+
+  .insight-box p {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-mid);
+    font-weight: 300;
+  }
+
+  .needs-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .needs-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--text-mid);
+    font-weight: 300;
+    line-height: 1.5;
+  }
+
+  .needs-list .icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: var(--bleed);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 14px;
+    margin-top: 1px;
+  }
+
+  /* Sync Indicator */
+  .sync-section {
+    margin-top: 20px;
+    padding: 18px;
+    background: var(--surface);
+    border-radius: 20px;
+    border: 1px solid rgba(107, 63, 160, 0.1);
+    text-align: center;
+    opacity: 0;
+    animation: fadeUp 0.7s ease 0.85s forwards;
+  }
+
+  .sync-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+
+  .sync-status {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-style: italic;
+    color: var(--plum-light);
+  }
+
+  .sync-detail {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 6px;
+  }
+
+  /* Bottom Nav */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 430px;
+    padding: 12px 24px 28px;
+    background: linear-gradient(to top, var(--bg) 60%, transparent);
+    display: flex;
+    justify-content: space-around;
+    z-index: 10;
+  }
+
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    color: var(--text-dim);
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color 0.3s;
+  }
+
+  .nav-item:hover, .nav-item.active { color: var(--gold); }
+
+  .nav-item svg {
+    width: 22px;
+    height: 22px;
+    stroke-width: 1.5;
+    fill: none;
+    stroke: currentColor;
+  }
+
+  /* Animations */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="header">
+    <h1>in sync</h1>
+    <p class="subtitle">february 2026</p>
+  </header>
+
+  <!-- Moon Phase Cycle -->
+  <div class="cycle-ring">
+    <div class="moon-container">
+      <div class="moon-ring"></div>
+      <div class="moon-progress"></div>
+      <div class="moon-center">
+        <span class="day-num">3</span>
+        <span class="day-label">day of cycle</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="cycle-phase">
+    <div class="phase-name">Menstrual Phase</div>
+    <div class="phase-desc">Days 1–5 · Shedding & renewal</div>
+  </div>
+
+  <!-- Week Strip -->
+  <div class="week-section">
+    <div class="section-label">This week</div>
+    <div class="week-strip">
+      <div class="week-day period">
+        <div class="day-name">Mon</div>
+        <div class="day-number">17</div>
+        <div class="dot"></div>
+      </div>
+      <div class="week-day period">
+        <div class="day-name">Tue</div>
+        <div class="day-number">18</div>
+        <div class="dot"></div>
+      </div>
+      <div class="week-day period">
+        <div class="day-name">Wed</div>
+        <div class="day-number">19</div>
+        <div class="dot"></div>
+      </div>
+      <div class="week-day period today">
+        <div class="day-name">Thu</div>
+        <div class="day-number">20</div>
+        <div class="dot"></div>
+      </div>
+      <div class="week-day period">
+        <div class="day-name">Fri</div>
+        <div class="day-number">21</div>
+        <div class="dot"></div>
+      </div>
+      <div class="week-day">
+        <div class="day-name">Sat</div>
+        <div class="day-number">22</div>
+        <div class="dot"></div>
+      </div>
+      <div class="week-day">
+        <div class="day-name">Sun</div>
+        <div class="day-number">23</div>
+        <div class="dot"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Me Card -->
+  <div class="me-card">
+    <div class="card-header">
+      <div class="card-title">You</div>
+      <div class="card-badge">Day 3 · Period</div>
+    </div>
+    <div class="mood-bar">
+      <div class="bar-label"><span>Energy</span><span>Low</span></div>
+      <div class="bar-track"><div class="bar-fill energy"></div></div>
+    </div>
+    <div class="mood-bar" style="margin-top: 12px;">
+      <div class="bar-label"><span>Mood</span><span>Gentle</span></div>
+      <div class="bar-track"><div class="bar-fill mood"></div></div>
+    </div>
+    <div class="symptoms-row">
+      <span class="symptom-tag">Cramps</span>
+      <span class="symptom-tag">Fatigue</span>
+      <span class="symptom-tag">Cravings</span>
+    </div>
+  </div>
+
+  <!-- Partner Card -->
+  <div class="partner-card">
+    <div class="partner-header">
+      <div class="partner-avatar">S</div>
+      <div class="partner-info">
+        <div class="name">Sofia</div>
+        <div class="status">Day 18 · Luteal phase</div>
+      </div>
+    </div>
+
+    <div class="insight-box">
+      <div class="insight-title">Her mood right now</div>
+      <p>Sofia may be feeling more introspective and emotionally sensitive. The luteal phase often brings a need for reassurance and deeper connection. She might seem quieter than usual — this is normal.</p>
+    </div>
+
+    <div class="section-label" style="margin-top: 4px;">What she needs</div>
+    <ul class="needs-list">
+      <li>
+        <span class="icon">🫖</span>
+        <span>Warm drinks and comfort food — her body is craving warmth and nourishment</span>
+      </li>
+      <li>
+        <span class="icon">🤲</span>
+        <span>Physical closeness without pressure — just being near you helps</span>
+      </li>
+      <li>
+        <span class="icon">🌙</span>
+        <span>Earlier nights — she'll likely feel tired sooner this week</span>
+      </li>
+      <li>
+        <span class="icon">💬</span>
+        <span>Patience with mood shifts — they're hormonal, not personal</span>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Sync Status -->
+  <div class="sync-section">
+    <div class="sync-label">Cycle sync</div>
+    <div class="sync-status">15 days apart</div>
+    <div class="sync-detail">Your cycles are offset — you can support each other through different phases</div>
+  </div>
+</div>
+
+<!-- Bottom Nav -->
+<nav class="bottom-nav">
+  <div class="nav-item active">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3 C12 3 12 21 12 21"/></svg>
+    Today
+  </div>
+  <div class="nav-item">
+    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 2v4M16 2v4"/></svg>
+    Calendar
+  </div>
+  <div class="nav-item">
+    <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+    Partner
+  </div>
+  <div class="nav-item">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0 1 12 0v2"/></svg>
+    Profile
+  </div>
+</nav>
+
+</body>
+</html>

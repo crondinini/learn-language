@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Synced</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,300;1,9..144,400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #faf5ed;
+    --warm-white: #f5ede0;
+    --sand: #e8dcc8;
+    --terracotta: #c4654a;
+    --terracotta-light: #d98a72;
+    --terracotta-bg: rgba(196, 101, 74, 0.08);
+    --sage: #6b7f5e;
+    --sage-light: #8fa87e;
+    --sage-bg: rgba(107, 127, 94, 0.08);
+    --bark: #4a3f35;
+    --bark-light: #6d5f52;
+    --text: #3a322a;
+    --text-mid: #7a6f63;
+    --text-dim: #a89d91;
+    --clay: #b8845c;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: var(--cream);
+    color: var(--text);
+    min-height: 100vh;
+    max-width: 430px;
+    margin: 0 auto;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Organic texture bg */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 0%, rgba(196, 101, 74, 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 100%, rgba(107, 127, 94, 0.06) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app { position: relative; z-index: 1; padding: 0 22px 110px; }
+
+  /* Header */
+  .header {
+    padding: 48px 0 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    opacity: 0;
+    animation: softIn 0.7s ease forwards;
+  }
+
+  .header-left h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: 32px;
+    color: var(--bark);
+    line-height: 1;
+  }
+
+  .header-left .greeting {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    font-weight: 300;
+  }
+
+  .header-right {
+    display: flex;
+    gap: 6px;
+  }
+
+  .avatar-sm {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 2px solid var(--cream);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fraunces', serif;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .avatar-sm.me { background: var(--terracotta-bg); color: var(--terracotta); border-color: var(--terracotta-light); }
+  .avatar-sm.her { background: var(--sage-bg); color: var(--sage); border-color: var(--sage-light); margin-left: -10px; }
+
+  /* Week Garden */
+  .week-garden {
+    margin-top: 28px;
+    opacity: 0;
+    animation: softIn 0.7s ease 0.15s forwards;
+  }
+
+  .week-garden .label {
+    font-family: 'Fraunces', serif;
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--text-mid);
+    margin-bottom: 14px;
+  }
+
+  .week-row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+  }
+
+  .garden-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+  }
+
+  .garden-day .gd-name {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .garden-day .gd-circle {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    background: var(--warm-white);
+  }
+
+  .garden-day .gd-num {
+    font-family: 'Fraunces', serif;
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--text-mid);
+  }
+
+  /* Period days: filled circle */
+  .garden-day.period .gd-circle {
+    background: var(--terracotta);
+  }
+
+  .garden-day.period .gd-num {
+    color: white;
+    font-weight: 600;
+  }
+
+  /* Follicular days */
+  .garden-day.follicular .gd-circle {
+    background: var(--sage-bg);
+  }
+
+  .garden-day.follicular .gd-num {
+    color: var(--sage);
+  }
+
+  /* Today: ring highlight + scale */
+  .garden-day.today .gd-circle {
+    transform: scale(1.12);
+    box-shadow: 0 0 0 3px var(--cream), 0 0 0 5px var(--terracotta-light);
+  }
+
+  /* Dot under period days */
+  .garden-day .gd-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: transparent;
+  }
+
+  .garden-day.period .gd-dot {
+    background: var(--terracotta);
+  }
+
+  .garden-day.follicular .gd-dot {
+    background: var(--sage-light);
+  }
+
+  .garden-day.today .gd-dot {
+    animation: pulseSoft 2s ease-in-out infinite;
+  }
+
+  @keyframes pulseSoft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* My Cycle Card */
+  .my-cycle {
+    margin-top: 24px;
+    padding: 24px;
+    background: white;
+    border-radius: 24px;
+    border: 1px solid var(--sand);
+    opacity: 0;
+    animation: softIn 0.7s ease 0.3s forwards;
+  }
+
+  .cycle-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .cycle-top h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-size: 20px;
+    color: var(--bark);
+  }
+
+  .phase-pill {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 5px 12px;
+    border-radius: 20px;
+  }
+
+  .phase-pill.period-pill {
+    background: var(--terracotta-bg);
+    color: var(--terracotta);
+  }
+
+  .phase-pill.luteal-pill {
+    background: var(--sage-bg);
+    color: var(--sage);
+  }
+
+  .cycle-progress {
+    margin-top: 20px;
+    display: flex;
+    gap: 3px;
+    height: 8px;
+  }
+
+  .cycle-seg {
+    flex: 1;
+    border-radius: 4px;
+    background: var(--warm-white);
+  }
+
+  .cycle-seg.active { background: var(--terracotta-light); }
+  .cycle-seg.past { background: var(--terracotta); }
+
+  .cycle-info {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+  }
+
+  .cycle-info span {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-weight: 300;
+  }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-top: 20px;
+  }
+
+  .stat-box {
+    text-align: center;
+    padding: 14px 8px;
+    background: var(--cream);
+    border-radius: 16px;
+  }
+
+  .stat-box .val {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--bark);
+  }
+
+  .stat-box .stat-label {
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 2px;
+    letter-spacing: 0.5px;
+  }
+
+  /* Partner Section */
+  .partner-section {
+    margin-top: 20px;
+    opacity: 0;
+    animation: softIn 0.7s ease 0.45s forwards;
+  }
+
+  .partner-card {
+    padding: 24px;
+    background: white;
+    border-radius: 24px;
+    border: 1px solid var(--sand);
+  }
+
+  .partner-top {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .partner-avatar-lg {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--sage-bg), var(--sage-light));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    color: white;
+    font-weight: 400;
+  }
+
+  .partner-meta h3 {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-size: 20px;
+    color: var(--bark);
+  }
+
+  .partner-meta .p-phase {
+    font-size: 12px;
+    color: var(--sage);
+    margin-top: 2px;
+  }
+
+  /* Mood forecast */
+  .mood-forecast {
+    padding: 20px;
+    background: var(--sage-bg);
+    border-radius: 18px;
+    margin-bottom: 16px;
+    border: 1px solid rgba(107, 127, 94, 0.12);
+  }
+
+  .forecast-header {
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+    font-weight: 400;
+    color: var(--sage);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .forecast-header .leaf {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    background: var(--sage-light);
+    border-radius: 50% 0 50% 0;
+    transform: rotate(-10deg);
+  }
+
+  .mood-forecast p {
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text-mid);
+    font-weight: 300;
+  }
+
+  /* Needs as garden notes */
+  .garden-notes {
+    list-style: none;
+  }
+
+  .garden-note {
+    display: flex;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--warm-white);
+    align-items: flex-start;
+  }
+
+  .garden-note:last-child { border-bottom: none; }
+
+  .note-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    background: var(--cream);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .note-content h4 {
+    font-family: 'Fraunces', serif;
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--bark);
+    margin-bottom: 2px;
+  }
+
+  .note-content p {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.5;
+    font-weight: 300;
+  }
+
+  /* Sync bloom */
+  .sync-bloom {
+    margin-top: 20px;
+    padding: 20px;
+    background: white;
+    border-radius: 24px;
+    border: 1px solid var(--sand);
+    text-align: center;
+    opacity: 0;
+    animation: softIn 0.7s ease 0.6s forwards;
+  }
+
+  .sync-flowers {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .sync-flower {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+  }
+
+  .sync-flower.me-flower {
+    background: radial-gradient(circle, var(--terracotta-light), var(--terracotta));
+  }
+
+  .sync-flower.her-flower {
+    background: radial-gradient(circle, var(--sage-light), var(--sage));
+  }
+
+  .sync-bloom h3 {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: 18px;
+    color: var(--bark);
+  }
+
+  .sync-bloom .sync-desc {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    font-weight: 300;
+    line-height: 1.5;
+  }
+
+  /* Bottom Nav */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 430px;
+    padding: 10px 20px 28px;
+    background: linear-gradient(to top, var(--cream) 70%, transparent);
+    display: flex;
+    justify-content: space-around;
+    z-index: 10;
+  }
+
+  .nav-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    color: var(--text-dim);
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: color 0.3s;
+  }
+
+  .nav-btn:hover, .nav-btn.active { color: var(--terracotta); }
+
+  .nav-btn .nav-dot {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 1.5px solid currentColor;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .nav-btn.active .nav-dot {
+    background: var(--terracotta-bg);
+    border-color: var(--terracotta);
+  }
+
+  .nav-btn .nav-dot svg {
+    width: 12px;
+    height: 12px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.5;
+  }
+
+  @keyframes softIn {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="header">
+    <div class="header-left">
+      <h1>Synced</h1>
+      <p class="greeting">Good morning, Camila</p>
+    </div>
+    <div class="header-right">
+      <div class="avatar-sm me">C</div>
+      <div class="avatar-sm her">S</div>
+    </div>
+  </header>
+
+  <!-- Week Garden -->
+  <div class="week-garden">
+    <div class="label">Your week in bloom</div>
+    <div class="week-row">
+      <div class="garden-day period">
+        <span class="gd-name">Mon</span>
+        <div class="gd-circle"><span class="gd-num">17</span></div>
+        <div class="gd-dot"></div>
+      </div>
+      <div class="garden-day period">
+        <span class="gd-name">Tue</span>
+        <div class="gd-circle"><span class="gd-num">18</span></div>
+        <div class="gd-dot"></div>
+      </div>
+      <div class="garden-day period">
+        <span class="gd-name">Wed</span>
+        <div class="gd-circle"><span class="gd-num">19</span></div>
+        <div class="gd-dot"></div>
+      </div>
+      <div class="garden-day period today">
+        <span class="gd-name">Thu</span>
+        <div class="gd-circle"><span class="gd-num">20</span></div>
+        <div class="gd-dot"></div>
+      </div>
+      <div class="garden-day period">
+        <span class="gd-name">Fri</span>
+        <div class="gd-circle"><span class="gd-num">21</span></div>
+        <div class="gd-dot"></div>
+      </div>
+      <div class="garden-day follicular">
+        <span class="gd-name">Sat</span>
+        <div class="gd-circle"><span class="gd-num">22</span></div>
+        <div class="gd-dot"></div>
+      </div>
+      <div class="garden-day follicular">
+        <span class="gd-name">Sun</span>
+        <div class="gd-circle"><span class="gd-num">23</span></div>
+        <div class="gd-dot"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- My Cycle -->
+  <div class="my-cycle">
+    <div class="cycle-top">
+      <h2>Your cycle</h2>
+      <span class="phase-pill period-pill">Day 4 · Period</span>
+    </div>
+
+    <div class="cycle-progress">
+      <div class="cycle-seg past"></div>
+      <div class="cycle-seg past"></div>
+      <div class="cycle-seg past"></div>
+      <div class="cycle-seg active"></div>
+      <div class="cycle-seg"></div>
+      <div class="cycle-seg"></div>
+      <div class="cycle-seg"></div>
+      <div class="cycle-seg"></div>
+      <div class="cycle-seg"></div>
+      <div class="cycle-seg"></div>
+      <div class="cycle-seg"></div>
+      <div class="cycle-seg"></div>
+      <div class="cycle-seg"></div>
+      <div class="cycle-seg"></div>
+      <div class="cycle-seg"></div>
+      <div class="cycle-seg"></div>
+      <div class="cycle-seg"></div>
+      <div class="cycle-seg"></div>
+      <div class="cycle-seg"></div>
+      <div class="cycle-seg"></div>
+      <div class="cycle-seg"></div>
+      <div class="cycle-seg"></div>
+      <div class="cycle-seg"></div>
+      <div class="cycle-seg"></div>
+      <div class="cycle-seg"></div>
+      <div class="cycle-seg"></div>
+      <div class="cycle-seg"></div>
+      <div class="cycle-seg"></div>
+    </div>
+    <div class="cycle-info">
+      <span>Day 4 of 28</span>
+      <span>Period ends ~Sat</span>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-box">
+        <div class="val">28</div>
+        <div class="stat-label">Cycle length</div>
+      </div>
+      <div class="stat-box">
+        <div class="val">5</div>
+        <div class="stat-label">Period days</div>
+      </div>
+      <div class="stat-box">
+        <div class="val">24</div>
+        <div class="stat-label">Next period</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Partner Section -->
+  <div class="partner-section">
+    <div class="partner-card">
+      <div class="partner-top">
+        <div class="partner-avatar-lg">S</div>
+        <div class="partner-meta">
+          <h3>Sofia's cycle</h3>
+          <p class="p-phase">Day 21 · Late luteal</p>
+        </div>
+      </div>
+
+      <div class="mood-forecast">
+        <div class="forecast-header">
+          <span class="leaf"></span>
+          Mood forecast
+        </div>
+        <p>Sofia is in her late luteal phase — expect heightened emotions, a shorter fuse, and a deeper need for comfort. She may feel bloated or restless. This isn't a great time for big conversations or plans. Think: cozy, quiet, together.</p>
+      </div>
+
+      <ul class="garden-notes">
+        <li class="garden-note">
+          <div class="note-icon">🛁</div>
+          <div class="note-content">
+            <h4>Create calm spaces</h4>
+            <p>She'll gravitate toward warmth and softness. Run a bath, light a candle, lower the lights.</p>
+          </div>
+        </li>
+        <li class="garden-note">
+          <div class="note-icon">🍫</div>
+          <div class="note-content">
+            <h4>Keep snacks close</h4>
+            <p>Cravings peak now. Chocolate, carbs, and warm meals will be deeply appreciated.</p>
+          </div>
+        </li>
+        <li class="garden-note">
+          <div class="note-icon">🤍</div>
+          <div class="note-content">
+            <h4>Affirm and reassure</h4>
+            <p>She may doubt herself more this week. A simple "you're doing great" goes far.</p>
+          </div>
+        </li>
+        <li class="garden-note">
+          <div class="note-icon">📵</div>
+          <div class="note-content">
+            <h4>Less stimulation</h4>
+            <p>Reduce social plans if you can. She'll recharge best in low-key environments.</p>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Sync -->
+  <div class="sync-bloom">
+    <div class="sync-flowers">
+      <div class="sync-flower me-flower"></div>
+      <div class="sync-flower her-flower"></div>
+    </div>
+    <h3>Different seasons, same garden</h3>
+    <p class="sync-desc">You're in your period while Sofia enters her pre-menstrual phase. Take it slow together — you both need rest this week.</p>
+  </div>
+</div>
+
+<!-- Bottom Nav -->
+<nav class="bottom-nav">
+  <div class="nav-btn active">
+    <div class="nav-dot">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/></svg>
+    </div>
+    Home
+  </div>
+  <div class="nav-btn">
+    <div class="nav-dot">
+      <svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M5 10h14"/></svg>
+    </div>
+    Calendar
+  </div>
+  <div class="nav-btn">
+    <div class="nav-dot">
+      <svg viewBox="0 0 24 24"><path d="M12 6C12 6 6 12 6 15a6 6 0 0012 0c0-3-6-9-6-9z"/></svg>
+    </div>
+    Partner
+  </div>
+  <div class="nav-btn">
+    <div class="nav-dot">
+      <svg viewBox="0 0 24 24"><path d="M12 3v1m0 16v1m8.66-13.5l-.87.5M4.21 16l-.87.5M20.66 16l-.87-.5M4.21 8l-.87-.5M17 12h1M6 12H5"/><circle cx="12" cy="12" r="4"/></svg>
+    </div>
+    Settings
+  </div>
+</nav>
+
+</body>
+</html>
