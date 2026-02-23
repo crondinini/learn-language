@@ -1,0 +1,72 @@
+name: Deploy Period Tracker API
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'projects/period-tracker/api/**'
+      - '.github/workflows/deploy-period-tracker.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to Hetzner
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: ${{ secrets.HETZNER_USER }}
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          command_timeout: 10m
+          script: |
+            set -e
+
+            APP_DIR=~/learn-language
+            API_SRC=$APP_DIR/projects/period-tracker/api
+            DEPLOY_DIR=/opt/period-tracker
+
+            # Pull latest code
+            if [ ! -d "$APP_DIR/.git" ]; then
+              git clone git@github.com:${{ github.repository }}.git $APP_DIR
+            else
+              cd $APP_DIR
+              git fetch origin
+              git reset --hard origin/main
+            fi
+
+            # Deploy API directory
+            mkdir -p $DEPLOY_DIR/data
+            rsync -a --delete --exclude='data' --exclude='.env' --exclude='node_modules' $API_SRC/ $DEPLOY_DIR/
+
+            cd $DEPLOY_DIR
+
+            # Install deps and build
+            npm ci
+            npm run build
+
+            # Check .env exists
+            if [ ! -f .env ]; then
+              cp .env.example .env
+              echo "⚠ Created .env from example — edit $DEPLOY_DIR/.env with real values!"
+            fi
+
+            # Push schema to database
+            npx drizzle-kit push
+
+            # Install systemd service
+            cp deploy/period-tracker.service /etc/systemd/system/
+            systemctl daemon-reload
+            systemctl enable period-tracker
+            systemctl restart period-tracker
+
+            # Verify
+            sleep 3
+            if curl -sf http://localhost:3068/ > /dev/null; then
+              echo "✓ Period Tracker API deployed successfully!"
+            else
+              echo "✗ Health check failed"
+              journalctl -u period-tracker --no-pager -n 20
+              exit 1
+            fi

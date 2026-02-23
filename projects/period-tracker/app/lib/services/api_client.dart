@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class ApiClient {
-  static const String _baseUrl = 'http://localhost:3040'; // TODO: change for production
+  static const String _baseUrl = 'http://localhost:3068'; // TODO: change for production
   static const _storage = FlutterSecureStorage();
   static const _tokenKey = 'auth_token';
 

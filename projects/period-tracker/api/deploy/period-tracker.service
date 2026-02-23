@@ -1,0 +1,16 @@
+[Unit]
+Description=Period Tracker API
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/period-tracker
+ExecStart=/usr/bin/node dist/index.js
+EnvironmentFile=/opt/period-tracker/.env
+Environment=NODE_ENV=production
+Restart=on-failure
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

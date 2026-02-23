@@ -31,7 +31,7 @@ app.route("/predictions", predictionsRouter);
 app.route("/sync", syncRouter);
 app.route("/partners", partnersRouter);
 
-const port = Number(process.env.PORT) || 3040;
+const port = Number(process.env.PORT) || 3068;
 console.log(`Period Tracker API running on port ${port}`);
 
 serve({ fetch: app.fetch, port });
