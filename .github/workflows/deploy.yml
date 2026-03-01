@@ -67,11 +67,11 @@ jobs:
 
             # Create symlinks for persistent data
             ln -sfn $VOLUME_PATH/data $DEPLOY_DIR/data
-            ln -sfn $VOLUME_PATH/data/audio $DEPLOY_DIR/public/audio
-            ln -sfn $VOLUME_PATH/data/images $DEPLOY_DIR/public/images
-            ln -sfn $VOLUME_PATH/data/homework $DEPLOY_DIR/public/homework
             ln -sfn $VOLUME_PATH/.env.local $DEPLOY_DIR/.env.local
             ln -sfn $VOLUME_PATH/tts $DEPLOY_DIR/tts
+            # Homework files still live on filesystem — symlink to volume
+            rm -rf $DEPLOY_DIR/public/homework
+            ln -sfn $VOLUME_PATH/data/homework $DEPLOY_DIR/public/homework
 
             # Copy systemd service file if changed
             cp $WEB_APP_DIR/deploy/learn-language.service /etc/systemd/system/learn-language.service

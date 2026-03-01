@@ -3,7 +3,7 @@ import { readFile } from "fs/promises";
 import { existsSync } from "fs";
 import path from "path";
 
-// Serve media files dynamically (audio, images, homework)
+// Serve homework files from filesystem (homework stays on filesystem for now)
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
@@ -11,16 +11,8 @@ export async function GET(
   const { path: pathSegments } = await params;
   const filePath = pathSegments.join("/");
 
-  // Only allow specific directories
-  const allowedDirs = ["audio", "images", "homework"];
-  const dir = pathSegments[0];
-
-  if (!allowedDirs.includes(dir)) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
-
-  // Construct full path - files are in /app/public/ in container or ./public/ locally
-  const fullPath = path.join(process.cwd(), "public", filePath);
+  // Construct full path under public/homework/
+  const fullPath = path.join(process.cwd(), "public", "homework", filePath);
 
   if (!existsSync(fullPath)) {
     return NextResponse.json({ error: "File not found" }, { status: 404 });
@@ -29,12 +21,12 @@ export async function GET(
   try {
     const file = await readFile(fullPath);
 
-    // Determine content type
     const ext = path.extname(filePath).toLowerCase();
     const contentTypes: Record<string, string> = {
       ".mp3": "audio/mpeg",
       ".wav": "audio/wav",
       ".ogg": "audio/ogg",
+      ".webm": "audio/webm",
       ".jpg": "image/jpeg",
       ".jpeg": "image/jpeg",
       ".png": "image/png",
@@ -52,7 +44,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("Error serving media:", error);
+    console.error("Error serving homework media:", error);
     return NextResponse.json({ error: "Failed to read file" }, { status: 500 });
   }
 }

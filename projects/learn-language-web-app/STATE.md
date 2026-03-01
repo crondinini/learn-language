@@ -48,6 +48,7 @@ Endpoint: `https://learn.rocksbythesea.uk/mcp`
 - **HTTPS**: Cloudflare Tunnel
 - **Deploy**: Auto on push to `main` via GitHub Actions (bare-metal systemd, no Docker)
 - **Data**: Hetzner volume at `/mnt/HC_Volume_104464186/learn-language/`
+- **Media storage**: Audio/images stored as blobs in SQLite `media` table (survives deploys). Homework files still on filesystem.
 
 ## Skills
 
@@ -64,6 +65,7 @@ Endpoint: `https://learn.rocksbythesea.uk/mcp`
 
 <!-- Keep only relevant/current changes. Remove entries that are superseded or no longer applicable. -->
 
+- **2026-03**: Moved audio/image storage from filesystem to SQLite `media` table — media now survives deploys without symlinks
 - **2026-02**: Added Lessons feature — class transcripts with AI summarization and card generation (continuable conversations via Claude `--resume`)
 - **2026-02**: Migrated deployment from Docker to bare-metal systemd service (builds on server, runs as `/opt/learn-language/server.js`)
 - **2026-02**: Added generation history - past generations are persisted in SQLite and shown on `/generate` page

@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile, mkdir, unlink } from "fs/promises";
-import { existsSync } from "fs";
-import path from "path";
 import db from "@/lib/db";
 import { getCardById } from "@/lib/cards";
+import { saveMedia, deleteMedia, parseMediaId } from "@/lib/media";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
@@ -49,33 +47,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Card not found" }, { status: 404 });
     }
 
-    // Delete existing image if present
+    // Delete existing media if present
     if (card.image_url) {
-      const oldPath = path.join(process.cwd(), "public", card.image_url);
-      try {
-        await unlink(oldPath);
-      } catch {
-        // File might not exist, that's ok
+      const oldMediaId = parseMediaId(card.image_url);
+      if (oldMediaId) {
+        deleteMedia(oldMediaId);
       }
     }
 
-    // Ensure images directory exists
-    const imagesDir = path.join(process.cwd(), "public", "images");
-    if (!existsSync(imagesDir)) {
-      await mkdir(imagesDir, { recursive: true });
-    }
-
-    // Get file extension from mime type
-    const ext = image.type.split("/")[1].replace("jpeg", "jpg");
-    const filename = `card-${cardId}.${ext}`;
-    const filepath = path.join(imagesDir, filename);
-
-    // Save the file
+    // Save image to media table
     const buffer = Buffer.from(await image.arrayBuffer());
-    await writeFile(filepath, buffer);
+    const ext = image.type.split("/")[1].replace("jpeg", "jpg");
+    const mediaId = saveMedia(buffer, image.type, `card-${cardId}.${ext}`);
+    const imageUrl = `/api/media/${mediaId}`;
 
     // Update card with image URL
-    const imageUrl = `/api/media/images/${filename}`;
     const updateStmt = db.prepare(
       "UPDATE cards SET image_url = ?, updated_at = datetime('now') WHERE id = ?"
     );
@@ -112,13 +98,11 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Card not found" }, { status: 404 });
     }
 
-    // Delete file if exists
+    // Delete media blob
     if (card.image_url) {
-      const filepath = path.join(process.cwd(), "public", card.image_url);
-      try {
-        await unlink(filepath);
-      } catch {
-        // File might not exist, that's ok
+      const mediaId = parseMediaId(card.image_url);
+      if (mediaId) {
+        deleteMedia(mediaId);
       }
     }
 

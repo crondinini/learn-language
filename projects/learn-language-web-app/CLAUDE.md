@@ -35,8 +35,8 @@ systemctl restart learn-language
 
 ### Data locations on Hetzner
 - Database: `/mnt/HC_Volume_104464186/learn-language/data/learn-language.db`
-- Images: `/mnt/HC_Volume_104464186/learn-language/data/images/`
-- Audio: `/mnt/HC_Volume_104464186/learn-language/data/audio/`
+- Audio/Images: stored as blobs in the `media` table in SQLite (served via `/api/media/{id}`)
+- Homework files: `/mnt/HC_Volume_104464186/learn-language/data/homework/` (still on filesystem)
 - Env file: `/mnt/HC_Volume_104464186/learn-language/.env.local`
 
 ## Available Skills

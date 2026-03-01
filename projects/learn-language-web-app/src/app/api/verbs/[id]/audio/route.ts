@@ -1,19 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile, mkdir, unlink } from "fs/promises";
-import { existsSync } from "fs";
-import path from "path";
 import db from "@/lib/db";
-
-/**
- * Sanitize a string for use in a filename
- */
-function sanitizeFilename(str: string): string {
-  return str
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .substring(0, 30);
-}
+import { saveMedia, deleteMedia, parseMediaId } from "@/lib/media";
 
 // TTS Provider config
 const TTS_PROVIDER = process.env.TTS_PROVIDER || "elevenlabs";
@@ -131,20 +118,19 @@ export async function POST(
       );
     }
 
-    // Ensure audio directory exists
-    const audioDir = path.join(process.cwd(), "public", "audio");
-    if (!existsSync(audioDir)) {
-      await mkdir(audioDir, { recursive: true });
+    // Delete old media if regenerating
+    if (verb.audio_url) {
+      const oldMediaId = parseMediaId(verb.audio_url);
+      if (oldMediaId) {
+        deleteMedia(oldMediaId);
+      }
     }
 
-    // Save audio file with verb ID and meaning in filename
-    const safeName = sanitizeFilename(verb.meaning);
-    const filename = `verb-${verbId}-${safeName}.mp3`;
-    const filepath = path.join(audioDir, filename);
-    await writeFile(filepath, audioBuffer);
+    // Save audio to media table
+    const mediaId = saveMedia(audioBuffer, "audio/mpeg", `verb-${verbId}.mp3`);
+    const audioUrl = `/api/media/${mediaId}`;
 
     // Update verb with audio URL
-    const audioUrl = `/api/media/audio/${filename}`;
     db.prepare("UPDATE verbs SET audio_url = ?, updated_at = datetime('now') WHERE id = ?").run(audioUrl, verbId);
 
     return NextResponse.json({
@@ -194,37 +180,21 @@ export async function PUT(
       return NextResponse.json({ error: "Invalid file type. Allowed: mp3, wav, ogg, webm" }, { status: 400 });
     }
 
-    // Delete old audio file if exists
+    // Delete old media if exists
     if (verb.audio_url) {
-      const oldFilename = verb.audio_url.split("/").pop();
-      if (oldFilename) {
-        const oldFilepath = path.join(process.cwd(), "public", "audio", oldFilename);
-        try {
-          await unlink(oldFilepath);
-        } catch {
-          // File might not exist
-        }
+      const oldMediaId = parseMediaId(verb.audio_url);
+      if (oldMediaId) {
+        deleteMedia(oldMediaId);
       }
     }
 
-    // Ensure audio directory exists
-    const audioDir = path.join(process.cwd(), "public", "audio");
-    if (!existsSync(audioDir)) {
-      await mkdir(audioDir, { recursive: true });
-    }
-
-    // Get file extension from original filename or default to mp3
+    // Save to media table
+    const buffer = Buffer.from(await file.arrayBuffer());
     const ext = file.name.split(".").pop()?.toLowerCase() || "mp3";
-    const safeName = sanitizeFilename(verb.meaning);
-    const filename = `verb-${verbId}-${safeName}.${ext}`;
-    const filepath = path.join(audioDir, filename);
-
-    // Write file
-    const arrayBuffer = await file.arrayBuffer();
-    await writeFile(filepath, Buffer.from(arrayBuffer));
+    const mediaId = saveMedia(buffer, file.type || "audio/mpeg", `verb-${verbId}.${ext}`);
+    const audioUrl = `/api/media/${mediaId}`;
 
     // Update verb with audio URL
-    const audioUrl = `/api/media/audio/${filename}`;
     db.prepare("UPDATE verbs SET audio_url = ?, updated_at = datetime('now') WHERE id = ?").run(audioUrl, verbId);
 
     return NextResponse.json({
@@ -298,16 +268,11 @@ export async function DELETE(
       return NextResponse.json({ error: "Verb not found" }, { status: 404 });
     }
 
-    // Delete file if exists
+    // Delete media blob
     if (verb.audio_url) {
-      const filename = verb.audio_url.split("/").pop();
-      if (filename) {
-        const filepath = path.join(process.cwd(), "public", "audio", filename);
-        try {
-          await unlink(filepath);
-        } catch {
-          // File might not exist, that's ok
-        }
+      const mediaId = parseMediaId(verb.audio_url);
+      if (mediaId) {
+        deleteMedia(mediaId);
       }
     }
 

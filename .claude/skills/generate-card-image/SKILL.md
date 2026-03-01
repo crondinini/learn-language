@@ -17,9 +17,7 @@ This skill downloads images for vocabulary cards using the Unsplash API.
 
 1. **Find card** → Get card ID and English translation
 2. **Create query** → Use translation or custom search term
-3. **Run script** → Execute generate-image.py
-4. **Sync to Pi** → rsync images to correct folder
-5. **Restart container** → So new images are picked up
+3. **Run script** → Execute generate-image.py (downloads + uploads via API)
 
 ## Step 1: Find the Card
 
@@ -62,27 +60,10 @@ The script will:
 1. Load API_URL, API_TOKEN, and UNSPLASH_ACCESS_KEY from .env.local
 2. Fetch the card's English translation from remote API
 3. Search Unsplash for matching image
-4. Save to public/images/card-{id}-{word}.jpg locally
-5. PATCH the card with image_url via remote API
+4. Upload the image via `POST /api/images` (stored in SQLite media table)
+5. The API automatically updates the card's `image_url`
 
-## Step 4: Sync Images to Pi
-
-After generating images, sync them to the Pi's data folder:
-
-```bash
-rsync -avz public/images/card-*.jpg pi:~/learn-language/data/images/
-```
-
-**IMPORTANT:** Images must go to `~/learn-language/data/images/` (NOT `public/images/`).
-This folder is mounted into the container at `/app/public/images`.
-
-## Step 5: Restart Container
-
-The container needs a restart to pick up newly synced images:
-
-```bash
-ssh pi "cd ~/learn-language && docker compose restart"
-```
+No rsync or server restart needed — images are stored in the database and served via `/api/media/{id}`.
 
 ## Full Example
 
@@ -98,13 +79,7 @@ User: add image to مُفتاح
 3. Run:
    python3 scripts/generate-image.py 24 "metal key"
 
-4. Sync:
-   rsync -avz public/images/card-24*.jpg pi:~/learn-language/data/images/
-
-5. Restart:
-   ssh pi "cd ~/learn-language && docker compose restart"
-
-6. Report: "✓ Added image to مُفتاح (key)"
+4. Report: "✓ Added image to مُفتاح (key)"
 ```
 
 ## Batch Mode
@@ -112,17 +87,10 @@ User: add image to مُفتاح
 To add images to multiple cards without images:
 
 ```bash
-# Generate images
 for card_id in 119 120 121; do
   python3 scripts/generate-image.py "$card_id"
   sleep 1  # Be nice to the API
 done
-
-# Sync all to Pi
-rsync -avz public/images/card-*.jpg pi:~/learn-language/data/images/
-
-# Restart container
-ssh pi "cd ~/learn-language && docker compose restart"
 ```
 
 ## Rate Limits
@@ -135,7 +103,6 @@ Unsplash free tier: **50 requests/hour**
   - `API_URL=https://learn.rocksbythesea.uk`
   - `API_TOKEN=<your-api-token>`
   - `UNSPLASH_ACCESS_KEY=...`
-- Images saved locally to `public/images/card-{id}-{word}.jpg`
-- Must sync to Pi: `~/learn-language/data/images/`
-- Must restart container after syncing new images
+- Images are stored in the SQLite `media` table and served via `/api/media/{id}`
+- No filesystem sync or server restart needed
 - For abstract words (adjectives, verbs), provide a descriptive custom query

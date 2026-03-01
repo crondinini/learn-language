@@ -1,8 +1,8 @@
 import { NextRequest } from "next/server";
-import fs from "fs";
 import path from "path";
 import AnkiExport from "anki-apkg-export";
 import db, { Card, CardState } from "@/lib/db";
+import { getMedia, parseMediaId } from "@/lib/media";
 
 interface ExportCard extends Card {
   deck_name: string;
@@ -88,8 +88,6 @@ export async function GET(request: NextRequest) {
 img { max-width: 300px; max-height: 200px; margin-top: 12px; }`,
   });
 
-  const publicDir = path.join(process.cwd(), "public");
-
   // Add media and build cards
   for (const card of cards) {
     let front = `<div class="arabic">${card.front}</div>`;
@@ -97,14 +95,15 @@ img { max-width: 300px; max-height: 200px; margin-top: 12px; }`,
 
     // Add audio to front
     if (card.audio_url) {
-      const audioPath = path.join(publicDir, card.audio_url);
-      const filename = `card-${card.id}${path.extname(card.audio_url)}`;
-      try {
-        const audioData = fs.readFileSync(audioPath);
-        apkg.addMedia(filename, audioData);
-        front += `[sound:${filename}]`;
-      } catch {
-        // Skip if audio file not found
+      const mediaId = parseMediaId(card.audio_url);
+      if (mediaId) {
+        const media = getMedia(mediaId);
+        if (media) {
+          const ext = media.content_type === "audio/mpeg" ? ".mp3" : path.extname(media.filename || ".mp3");
+          const filename = `card-${card.id}${ext}`;
+          apkg.addMedia(filename, media.data);
+          front += `[sound:${filename}]`;
+        }
       }
     }
 
@@ -115,14 +114,15 @@ img { max-width: 300px; max-height: 200px; margin-top: 12px; }`,
 
     // Add image to back
     if (card.image_url) {
-      const imagePath = path.join(publicDir, card.image_url);
-      const filename = `card-${card.id}${path.extname(card.image_url)}`;
-      try {
-        const imageData = fs.readFileSync(imagePath);
-        apkg.addMedia(filename, imageData);
-        back += `<img src="${filename}" />`;
-      } catch {
-        // Skip if image file not found
+      const mediaId = parseMediaId(card.image_url);
+      if (mediaId) {
+        const media = getMedia(mediaId);
+        if (media) {
+          const ext = media.content_type.split("/")[1].replace("jpeg", "jpg");
+          const filename = `card-${card.id}.${ext}`;
+          apkg.addMedia(filename, media.data);
+          back += `<img src="${filename}" />`;
+        }
       }
     }
 

@@ -225,6 +225,15 @@ function getDb(): Database.Database {
 
     CREATE INDEX IF NOT EXISTS idx_generations_created_at ON generations(created_at);
 
+    -- Media table: stores audio/image blobs directly in SQLite
+    CREATE TABLE IF NOT EXISTS media (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      data BLOB NOT NULL,
+      content_type TEXT NOT NULL,
+      filename TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
     -- Lessons table: class sessions with transcripts and AI-generated summaries
     CREATE TABLE IF NOT EXISTS lessons (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

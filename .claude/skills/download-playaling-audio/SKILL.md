@@ -94,36 +94,41 @@ Use curl to download the audio file:
 curl -o "/tmp/word-audio.mp3" "AUDIO_URL"
 ```
 
-### Step 6: Send to Pi
+### Step 6: Upload via API
 
-Transfer the file to the Pi (Docker maps data/audio to /app/public/audio):
+For **cards**, upload the audio file using the media upload endpoint:
 ```bash
-rsync /tmp/word-audio.mp3 pi:~/learn-language/data/audio/
+curl -X POST "https://learn.rocksbythesea.uk/api/media" \
+  -H "Authorization: Bearer $API_TOKEN" \
+  -F "file=@/tmp/word-audio.mp3"
 ```
 
-Or with a specific name:
-```bash
-rsync /tmp/word-audio.mp3 pi:~/learn-language/data/audio/card-123-word.mp3
-```
-
-### Step 7: Update Card Database (REQUIRED)
-
-**IMPORTANT: This step is MANDATORY. The task is NOT complete until the card is updated in the database.**
-
-After uploading the audio file, update the card's `audio_url` in the database via the API:
-
+This returns `{ "id": 123, "url": "/api/media/123" }`. Then update the card:
 ```bash
 curl -X PATCH "https://learn.rocksbythesea.uk/api/cards/CARD_ID" \
   -H "Authorization: Bearer $API_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"audio_url": "/audio/card-CARD_ID-word.mp3"}'
+  -d '{"audio_url": "/api/media/123"}'
 ```
 
-The `audio_url` should match the filename you used when uploading (without the full path, just `/audio/filename.mp3`).
+For **verbs**, upload directly:
+```bash
+curl -X PUT "https://learn.rocksbythesea.uk/api/verbs/VERB_ID/audio" \
+  -H "Authorization: Bearer $API_TOKEN" \
+  -F "file=@/tmp/word-audio.mp3"
+```
 
-### Step 8: Verify Update
+Alternatively, if you want to use the Playaling URL directly (external URL), just set it:
+```bash
+curl -X PATCH "https://learn.rocksbythesea.uk/api/cards/CARD_ID" \
+  -H "Authorization: Bearer $API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"audio_url": "https://api.playaling.com/upload/audio/HASH/msa.mp3"}'
+```
 
-Confirm the card was updated by checking the API response. The response should include the updated `audio_url` field. If the update fails, retry or report the error.
+### Step 7: Verify Update
+
+Confirm the card was updated by checking the API response. The response should include the updated `audio_url` field.
 
 **The task is only complete when the API returns a successful response with the updated audio_url.**
 
@@ -137,9 +142,9 @@ For the word "كتاب" (book) on card 42:
 4. Click MSA button
 5. Check network requests for `msa.mp3`
 6. Download: `curl -o /tmp/card-42-kitaab.mp3 "https://api.playaling.com/upload/audio/HASH/msa.mp3"`
-7. Upload: `rsync /tmp/card-42-kitaab.mp3 pi:~/learn-language/data/audio/`
-8. **Update DB (REQUIRED)**: `curl -X PATCH "https://learn.rocksbythesea.uk/api/cards/42" -H "Authorization: Bearer $API_TOKEN" -H "Content-Type: application/json" -d '{"audio_url": "/audio/card-42-kitaab.mp3"}'`
-9. **Verify**: Check that the API response includes `"audio_url": "/audio/card-42-kitaab.mp3"`
+7. Upload: `curl -X POST .../api/media -H "Authorization: Bearer $API_TOKEN" -F "file=@/tmp/card-42-kitaab.mp3"` → returns `{"id": 456, "url": "/api/media/456"}`
+8. **Update card**: `curl -X PATCH .../api/cards/42 -H "Authorization: Bearer $API_TOKEN" -H "Content-Type: application/json" -d '{"audio_url": "/api/media/456"}'`
+9. **Verify**: Check that the API response includes the updated `audio_url`
 
 ## Available Dialects
 
@@ -169,8 +174,6 @@ uid=X_107 ignored
     uid=X_115 StaticText "Egy"
 ```
 
-The actual play button images are typically inside the row for each vocabulary entry, not next to the dialect labels. Look for `image` elements under each vocabulary row in the results.
-
 ## Finding Cards in the Database
 
 Before downloading audio, you need to find the card ID. Use the vocab API:
@@ -198,4 +201,5 @@ curl -s "https://learn.rocksbythesea.uk/api/vocab" -H "Authorization: Bearer $AP
 - Some words may not have all dialect pronunciations available
 - The user must be logged into Playaling for this to work
 - Audio URLs include a timestamp parameter `?h=` which can be omitted
-- Use `/api/media/audio/filename.mp3` format for audio_url (not `/audio/`)
+- Audio is stored in the SQLite `media` table and served via `/api/media/{id}`
+- External Playaling URLs can also be used directly as `audio_url`

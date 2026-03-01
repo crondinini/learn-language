@@ -1,20 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import { existsSync } from "fs";
-import path from "path";
 import db from "@/lib/db";
 import { getCardById } from "@/lib/cards";
-
-/**
- * Sanitize a string for use in a filename
- */
-function sanitizeFilename(str: string): string {
-  return str
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-") // Replace non-alphanumeric with dashes
-    .replace(/^-+|-+$/g, "")     // Remove leading/trailing dashes
-    .substring(0, 30);           // Limit length
-}
+import { saveMedia, deleteMedia, parseMediaId } from "@/lib/media";
 
 // TTS Provider config
 const TTS_PROVIDER = process.env.TTS_PROVIDER || "elevenlabs"; // "google" or "elevenlabs"
@@ -125,20 +112,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Ensure audio directory exists
-    const audioDir = path.join(process.cwd(), "public", "audio");
-    if (!existsSync(audioDir)) {
-      await mkdir(audioDir, { recursive: true });
+    // Delete old media if regenerating
+    if (card.audio_url) {
+      const oldMediaId = parseMediaId(card.audio_url);
+      if (oldMediaId) {
+        deleteMedia(oldMediaId);
+      }
     }
 
-    // Save audio file with card ID and English translation in filename
-    const safeName = sanitizeFilename(card.back);
-    const filename = `card-${cardId}-${safeName}.mp3`;
-    const filepath = path.join(audioDir, filename);
-    await writeFile(filepath, audioBuffer);
+    // Save audio to media table
+    const mediaId = saveMedia(audioBuffer, "audio/mpeg", `card-${cardId}.mp3`);
+    const audioUrl = `/api/media/${mediaId}`;
 
     // Update card with audio URL
-    const audioUrl = `/api/media/audio/${filename}`;
     const updateStmt = db.prepare(
       "UPDATE cards SET audio_url = ?, updated_at = datetime('now') WHERE id = ?"
     );
@@ -176,14 +162,11 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Card not found" }, { status: 404 });
     }
 
-    // Delete file if exists
+    // Delete media blob if it's a DB-stored media
     if (card.audio_url) {
-      const filepath = path.join(process.cwd(), "public", card.audio_url);
-      const { unlink } = await import("fs/promises");
-      try {
-        await unlink(filepath);
-      } catch {
-        // File might not exist, that's ok
+      const mediaId = parseMediaId(card.audio_url);
+      if (mediaId) {
+        deleteMedia(mediaId);
       }
     }
 
@@ -205,7 +188,7 @@ export async function DELETE(request: NextRequest) {
 
 /**
  * PATCH /api/audio
- * Clean up stale audio_url references where the file no longer exists on disk
+ * Clean up stale audio_url references where the media no longer exists
  */
 export async function PATCH() {
   try {
@@ -219,16 +202,19 @@ export async function PATCH() {
     );
 
     for (const card of cards) {
-      // Normalize URL to filesystem path: both /audio/x.mp3 and /api/media/audio/x.mp3
-      let relativePath = card.audio_url;
-      if (relativePath.startsWith("/api/media/")) {
-        relativePath = relativePath.replace("/api/media/", "");
-      } else if (relativePath.startsWith("/")) {
-        relativePath = relativePath.slice(1);
-      }
+      // Skip external URLs (e.g. Playaling links)
+      if (card.audio_url.startsWith("http")) continue;
 
-      const fullPath = path.join(process.cwd(), "public", relativePath);
-      if (!existsSync(fullPath)) {
+      const mediaId = parseMediaId(card.audio_url);
+      if (mediaId) {
+        // Check if media exists in DB
+        const exists = db.prepare("SELECT 1 FROM media WHERE id = ?").get(mediaId);
+        if (!exists) {
+          updateStmt.run(card.id);
+          cleaned++;
+        }
+      } else {
+        // Old filesystem URL format — media is gone, clear it
         updateStmt.run(card.id);
         cleaned++;
       }

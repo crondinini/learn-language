@@ -83,27 +83,25 @@ def main():
         print(f"Error: Failed to download image (status {image_response.status_code})")
         sys.exit(1)
 
-    # Save image with descriptive name (sanitize word for filename)
+    # Upload image via API (stored in SQLite media table)
     safe_word = "".join(c if c.isalnum() else "-" for c in word.split(",")[0].strip()).lower()
     filename = f"card-{card_id}-{safe_word}.jpg"
-    image_path = project_dir / "public" / "images" / filename
-    image_path.parent.mkdir(parents=True, exist_ok=True)
-    image_path.write_bytes(image_response.content)
-    print(f"Saved: {image_path}")
+    print(f"Uploading {filename} via API...")
 
-    # Update card
-    image_url = f"/images/{filename}"
-    result = requests.patch(
-        f"{API_URL}/api/cards/{card_id}",
+    result = requests.post(
+        f"{API_URL}/api/images",
         headers=api_headers,
-        json={"image_url": image_url}
+        files={"image": (filename, image_response.content, "image/jpeg")},
+        data={"cardId": card_id}
     )
 
     if result.status_code == 200:
-        print(f"✓ Updated card {card_id} with image")
+        image_url = result.json().get("image_url", "")
+        print(f"✓ Uploaded and updated card {card_id} with image ({image_url})")
     else:
-        print(f"Warning: Card update returned status {result.status_code}")
-        print(f"Image saved but you may need to update the card manually")
+        print(f"Error: Upload failed (status {result.status_code})")
+        print(result.text[:200])
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
