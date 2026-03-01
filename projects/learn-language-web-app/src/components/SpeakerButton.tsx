@@ -64,12 +64,22 @@ export default function SpeakerButton({
     audio.onended = () => setIsPlaying(false);
     audio.onerror = () => {
       setIsPlaying(false);
-      // Fall back to Web Speech API if file fails to load
-      playWithWebSpeech();
+      setCurrentAudioUrl(null);
+      // File is missing — regenerate if possible, otherwise try Web Speech
+      if (cardId) {
+        generateAudio();
+      } else {
+        playWithWebSpeech();
+      }
     };
 
     audio.play().catch(() => {
-      playWithWebSpeech();
+      setCurrentAudioUrl(null);
+      if (cardId) {
+        generateAudio();
+      } else {
+        playWithWebSpeech();
+      }
     });
   };
 

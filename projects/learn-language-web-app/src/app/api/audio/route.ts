@@ -202,3 +202,48 @@ export async function DELETE(request: NextRequest) {
     );
   }
 }
+
+/**
+ * PATCH /api/audio
+ * Clean up stale audio_url references where the file no longer exists on disk
+ */
+export async function PATCH() {
+  try {
+    const cards = db.prepare(
+      "SELECT id, audio_url FROM cards WHERE audio_url IS NOT NULL"
+    ).all() as { id: number; audio_url: string }[];
+
+    let cleaned = 0;
+    const updateStmt = db.prepare(
+      "UPDATE cards SET audio_url = NULL, updated_at = datetime('now') WHERE id = ?"
+    );
+
+    for (const card of cards) {
+      // Normalize URL to filesystem path: both /audio/x.mp3 and /api/media/audio/x.mp3
+      let relativePath = card.audio_url;
+      if (relativePath.startsWith("/api/media/")) {
+        relativePath = relativePath.replace("/api/media/", "");
+      } else if (relativePath.startsWith("/")) {
+        relativePath = relativePath.slice(1);
+      }
+
+      const fullPath = path.join(process.cwd(), "public", relativePath);
+      if (!existsSync(fullPath)) {
+        updateStmt.run(card.id);
+        cleaned++;
+      }
+    }
+
+    return NextResponse.json({
+      message: `Cleaned ${cleaned} stale audio references out of ${cards.length} total`,
+      cleaned,
+      total: cards.length,
+    });
+  } catch (error) {
+    console.error("Error cleaning audio:", error);
+    return NextResponse.json(
+      { error: "Failed to clean audio" },
+      { status: 500 }
+    );
+  }
+}
