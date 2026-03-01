@@ -35,11 +35,12 @@ interface ReviewSessionState {
 
 interface ReviewSessionProps {
   deckId?: string;
+  lessonId?: string;
   backUrl: string;
   backLabel: string;
 }
 
-export default function ReviewSession({ deckId, backUrl, backLabel }: ReviewSessionProps) {
+export default function ReviewSession({ deckId, lessonId, backUrl, backLabel }: ReviewSessionProps) {
   const [cards, setCards] = useState<Card[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -66,8 +67,8 @@ export default function ReviewSession({ deckId, backUrl, backLabel }: ReviewSess
   }
 
   useEffect(() => {
-    fetchDueCards();
-  }, [deckId]);
+    fetchCards();
+  }, [deckId, lessonId]);
 
   useEffect(() => {
     if (cards.length > 0 && currentIndex < cards.length) {
@@ -77,18 +78,23 @@ export default function ReviewSession({ deckId, backUrl, backLabel }: ReviewSess
     }
   }, [currentIndex, cards]);
 
-  async function fetchDueCards() {
+  async function fetchCards() {
     try {
-      const url = deckId
-        ? `/api/review?deckId=${deckId}&limit=50`
-        : `/api/review?limit=50`;
+      let url: string;
+      if (lessonId) {
+        url = `/api/review?lessonId=${lessonId}`;
+      } else if (deckId) {
+        url = `/api/review?deckId=${deckId}&limit=50`;
+      } else {
+        url = `/api/review?limit=50`;
+      }
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
         setCards(data);
       }
     } catch (error) {
-      console.error("Error fetching due cards:", error);
+      console.error("Error fetching cards:", error);
     } finally {
       setIsLoading(false);
     }
@@ -187,7 +193,9 @@ export default function ReviewSession({ deckId, backUrl, backLabel }: ReviewSess
         <div className="text-center">
           <div className="mb-4 text-6xl">🎉</div>
           <h2 className="text-2xl font-bold text-slate-800 dark:text-white">All Done!</h2>
-          <p className="mt-2 text-slate-500">No cards due for review right now.</p>
+          <p className="mt-2 text-slate-500">
+            {lessonId ? "This lesson has no cards yet." : "No cards due for review right now."}
+          </p>
           <Link
             href={backUrl}
             className="mt-6 inline-block rounded-lg bg-emerald-600 px-6 py-3 text-white transition hover:bg-emerald-700"

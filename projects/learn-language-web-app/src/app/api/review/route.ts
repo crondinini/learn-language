@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import db, { Card } from "@/lib/db";
-import { getDueCards, getCardById } from "@/lib/cards";
+import { getDueCards, getCardById, getLessonCards } from "@/lib/cards";
 import { reviewCard } from "@/lib/fsrs";
 
 /**
@@ -10,9 +10,14 @@ import { reviewCard } from "@/lib/fsrs";
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const deckId = searchParams.get("deckId");
+  const lessonId = searchParams.get("lessonId");
   const limit = parseInt(searchParams.get("limit") || "20");
 
   try {
+    if (lessonId) {
+      const cards = getLessonCards(parseInt(lessonId));
+      return NextResponse.json(cards);
+    }
     const dueCards = getDueCards(deckId ? parseInt(deckId) : undefined, limit);
     return NextResponse.json(dueCards);
   } catch (error) {

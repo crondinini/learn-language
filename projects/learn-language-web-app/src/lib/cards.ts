@@ -101,6 +101,16 @@ export function deleteCard(id: number): boolean {
   return result.changes > 0;
 }
 
+export function getLessonCards(lessonId: number): Card[] {
+  const stmt = db.prepare(`
+    SELECT c.* FROM cards c
+    JOIN lesson_cards lc ON lc.card_id = c.id
+    WHERE lc.lesson_id = ?
+    ORDER BY RANDOM()
+  `);
+  return stmt.all(lessonId) as Card[];
+}
+
 export function getDueCards(deckId?: number, limit: number = 20): Card[] {
   let query = `
     SELECT * FROM cards
