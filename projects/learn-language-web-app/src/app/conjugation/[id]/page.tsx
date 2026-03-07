@@ -35,6 +35,7 @@ interface Verb {
   active_participle: string | null;
   passive_participle: string | null;
   notes: string | null;
+  is_colloquial: number;
   conjugations: VerbConjugation[];
 }
 
@@ -188,6 +189,11 @@ export default function VerbDetailPage({ params }: { params: Promise<{ id: strin
                 <span className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-500 dark:bg-slate-700 dark:text-slate-400">
                   Form {verb.form}
                 </span>
+                {verb.is_colloquial === 1 && (
+                  <span className="rounded-full bg-amber-100 px-3 py-1 text-sm font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                    Colloquial
+                  </span>
+                )}
               </div>
               <div className="mb-2 text-xl text-slate-600 dark:text-slate-300">{verb.meaning}</div>
               <div dir="rtl" className="text-lg text-slate-500 dark:text-slate-400">
@@ -304,6 +310,7 @@ function EditVerbModal({
     past_3ms: verb.past_3ms,
     present_3ms: verb.present_3ms,
     masdar: verb.masdar || "",
+    is_colloquial: verb.is_colloquial === 1,
   });
 
   const pastConjs = verb.conjugations.filter((c) => c.tense === "past");
@@ -408,6 +415,17 @@ function EditVerbModal({
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-lg dark:border-slate-600 dark:bg-slate-700 dark:text-white"
                 required
               />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={form.is_colloquial}
+                  onChange={(e) => setForm({ ...form, is_colloquial: e.target.checked })}
+                  className="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
+                />
+                Colloquial / Levantine (not MSA)
+              </label>
             </div>
           </div>
 

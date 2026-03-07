@@ -140,14 +140,15 @@ export interface CreateVerbInput {
   active_participle?: string;
   passive_participle?: string;
   notes?: string;
+  is_colloquial?: boolean;
   // Past tense conjugations (all 13 persons)
   past_conjugations: Record<string, string>;
 }
 
 export function createVerb(input: CreateVerbInput): VerbWithConjugations {
   const insertVerb = db.prepare(`
-    INSERT INTO verbs (root, root_transliteration, form, meaning, past_3ms, present_3ms, masdar, active_participle, passive_participle, notes)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO verbs (root, root_transliteration, form, meaning, past_3ms, present_3ms, masdar, active_participle, passive_participle, notes, is_colloquial)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const result = insertVerb.run(
@@ -160,7 +161,8 @@ export function createVerb(input: CreateVerbInput): VerbWithConjugations {
     input.masdar || null,
     input.active_participle || null,
     input.passive_participle || null,
-    input.notes || null
+    input.notes || null,
+    input.is_colloquial ? 1 : 0
   );
 
   const verbId = result.lastInsertRowid as number;
@@ -193,6 +195,7 @@ export interface UpdateVerbInput {
   active_participle?: string;
   passive_participle?: string;
   notes?: string;
+  is_colloquial?: boolean;
   past_conjugations?: Record<string, string>;
 }
 
@@ -243,6 +246,10 @@ export function updateVerb(id: number, input: UpdateVerbInput): VerbWithConjugat
   if (input.notes !== undefined) {
     updates.push("notes = ?");
     values.push(input.notes);
+  }
+  if (input.is_colloquial !== undefined) {
+    updates.push("is_colloquial = ?");
+    values.push(input.is_colloquial ? 1 : 0);
   }
 
   if (updates.length > 0) {

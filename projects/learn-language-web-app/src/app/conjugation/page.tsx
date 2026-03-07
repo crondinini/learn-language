@@ -14,6 +14,7 @@ interface VerbWithStats {
   past_3ms: string;
   present_3ms: string;
   masdar: string | null;
+  is_colloquial: number;
   total_conjugations: number;
   practiced_count: number;
   mastered_count: number;
@@ -116,9 +117,16 @@ export default function ConjugationPage() {
                   <div dir="rtl" className="text-2xl font-bold text-slate-800 dark:text-white">
                     {verb.past_3ms}
                   </div>
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500 dark:bg-slate-700 dark:text-slate-400">
-                    Form {verb.form}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {verb.is_colloquial === 1 && (
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                        Colloquial
+                      </span>
+                    )}
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500 dark:bg-slate-700 dark:text-slate-400">
+                      Form {verb.form}
+                    </span>
+                  </div>
                 </div>
                 <div className="mb-1 text-sm text-slate-600 dark:text-slate-300">{verb.meaning}</div>
                 <div dir="rtl" className="mb-3 text-sm text-slate-400">
@@ -173,6 +181,7 @@ function AddVerbModal({ onClose, onAdded }: { onClose: () => void; onAdded: () =
     past_3ms: "",
     present_3ms: "",
     masdar: "",
+    is_colloquial: false,
   });
   const [conjugations, setConjugations] = useState<Record<string, string>>({
     ana: "",
@@ -321,6 +330,17 @@ function AddVerbModal({ onClose, onAdded }: { onClose: () => void; onAdded: () =
                 onChange={(e) => setForm({ ...form, masdar: e.target.value })}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-lg dark:border-slate-600 dark:bg-slate-700 dark:text-white"
               />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={form.is_colloquial}
+                  onChange={(e) => setForm({ ...form, is_colloquial: e.target.checked })}
+                  className="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
+                />
+                Colloquial / Levantine (not MSA)
+              </label>
             </div>
           </div>
 

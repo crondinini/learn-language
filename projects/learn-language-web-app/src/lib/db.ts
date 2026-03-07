@@ -157,6 +157,7 @@ function getDb(): Database.Database {
       passive_participle TEXT,               -- مَكْتُوب
       notes TEXT,
       audio_url TEXT,
+      is_colloquial INTEGER DEFAULT 0,
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now'))
     );
@@ -292,6 +293,12 @@ function getDb(): Database.Database {
     }
   }
 
+  // Migration: Add is_colloquial column to verbs if it doesn't exist
+  const verbColumns = _db.prepare("PRAGMA table_info(verbs)").all() as { name: string }[];
+  if (verbColumns.length > 0 && !verbColumns.some((col) => col.name === "is_colloquial")) {
+    _db.exec("ALTER TABLE verbs ADD COLUMN is_colloquial INTEGER DEFAULT 0");
+  }
+
   return _db;
 }
 
@@ -424,6 +431,7 @@ export interface Verb {
   passive_participle: string | null;
   notes: string | null;
   audio_url: string | null;
+  is_colloquial: number;
   created_at: string;
   updated_at: string;
 }
