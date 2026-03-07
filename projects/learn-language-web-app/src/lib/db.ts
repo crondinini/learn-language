@@ -303,7 +303,7 @@ function getDb(): Database.Database {
   // Migration: Add updated_at column to verb_conjugations if it doesn't exist
   const conjColumns = _db.prepare("PRAGMA table_info(verb_conjugations)").all() as { name: string }[];
   if (conjColumns.length > 0 && !conjColumns.some((col) => col.name === "updated_at")) {
-    _db.exec("ALTER TABLE verb_conjugations ADD COLUMN updated_at TEXT DEFAULT (datetime('now'))");
+    _db.exec("ALTER TABLE verb_conjugations ADD COLUMN updated_at TEXT");
   }
 
   return _db;
