@@ -89,7 +89,7 @@ export default function ConjugationPage() {
         {/* Page Title */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Verb Conjugation</h1>
-          <p className="mt-1 text-sm text-slate-500">Practice Arabic verb conjugations (Past Tense)</p>
+          <p className="mt-1 text-sm text-slate-500">Practice Arabic verb conjugations</p>
         </div>
 
         {/* Verb List */}
@@ -194,6 +194,17 @@ function AddVerbModal({ onClose, onAdded }: { onClose: () => void; onAdded: () =
     hum: "",
     hunna: "",
   });
+  const [presentConjugations, setPresentConjugations] = useState<Record<string, string>>({
+    ana: "",
+    nahnu: "",
+    anta: "",
+    anti: "",
+    antum: "",
+    huwa: "",
+    hiya: "",
+    hum: "",
+    hunna: "",
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -209,6 +220,7 @@ function AddVerbModal({ onClose, onAdded }: { onClose: () => void; onAdded: () =
         body: JSON.stringify({
           ...form,
           past_conjugations: conjugations,
+          present_conjugations: presentConjugations,
         }),
       });
 
@@ -344,27 +356,50 @@ function AddVerbModal({ onClose, onAdded }: { onClose: () => void; onAdded: () =
             </div>
           </div>
 
-          {/* Past Tense Conjugations */}
+          {/* Conjugations */}
           <div className="mb-6">
             <h3 className="mb-3 text-lg font-semibold text-slate-800 dark:text-white">
-              Past Tense Conjugations
+              Conjugations
             </h3>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {persons.map(([key, info]) => (
-                <div key={key} className="flex items-center gap-2">
-                  <span className="w-24 text-sm text-slate-500 dark:text-slate-400">
-                    {info.arabic} ({info.english})
-                  </span>
-                  <input
-                    type="text"
-                    dir="rtl"
-                    value={conjugations[key]}
-                    onChange={(e) => setConjugations({ ...conjugations, [key]: e.target.value })}
-                    placeholder={key === "huwa" ? form.past_3ms : ""}
-                    className="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-lg dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                  />
-                </div>
-              ))}
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 dark:border-slate-700">
+                    <th className="pb-2 text-left font-medium text-slate-500 dark:text-slate-400">Pronoun</th>
+                    <th className="pb-2 text-right font-medium text-slate-500 dark:text-slate-400">Past</th>
+                    <th className="pb-2 text-right font-medium text-slate-500 dark:text-slate-400">Present</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {persons.map(([key, info]) => (
+                    <tr key={key}>
+                      <td className="py-1.5 text-slate-500 dark:text-slate-400">
+                        {info.arabic} ({info.english})
+                      </td>
+                      <td className="py-1.5">
+                        <input
+                          type="text"
+                          dir="rtl"
+                          value={conjugations[key]}
+                          onChange={(e) => setConjugations({ ...conjugations, [key]: e.target.value })}
+                          placeholder={key === "huwa" ? form.past_3ms : ""}
+                          className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-lg dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                        />
+                      </td>
+                      <td className="py-1.5 pl-2">
+                        <input
+                          type="text"
+                          dir="rtl"
+                          value={presentConjugations[key]}
+                          onChange={(e) => setPresentConjugations({ ...presentConjugations, [key]: e.target.value })}
+                          placeholder={key === "huwa" ? form.present_3ms : ""}
+                          className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-lg dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
 

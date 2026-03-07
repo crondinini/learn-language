@@ -13,6 +13,7 @@ interface ConjugationItem {
   root: string;
   meaning: string;
   past_3ms: string;
+  present_3ms: string;
   tense: string;
   person: string;
   pronoun_arabic: string;
@@ -302,7 +303,11 @@ function ConjugationReviewContent() {
             {/* Prompt */}
             <div className="rounded-lg bg-slate-100 p-4 dark:bg-slate-700">
               <div className="mb-1 text-sm text-slate-500 dark:text-slate-400">
-                Conjugate for:
+                Conjugate in the{" "}
+                <span className="font-semibold">
+                  {currentItem.tense === "present" ? "present (المضارع)" : "past (الماضي)"}
+                </span>{" "}
+                for:
               </div>
               <div dir="rtl" className="text-3xl font-bold text-blue-600 dark:text-blue-400">
                 {currentItem.pronoun_arabic}

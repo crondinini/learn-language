@@ -38,7 +38,7 @@ export function getAllVerbs(): VerbWithStats[] {
         SUM(CASE WHEN cp.due <= datetime('now') THEN 1 ELSE 0 END) as due_count
       FROM verb_conjugations vc
       LEFT JOIN conjugation_progress cp ON vc.id = cp.verb_conjugation_id
-      WHERE vc.verb_id = ? AND vc.tense = 'past'
+      WHERE vc.verb_id = ? AND vc.tense IN ('past', 'present')
     `
       )
       .get(verb.id) as {
@@ -141,8 +141,10 @@ export interface CreateVerbInput {
   passive_participle?: string;
   notes?: string;
   is_colloquial?: boolean;
-  // Past tense conjugations (all 13 persons)
+  // Past tense conjugations (all 9 persons)
   past_conjugations: Record<string, string>;
+  // Present tense conjugations (all 9 persons)
+  present_conjugations?: Record<string, string>;
 }
 
 export function createVerb(input: CreateVerbInput): VerbWithConjugations {
@@ -170,13 +172,23 @@ export function createVerb(input: CreateVerbInput): VerbWithConjugations {
   // Insert past tense conjugations
   const insertConjugation = db.prepare(`
     INSERT INTO verb_conjugations (verb_id, tense, person, pronoun_arabic, conjugated_form)
-    VALUES (?, 'past', ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?)
   `);
 
   for (const [person, form] of Object.entries(input.past_conjugations)) {
     const personInfo = PersonInfo[person];
     if (personInfo && form) {
-      insertConjugation.run(verbId, person, personInfo.arabic, form);
+      insertConjugation.run(verbId, 'past', person, personInfo.arabic, form);
+    }
+  }
+
+  // Insert present tense conjugations
+  if (input.present_conjugations) {
+    for (const [person, form] of Object.entries(input.present_conjugations)) {
+      const personInfo = PersonInfo[person];
+      if (personInfo && form) {
+        insertConjugation.run(verbId, 'present', person, personInfo.arabic, form);
+      }
     }
   }
 
@@ -197,6 +209,7 @@ export interface UpdateVerbInput {
   notes?: string;
   is_colloquial?: boolean;
   past_conjugations?: Record<string, string>;
+  present_conjugations?: Record<string, string>;
 }
 
 export function updateVerb(id: number, input: UpdateVerbInput): VerbWithConjugations | null {
@@ -259,17 +272,26 @@ export function updateVerb(id: number, input: UpdateVerbInput): VerbWithConjugat
   }
 
   // Update conjugations if provided
-  if (input.past_conjugations) {
-    const upsertConjugation = db.prepare(`
-      INSERT INTO verb_conjugations (verb_id, tense, person, pronoun_arabic, conjugated_form)
-      VALUES (?, 'past', ?, ?, ?)
-      ON CONFLICT(verb_id, tense, person) DO UPDATE SET conjugated_form = excluded.conjugated_form
-    `);
+  const upsertConjugation = db.prepare(`
+    INSERT INTO verb_conjugations (verb_id, tense, person, pronoun_arabic, conjugated_form)
+    VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT(verb_id, tense, person) DO UPDATE SET conjugated_form = excluded.conjugated_form
+  `);
 
+  if (input.past_conjugations) {
     for (const [person, form] of Object.entries(input.past_conjugations)) {
       const personInfo = PersonInfo[person];
       if (personInfo && form) {
-        upsertConjugation.run(id, person, personInfo.arabic, form);
+        upsertConjugation.run(id, 'past', person, personInfo.arabic, form);
+      }
+    }
+  }
+
+  if (input.present_conjugations) {
+    for (const [person, form] of Object.entries(input.present_conjugations)) {
+      const personInfo = PersonInfo[person];
+      if (personInfo && form) {
+        upsertConjugation.run(id, 'present', person, personInfo.arabic, form);
       }
     }
   }
@@ -291,6 +313,7 @@ export interface DueConjugation {
   root: string;
   meaning: string;
   past_3ms: string;
+  present_3ms: string;
   verb_audio_url: string | null;
   conjugation_audio_url: string | null;
   tense: string;
@@ -320,6 +343,7 @@ export function getDueConjugations(limit: number = 20): DueConjugation[] {
       v.root,
       v.meaning,
       v.past_3ms,
+      v.present_3ms,
       v.audio_url as verb_audio_url,
       vc.audio_url as conjugation_audio_url,
       vc.tense,
@@ -357,6 +381,7 @@ export function getNewConjugations(verbId?: number, limit: number = 20): DueConj
       v.root,
       v.meaning,
       v.past_3ms,
+      v.present_3ms,
       v.audio_url as verb_audio_url,
       vc.audio_url as conjugation_audio_url,
       vc.tense,
@@ -375,7 +400,7 @@ export function getNewConjugations(verbId?: number, limit: number = 20): DueConj
     FROM verb_conjugations vc
     JOIN verbs v ON vc.verb_id = v.id
     LEFT JOIN conjugation_progress cp ON vc.id = cp.verb_conjugation_id
-    WHERE cp.id IS NULL AND vc.verb_id = ? AND vc.tense = 'past'
+    WHERE cp.id IS NULL AND vc.verb_id = ? AND vc.tense IN ('past', 'present')
     ORDER BY RANDOM()
     LIMIT ?
   `
@@ -387,6 +412,7 @@ export function getNewConjugations(verbId?: number, limit: number = 20): DueConj
       v.root,
       v.meaning,
       v.past_3ms,
+      v.present_3ms,
       v.audio_url as verb_audio_url,
       vc.audio_url as conjugation_audio_url,
       vc.tense,
@@ -405,7 +431,7 @@ export function getNewConjugations(verbId?: number, limit: number = 20): DueConj
     FROM verb_conjugations vc
     JOIN verbs v ON vc.verb_id = v.id
     LEFT JOIN conjugation_progress cp ON vc.id = cp.verb_conjugation_id
-    WHERE cp.id IS NULL AND vc.tense = 'past'
+    WHERE cp.id IS NULL AND vc.tense IN ('past', 'present')
     ORDER BY RANDOM()
     LIMIT ?
   `;

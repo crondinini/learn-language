@@ -117,11 +117,24 @@ export default function VerbDetailPage({ params }: { params: Promise<{ id: strin
       return orderA - orderB;
     });
 
-  const dueCount = pastConjugations.filter(
+  const presentConjugations = verb.conjugations
+    .filter((c) => c.tense === "present")
+    .sort((a, b) => {
+      const orderA = PersonInfo[a.person]?.order || 99;
+      const orderB = PersonInfo[b.person]?.order || 99;
+      return orderA - orderB;
+    });
+
+  // Create a map of present conjugations by person for easy lookup
+  const presentByPerson = new Map(presentConjugations.map((c) => [c.person, c]));
+
+  const allConjugations = [...pastConjugations, ...presentConjugations];
+
+  const dueCount = allConjugations.filter(
     (c) => c.progress && new Date(c.progress.due) <= new Date()
   ).length;
 
-  const newCount = pastConjugations.filter((c) => !c.progress).length;
+  const newCount = allConjugations.filter((c) => !c.progress).length;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
@@ -208,11 +221,11 @@ export default function VerbDetailPage({ params }: { params: Promise<{ id: strin
           </div>
         </div>
 
-        {/* Past Tense Table */}
+        {/* Conjugation Table */}
         <div className="rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
           <div className="border-b border-slate-200 p-4 dark:border-slate-700">
             <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-              Past Tense (الماضي)
+              Conjugations
             </h2>
           </div>
           <div className="overflow-x-auto">
@@ -226,7 +239,10 @@ export default function VerbDetailPage({ params }: { params: Promise<{ id: strin
                     Pronoun
                   </th>
                   <th className="px-4 py-3 text-right text-sm font-medium text-slate-500 dark:text-slate-400">
-                    Conjugation
+                    Present (المضارع)
+                  </th>
+                  <th className="px-4 py-3 text-right text-sm font-medium text-slate-500 dark:text-slate-400">
+                    Past (الماضي)
                   </th>
                   <th className="px-4 py-3 text-center text-sm font-medium text-slate-500 dark:text-slate-400">
                     Status
@@ -234,40 +250,63 @@ export default function VerbDetailPage({ params }: { params: Promise<{ id: strin
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                {pastConjugations.map((conj) => {
-                  const personInfo = PersonInfo[conj.person];
-                  const state = conj.progress?.state ?? 0;
-                  const isDue = conj.progress && new Date(conj.progress.due) <= new Date();
+                {pastConjugations.map((pastConj) => {
+                  const personInfo = PersonInfo[pastConj.person];
+                  const presentConj = presentByPerson.get(pastConj.person);
+
+                  const pastState = pastConj.progress?.state ?? 0;
+                  const pastIsDue = pastConj.progress && new Date(pastConj.progress.due) <= new Date();
+                  const presentState = presentConj?.progress?.state ?? 0;
+                  const presentIsDue = presentConj?.progress && new Date(presentConj.progress.due) <= new Date();
 
                   return (
                     <tr
-                      key={conj.id}
+                      key={pastConj.id}
                       className="transition hover:bg-slate-50 dark:hover:bg-slate-700/50"
                     >
                       <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                        {personInfo?.english || conj.person}
+                        {personInfo?.english || pastConj.person}
                       </td>
                       <td dir="rtl" className="px-4 py-3 text-lg text-slate-700 dark:text-slate-200">
-                        {conj.pronoun_arabic}
+                        {pastConj.pronoun_arabic}
+                      </td>
+                      <td dir="rtl" className="px-4 py-3 text-xl font-medium text-slate-800 dark:text-white">
+                        {presentConj ? (
+                          <div className="flex items-center justify-end gap-2">
+                            {presentConj.conjugated_form}
+                            <SpeakerButton
+                              text={presentConj.conjugated_form}
+                              audioUrl={presentConj.audio_url}
+                              size="sm"
+                            />
+                            <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium ${stateColors[presentState]}`}>
+                              {presentIsDue && (
+                                <span className="h-1 w-1 rounded-full bg-blue-500"></span>
+                              )}
+                              {stateLabels[presentState]}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-slate-400">—</span>
+                        )}
                       </td>
                       <td dir="rtl" className="px-4 py-3 text-xl font-medium text-slate-800 dark:text-white">
                         <div className="flex items-center justify-end gap-2">
-                          {conj.conjugated_form}
+                          {pastConj.conjugated_form}
                           <SpeakerButton
-                            text={conj.conjugated_form}
-                            audioUrl={conj.audio_url}
+                            text={pastConj.conjugated_form}
+                            audioUrl={pastConj.audio_url}
                             size="sm"
                           />
+                          <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium ${stateColors[pastState]}`}>
+                            {pastIsDue && (
+                              <span className="h-1 w-1 rounded-full bg-blue-500"></span>
+                            )}
+                            {stateLabels[pastState]}
+                          </span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-center">
-                        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${stateColors[state]}`}>
-                          {isDue && (
-                            <span className="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
-                          )}
-                          {stateLabels[state]}
-                        </span>
-                      </td>
+                      <td />
                     </tr>
                   );
                 })}
@@ -314,8 +353,12 @@ function EditVerbModal({
   });
 
   const pastConjs = verb.conjugations.filter((c) => c.tense === "past");
+  const presentConjs = verb.conjugations.filter((c) => c.tense === "present");
   const [conjugations, setConjugations] = useState<Record<string, string>>(
     Object.fromEntries(pastConjs.map((c) => [c.person, c.conjugated_form]))
+  );
+  const [presentConjugations, setPresentConjugations] = useState<Record<string, string>>(
+    Object.fromEntries(presentConjs.map((c) => [c.person, c.conjugated_form]))
   );
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -333,6 +376,7 @@ function EditVerbModal({
         body: JSON.stringify({
           ...form,
           past_conjugations: conjugations,
+          present_conjugations: presentConjugations,
         }),
       });
 
@@ -429,26 +473,48 @@ function EditVerbModal({
             </div>
           </div>
 
-          {/* Past Tense Conjugations */}
+          {/* Conjugations */}
           <div className="mb-6">
             <h3 className="mb-3 text-lg font-semibold text-slate-800 dark:text-white">
-              Past Tense Conjugations
+              Conjugations
             </h3>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {persons.map(([key, info]) => (
-                <div key={key} className="flex items-center gap-2">
-                  <span className="w-24 text-sm text-slate-500 dark:text-slate-400">
-                    {info.arabic}
-                  </span>
-                  <input
-                    type="text"
-                    dir="rtl"
-                    value={conjugations[key] || ""}
-                    onChange={(e) => setConjugations({ ...conjugations, [key]: e.target.value })}
-                    className="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-lg dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                  />
-                </div>
-              ))}
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 dark:border-slate-700">
+                    <th className="pb-2 text-left font-medium text-slate-500 dark:text-slate-400">Pronoun</th>
+                    <th className="pb-2 text-right font-medium text-slate-500 dark:text-slate-400">Past</th>
+                    <th className="pb-2 text-right font-medium text-slate-500 dark:text-slate-400">Present</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {persons.map(([key, info]) => (
+                    <tr key={key}>
+                      <td className="py-1.5 text-slate-500 dark:text-slate-400">
+                        {info.arabic}
+                      </td>
+                      <td className="py-1.5">
+                        <input
+                          type="text"
+                          dir="rtl"
+                          value={conjugations[key] || ""}
+                          onChange={(e) => setConjugations({ ...conjugations, [key]: e.target.value })}
+                          className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-lg dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                        />
+                      </td>
+                      <td className="py-1.5 pl-2">
+                        <input
+                          type="text"
+                          dir="rtl"
+                          value={presentConjugations[key] || ""}
+                          onChange={(e) => setPresentConjugations({ ...presentConjugations, [key]: e.target.value })}
+                          className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-lg dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
 
