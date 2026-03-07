@@ -20,6 +20,7 @@ interface ConjugationItem {
   state: number;
   reps: number;
   verb_audio_url: string | null;
+  conjugation_audio_url: string | null;
 }
 
 type ReviewState = "prompt" | "checking" | "result";
@@ -366,8 +367,13 @@ function ConjugationReviewContent() {
 
                   <div>
                     <div className="text-sm text-slate-500">Correct answer:</div>
-                    <div dir="rtl" className="text-2xl font-bold text-slate-800 dark:text-white">
+                    <div dir="rtl" className="flex items-center justify-center gap-2 text-2xl font-bold text-slate-800 dark:text-white">
                       {currentItem.conjugated_form}
+                      <SpeakerButton
+                        text={currentItem.conjugated_form}
+                        audioUrl={currentItem.conjugation_audio_url}
+                        size="md"
+                      />
                     </div>
                   </div>
                 </div>

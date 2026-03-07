@@ -285,6 +285,7 @@ export interface DueConjugation {
   meaning: string;
   past_3ms: string;
   verb_audio_url: string | null;
+  conjugation_audio_url: string | null;
   tense: string;
   person: string;
   pronoun_arabic: string;
@@ -313,6 +314,7 @@ export function getDueConjugations(limit: number = 20): DueConjugation[] {
       v.meaning,
       v.past_3ms,
       v.audio_url as verb_audio_url,
+      vc.audio_url as conjugation_audio_url,
       vc.tense,
       vc.person,
       vc.pronoun_arabic,
@@ -349,6 +351,7 @@ export function getNewConjugations(verbId?: number, limit: number = 20): DueConj
       v.meaning,
       v.past_3ms,
       v.audio_url as verb_audio_url,
+      vc.audio_url as conjugation_audio_url,
       vc.tense,
       vc.person,
       vc.pronoun_arabic,
@@ -378,6 +381,7 @@ export function getNewConjugations(verbId?: number, limit: number = 20): DueConj
       v.meaning,
       v.past_3ms,
       v.audio_url as verb_audio_url,
+      vc.audio_url as conjugation_audio_url,
       vc.tense,
       vc.person,
       vc.pronoun_arabic,
