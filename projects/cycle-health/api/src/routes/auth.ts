@@ -5,6 +5,7 @@ import { users } from "../db/schema.js";
 import { eq } from "drizzle-orm";
 import { v4 as uuid } from "uuid";
 import { signToken, authMiddleware, type AuthUser } from "../middleware/auth.js";
+import { seedDefaultPlan } from "../services/training-seed.js";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
 const googleClient = new OAuth2Client();
@@ -51,6 +52,9 @@ auth.post("/google", async (c) => {
       return c.json({ error: "Failed to create user" }, 500);
     }
 
+    // Seed default training plan for new users
+    await seedDefaultPlan(user.id);
+
     const token = signToken({ userId: user.id, email: user.email });
 
     return c.json({
@@ -93,6 +97,9 @@ auth.post("/dev-login", async (c) => {
   if (!user) {
     return c.json({ error: "Failed to create dev user" }, 500);
   }
+
+  // Seed default training plan for new users
+  await seedDefaultPlan(user.id);
 
   const token = signToken({ userId: user.id, email: user.email });
 

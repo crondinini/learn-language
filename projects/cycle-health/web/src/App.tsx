@@ -27,9 +27,9 @@ export function App() {
           </RequireAuth>
         }
       >
-        <Route index element={<HomePage />} />
+        <Route index element={<FitPage />} />
+        <Route path="home" element={<HomePage />} />
         <Route path="calendar" element={<CalendarPage />} />
-        <Route path="fit" element={<FitPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="partner" element={<PartnerPage />} />
       </Route>
