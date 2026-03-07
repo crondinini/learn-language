@@ -65,6 +65,7 @@ Endpoint: `https://learn.rocksbythesea.uk/mcp`
 
 <!-- Keep only relevant/current changes. Remove entries that are superseded or no longer applicable. -->
 
+- **2026-03**: Extracted shared TTS module, unified audio generation endpoint for cards/verbs/conjugations
 - **2026-03**: Moved audio/image storage from filesystem to SQLite `media` table — media now survives deploys without symlinks
 - **2026-02**: Added Lessons feature — class transcripts with AI summarization and card generation (continuable conversations via Claude `--resume`)
 - **2026-02**: Migrated deployment from Docker to bare-metal systemd service (builds on server, runs as `/opt/learn-language/server.js`)
