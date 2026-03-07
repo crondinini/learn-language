@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
+import SpeakerButton from "@/components/SpeakerButton";
 import { PersonInfo } from "@/lib/constants";
 
 interface VerbConjugation {
@@ -244,7 +245,14 @@ export default function VerbDetailPage({ params }: { params: Promise<{ id: strin
                         {conj.pronoun_arabic}
                       </td>
                       <td dir="rtl" className="px-4 py-3 text-xl font-medium text-slate-800 dark:text-white">
-                        {conj.conjugated_form}
+                        <div className="flex items-center justify-end gap-2">
+                          {conj.conjugated_form}
+                          <SpeakerButton
+                            text={conj.conjugated_form}
+                            audioUrl={conj.audio_url}
+                            size="sm"
+                          />
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${stateColors[state]}`}>
