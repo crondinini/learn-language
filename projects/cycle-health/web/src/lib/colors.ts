@@ -1,0 +1,18 @@
+export const colors = {
+  cream: "#FAF5ED",
+  warmWhite: "#F5EDE0",
+  sand: "#E8DCC8",
+  terracotta: "#C4654A",
+  terracottaLight: "#D98A72",
+  terracottaBg: "rgba(196, 101, 74, 0.08)",
+  sage: "#6B7F5E",
+  sageLight: "#8FA87E",
+  sageBg: "rgba(107, 127, 94, 0.08)",
+  bark: "#4A3F35",
+  barkLight: "#6D5F52",
+  text: "#3A322A",
+  textMid: "#7A6F63",
+  textDim: "#A89D91",
+  clay: "#B8845C",
+  white: "#FFFFFF",
+} as const;

@@ -18,6 +18,8 @@ Each project has a `STATE.md` file that captures the current state of the projec
 | [learn-language-web-app](./projects/learn-language-web-app) | Arabic flashcard app with spaced repetition | [STATE.md](./projects/learn-language-web-app/STATE.md) |
 | [audio-to-cards](./projects/audio-to-cards) | Local tools for extracting Arabic vocabulary from audio | [STATE.md](./projects/audio-to-cards/STATE.md) |
 | [period-tracker](./projects/period-tracker) | Period tracking app with partner sharing (Flutter + Hono API) | [STATE.md](./projects/period-tracker/STATE.md) |
+| [cycle-health](./projects/cycle-health) | Period tracking PWA with cycle-synced fitness (React + Hono) | [STATE.md](./projects/cycle-health/STATE.md) |
+| [chrome-extension](./projects/chrome-extension) | Netflix dual subtitle extension (Arabic + English) | [STATE.md](./projects/chrome-extension/STATE.md) |
 
 ## Repository Structure
 
@@ -30,10 +32,17 @@ projects/
 ├── audio-to-cards/            # Python audio processing tools (local only)
 │   ├── CLAUDE.md
 │   └── STATE.md
-└── period-tracker/            # Flutter + Hono period tracker with partner sharing
-    ├── api/                   # TypeScript backend
-    ├── app/                   # Flutter mobile app
-    ├── CLAUDE.md
+├── period-tracker/            # Flutter + Hono period tracker with partner sharing
+│   ├── api/                   # TypeScript backend
+│   ├── app/                   # Flutter mobile app
+│   ├── CLAUDE.md
+│   └── STATE.md
+├── cycle-health/              # Period tracking PWA (React + Hono)
+│   ├── api/                   # TypeScript backend (adapted from period-tracker)
+│   ├── web/                   # Vite React PWA
+│   ├── CLAUDE.md
+│   └── STATE.md
+└── chrome-extension/          # Netflix dual subtitle Chrome extension
     └── STATE.md
 ```
 
