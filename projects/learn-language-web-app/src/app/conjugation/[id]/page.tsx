@@ -274,6 +274,8 @@ export default function VerbDetailPage({ params }: { params: Promise<{ id: strin
                             <SpeakerButton
                               text={presentConj.conjugated_form}
                               audioUrl={presentConj.audio_url}
+                              entityType="conjugation"
+                              entityId={presentConj.id}
                               size="sm"
                             />
                             <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium ${stateColors[presentState]}`}>
@@ -293,6 +295,8 @@ export default function VerbDetailPage({ params }: { params: Promise<{ id: strin
                           <SpeakerButton
                             text={pastConj.conjugated_form}
                             audioUrl={pastConj.audio_url}
+                            entityType="conjugation"
+                            entityId={pastConj.id}
                             size="sm"
                           />
                           <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium ${stateColors[pastState]}`}>

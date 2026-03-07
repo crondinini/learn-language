@@ -296,6 +296,8 @@ function ConjugationReviewContent() {
               <SpeakerButton
                 text={currentItem.past_3ms}
                 audioUrl={currentItem.verb_audio_url}
+                entityType="verb"
+                entityId={currentItem.verb_id}
                 size="md"
               />
             </div>
@@ -377,6 +379,8 @@ function ConjugationReviewContent() {
                       <SpeakerButton
                         text={currentItem.conjugated_form}
                         audioUrl={currentItem.conjugation_audio_url}
+                        entityType="conjugation"
+                        entityId={currentItem.conjugation_id}
                         size="md"
                       />
                     </div>

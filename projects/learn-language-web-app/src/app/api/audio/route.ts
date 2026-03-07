@@ -2,71 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import db from "@/lib/db";
 import { getCardById } from "@/lib/cards";
 import { saveMedia, deleteMedia, parseMediaId } from "@/lib/media";
-
-// TTS Provider config
-const TTS_PROVIDER = process.env.TTS_PROVIDER || "elevenlabs"; // "google" or "elevenlabs"
-
-// ElevenLabs config
-const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
-const ARABIC_VOICE_ID = process.env.ELEVENLABS_VOICE_ID || "pMsXgVXv3BLzUgSXRplE";
-
-/**
- * Generate audio using Google Cloud TTS
- */
-async function generateWithGoogle(text: string): Promise<Buffer> {
-  const textToSpeech = await import("@google-cloud/text-to-speech");
-  const client = new textToSpeech.TextToSpeechClient();
-
-  const request = {
-    input: { text },
-    voice: {
-      languageCode: "ar-XA", // Modern Standard Arabic
-      ssmlGender: "MALE" as const,
-    },
-    audioConfig: { audioEncoding: "MP3" as const },
-  };
-
-  const [response] = await client.synthesizeSpeech(request);
-  return Buffer.from(response.audioContent as Uint8Array);
-}
-
-/**
- * Generate audio using ElevenLabs
- */
-async function generateWithElevenLabs(text: string): Promise<Buffer> {
-  if (!ELEVENLABS_API_KEY) {
-    throw new Error("ElevenLabs API key not configured");
-  }
-
-  const response = await fetch(
-    `https://api.elevenlabs.io/v1/text-to-speech/${ARABIC_VOICE_ID}`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "xi-api-key": ELEVENLABS_API_KEY,
-      },
-      body: JSON.stringify({
-        text,
-        model_id: "eleven_multilingual_v2",
-        voice_settings: {
-          stability: 0.5,
-          similarity_boost: 0.75,
-          style: 0.0,
-          use_speaker_boost: true,
-        },
-      }),
-    }
-  );
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`ElevenLabs API error: ${response.status} - ${errorText}`);
-  }
-
-  const audioBuffer = await response.arrayBuffer();
-  return Buffer.from(audioBuffer);
-}
+import { generateTTSAudio, TTS_PROVIDER } from "@/lib/tts";
 
 /**
  * POST /api/audio
@@ -99,11 +35,7 @@ export async function POST(request: NextRequest) {
     // Generate audio based on provider
     let audioBuffer: Buffer;
     try {
-      if (TTS_PROVIDER === "google") {
-        audioBuffer = await generateWithGoogle(card.front);
-      } else {
-        audioBuffer = await generateWithElevenLabs(card.front);
-      }
+      audioBuffer = await generateTTSAudio(card.front);
     } catch (error) {
       console.error(`${TTS_PROVIDER} TTS error:`, error);
       return NextResponse.json(

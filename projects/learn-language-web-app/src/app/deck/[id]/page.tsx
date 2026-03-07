@@ -378,7 +378,7 @@ export default function DeckPage({ params }: { params: Promise<{ id: string }> }
                       </span>
                       <SpeakerButton
                         text={card.front}
-                        cardId={card.id}
+                        entityType="card" entityId={card.id}
                         audioUrl={card.audio_url}
                         size="sm"
                       />
@@ -728,7 +728,7 @@ export default function DeckPage({ params }: { params: Promise<{ id: string }> }
                     <div className="mt-4">
                       <SpeakerButton
                         text={previewCard.front}
-                        cardId={previewCard.id}
+                        entityType="card" entityId={previewCard.id}
                         audioUrl={previewCard.audio_url}
                         size="lg"
                       />
@@ -754,7 +754,7 @@ export default function DeckPage({ params }: { params: Promise<{ id: string }> }
                       </span>
                       <SpeakerButton
                         text={previewCard.front}
-                        cardId={previewCard.id}
+                        entityType="card" entityId={previewCard.id}
                         audioUrl={previewCard.audio_url}
                         size="md"
                       />

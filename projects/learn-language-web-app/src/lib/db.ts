@@ -171,6 +171,7 @@ function getDb(): Database.Database {
       pronoun_arabic TEXT NOT NULL,          -- أنا
       conjugated_form TEXT NOT NULL,         -- كَتَبْتُ
       audio_url TEXT,
+      updated_at TEXT DEFAULT (datetime('now')),
 
       FOREIGN KEY (verb_id) REFERENCES verbs(id) ON DELETE CASCADE,
       UNIQUE(verb_id, tense, person)
@@ -297,6 +298,12 @@ function getDb(): Database.Database {
   const verbColumns = _db.prepare("PRAGMA table_info(verbs)").all() as { name: string }[];
   if (verbColumns.length > 0 && !verbColumns.some((col) => col.name === "is_colloquial")) {
     _db.exec("ALTER TABLE verbs ADD COLUMN is_colloquial INTEGER DEFAULT 0");
+  }
+
+  // Migration: Add updated_at column to verb_conjugations if it doesn't exist
+  const conjColumns = _db.prepare("PRAGMA table_info(verb_conjugations)").all() as { name: string }[];
+  if (conjColumns.length > 0 && !conjColumns.some((col) => col.name === "updated_at")) {
+    _db.exec("ALTER TABLE verb_conjugations ADD COLUMN updated_at TEXT DEFAULT (datetime('now'))");
   }
 
   return _db;

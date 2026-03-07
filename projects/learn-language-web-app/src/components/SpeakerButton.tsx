@@ -6,7 +6,8 @@ import { speakArabic, isSpeechSupported, stopSpeaking } from "@/lib/speech";
 interface SpeakerButtonProps {
   text: string;
   audioUrl?: string | null; // Pre-generated audio URL
-  cardId?: number; // For on-demand generation
+  entityType?: "card" | "verb" | "conjugation"; // For on-demand generation
+  entityId?: number; // For on-demand generation
   size?: "sm" | "md" | "lg";
   className?: string;
   onAudioGenerated?: (audioUrl: string) => void; // Callback when audio is generated
@@ -15,7 +16,8 @@ interface SpeakerButtonProps {
 export default function SpeakerButton({
   text,
   audioUrl,
-  cardId,
+  entityType,
+  entityId,
   size = "md",
   className = "",
   onAudioGenerated,
@@ -49,7 +51,7 @@ export default function SpeakerButton({
     setIsPlaying(false);
     // Reset audio URL to the new card's audio URL
     setCurrentAudioUrl(audioUrl);
-  }, [cardId, audioUrl]);
+  }, [entityId, audioUrl]);
 
   // Play saved audio file
   const playAudioFile = (url: string) => {
@@ -66,7 +68,7 @@ export default function SpeakerButton({
       setIsPlaying(false);
       setCurrentAudioUrl(null);
       // File is missing — regenerate if possible, otherwise try Web Speech
-      if (cardId) {
+      if (entityType && entityId) {
         generateAudio();
       } else {
         playWithWebSpeech();
@@ -75,7 +77,7 @@ export default function SpeakerButton({
 
     audio.play().catch(() => {
       setCurrentAudioUrl(null);
-      if (cardId) {
+      if (entityType && entityId) {
         generateAudio();
       } else {
         playWithWebSpeech();
@@ -93,16 +95,16 @@ export default function SpeakerButton({
     });
   };
 
-  // Generate audio via ElevenLabs
+  // Generate audio via TTS
   const generateAudio = async () => {
-    if (!cardId || isGenerating) return;
+    if (!entityType || !entityId || isGenerating) return;
 
     setIsGenerating(true);
     try {
-      const response = await fetch("/api/audio", {
+      const response = await fetch("/api/audio/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cardId }),
+        body: JSON.stringify({ entityType, entityId }),
       });
 
       if (response.ok) {
@@ -145,8 +147,8 @@ export default function SpeakerButton({
       return;
     }
 
-    // If we have a cardId and can generate, try to generate
-    if (cardId) {
+    // If we have entity info and can generate, try to generate
+    if (entityType && entityId) {
       generateAudio();
       return;
     }
@@ -155,17 +157,17 @@ export default function SpeakerButton({
     playWithWebSpeech();
   };
 
-  // Long press to regenerate (if cardId provided)
+  // Long press to regenerate (if entity info provided)
   const handleContextMenu = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!cardId || isGenerating) return;
+    if (!entityType || !entityId || isGenerating) return;
 
     // Delete existing and regenerate
     if (currentAudioUrl) {
       try {
-        await fetch(`/api/audio?cardId=${cardId}`, { method: "DELETE" });
+        await fetch(`/api/audio/generate?entityType=${entityType}&entityId=${entityId}`, { method: "DELETE" });
         setCurrentAudioUrl(null);
       } catch (error) {
         console.error("Failed to delete audio:", error);
@@ -194,7 +196,7 @@ export default function SpeakerButton({
   return (
     <button
       onClick={handleClick}
-      onContextMenu={cardId ? handleContextMenu : undefined}
+      onContextMenu={entityType && entityId ? handleContextMenu : undefined}
       disabled={isGenerating}
       className={`inline-flex items-center justify-center rounded-full transition-colors ${
         isGenerating
@@ -212,7 +214,7 @@ export default function SpeakerButton({
           ? "Stop"
           : currentAudioUrl
           ? "Play (ElevenLabs audio)"
-          : cardId
+          : entityType && entityId
           ? "Generate & play audio"
           : "Play pronunciation"
       }

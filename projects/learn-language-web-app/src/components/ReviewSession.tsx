@@ -343,7 +343,7 @@ export default function ReviewSession({ deckId, lessonId, backUrl, backLabel }: 
                   <div className="mt-4 flex items-center justify-center gap-2">
                     <SpeakerButton
                       text={currentCard.front}
-                      cardId={currentCard.id}
+                      entityType="card" entityId={currentCard.id}
                       audioUrl={currentCard.audio_url}
                       size="lg"
                     />
@@ -412,7 +412,7 @@ export default function ReviewSession({ deckId, lessonId, backUrl, backLabel }: 
                     </span>
                     <SpeakerButton
                       text={currentCard.front}
-                      cardId={currentCard.id}
+                      entityType="card" entityId={currentCard.id}
                       audioUrl={currentCard.audio_url}
                       size="md"
                     />
