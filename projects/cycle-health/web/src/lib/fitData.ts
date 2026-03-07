@@ -23,13 +23,37 @@ export function getExerciseSubtitle(phase: CyclePhase): string {
 export function getNutritionSubtitle(phase: CyclePhase): string {
   switch (phase) {
     case "Period":
-      return "Replenish and comfort";
+      return "Replenish iron and keep energy stable";
     case "Follicular":
-      return "Fuel the rebuild with fresh, vibrant foods";
+      return "Fuel the rebuild — your body uses carbs efficiently now";
     case "Ovulation":
-      return "Light, clean, and antioxidant-rich";
+      return "Light, clean, and anti-inflammatory";
     case "Luteal":
-      return "Satisfy cravings wisely and support your mood";
+      return "Your metabolism is higher — eat accordingly";
+  }
+}
+
+export interface NutritionCallout {
+  text: string;
+  icon: string;
+}
+
+export function getNutritionCallout(phase: CyclePhase): NutritionCallout | null {
+  switch (phase) {
+    case "Period":
+      return {
+        icon: "🩸",
+        text: "Focus on iron-rich foods (red meat, spinach, lentils). You're losing iron — replenish it. Dark chocolate (70%+) has magnesium that helps with cramps.",
+      };
+    case "Follicular":
+      return null;
+    case "Ovulation":
+      return null;
+    case "Luteal":
+      return {
+        icon: "⚖️",
+        text: "Skip the scale days 17-28. Water retention makes the number meaningless — it's not fat gain, it's biology. You'll see your real weight after your period starts.",
+      };
   }
 }
 
@@ -70,31 +94,31 @@ export function getNutrition(phase: CyclePhase): FitItem[] {
   switch (phase) {
     case "Period":
       return [
-        { icon: "🥬", name: "Iron-rich foods", description: "Spinach, lentils, red meat — replenish what you lose", detail: "Essential" },
-        { icon: "🍲", name: "Warm soups", description: "Bone broth or veggie soup — warming and anti-inflammatory", detail: "Comfort" },
-        { icon: "🍫", name: "Dark chocolate", description: "70%+ cacao — magnesium to ease cramps and lift mood", detail: "Treat" },
-        { icon: "💧", name: "Hydration", description: "Herbal teas, warm water with lemon — reduce bloating", detail: "2L+ daily" },
+        { icon: "🥩", name: "Prioritise iron", description: "Red meat, spinach, lentils — you're losing iron, replenish it actively", detail: "Every meal" },
+        { icon: "🍫", name: "Magnesium for cramps", description: "Dark chocolate 70%+, nuts, bananas — eases cramps and lifts mood", detail: "Daily" },
+        { icon: "💧", name: "Extra hydration", description: "Herbal teas, warm water with lemon — helps with bloating", detail: "2L+" },
+        { icon: "🍽️", name: "Eat normally", description: "No need to cut calories. Your body is working hard — fuel it", detail: "Maintain" },
       ];
     case "Follicular":
       return [
-        { icon: "🥗", name: "Fresh salads", description: "Leafy greens, sprouts, and light vinaigrettes", detail: "Daily" },
-        { icon: "🥚", name: "Lean protein", description: "Chicken, fish, tofu — support muscle recovery", detail: "Each meal" },
-        { icon: "🫙", name: "Fermented foods", description: "Yogurt, kimchi, sauerkraut — boost gut health", detail: "1-2 servings" },
-        { icon: "🌾", name: "Complex carbs", description: "Oats, quinoa, sweet potatoes — sustained energy", detail: "Fuel up" },
+        { icon: "🥚", name: "Protein with every meal", description: "Chicken, fish, eggs, tofu — supports the muscle you're building in the gym", detail: "1 palm/meal" },
+        { icon: "🌾", name: "Carbs are your friend", description: "Your body accesses stored carbs efficiently now — oats, rice, potatoes", detail: "Fuel up" },
+        { icon: "🫙", name: "Fermented foods", description: "Yogurt, kimchi, sauerkraut — estrogen is rising, support gut health", detail: "1-2/day" },
+        { icon: "🥗", name: "Fresh and light", description: "You'll naturally crave lighter meals — lean into it", detail: "Daily" },
       ];
     case "Ovulation":
       return [
-        { icon: "🥕", name: "Raw vegetables", description: "Crunchy salads, veggie sticks — light and energizing", detail: "Daily" },
-        { icon: "🍓", name: "Antioxidant fruits", description: "Berries, pomegranate, citrus — support cell health", detail: "2-3 servings" },
-        { icon: "🍽️", name: "Light meals", description: "Smaller, frequent meals — keep energy steady", detail: "Grazing" },
-        { icon: "🌱", name: "Fiber-rich foods", description: "Flaxseeds, beans, whole grains — support estrogen balance", detail: "Important" },
+        { icon: "🥕", name: "Anti-inflammatory foods", description: "Leafy greens, berries, turmeric — support your body at peak output", detail: "Daily" },
+        { icon: "🌱", name: "Fibre for estrogen", description: "Flaxseeds, beans, whole grains — helps clear excess estrogen", detail: "Important" },
+        { icon: "🍽️", name: "Smaller, frequent meals", description: "Energy is high but appetite may dip — graze to stay fuelled", detail: "4-5 meals" },
+        { icon: "🐟", name: "Omega-3s", description: "Salmon, walnuts, chia — anti-inflammatory support for joints", detail: "2-3x/week" },
       ];
     case "Luteal":
       return [
-        { icon: "🍫", name: "Magnesium-rich foods", description: "Dark chocolate, nuts, bananas — ease PMS symptoms", detail: "Key mineral" },
-        { icon: "🌾", name: "Complex carbs", description: "Brown rice, oats — stabilize serotonin and mood", detail: "Each meal" },
-        { icon: "🐟", name: "Omega-3s", description: "Salmon, walnuts, chia seeds — reduce inflammation", detail: "2-3x/week" },
-        { icon: "🍲", name: "Comfort foods", description: "Warm stews and roasted veggies — nourish without overdoing", detail: "In moderation" },
+        { icon: "🍚", name: "+1 cupped hand of carbs", description: "Your metabolism increases 5-10%. The hunger is biological, not lack of discipline. Add an extra portion of carbs per day", detail: "Extra/day" },
+        { icon: "🌾", name: "Complex carbs for mood", description: "Brown rice, oats, sweet potatoes — stabilise serotonin. Mood dips are real, carbs help", detail: "Each meal" },
+        { icon: "🍫", name: "Magnesium-rich snacks", description: "Dark chocolate, nuts, bananas — ease PMS and satisfy cravings smartly", detail: "Daily" },
+        { icon: "🐟", name: "Omega-3s", description: "Salmon, walnuts, chia seeds — reduce inflammation and bloating", detail: "2-3x/week" },
       ];
   }
 }

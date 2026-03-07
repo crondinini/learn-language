@@ -9,6 +9,7 @@ import {
 import { eq, and, asc } from "drizzle-orm";
 import { v4 as uuid } from "uuid";
 import { authMiddleware, type AuthUser } from "../middleware/auth.js";
+import { reseedPlan } from "../services/training-seed.js";
 
 const trainingRouter = new Hono<{ Variables: { user: AuthUser } }>();
 trainingRouter.use("*", authMiddleware);
@@ -217,6 +218,13 @@ trainingRouter.get("/today", async (c) => {
     isRestDay: false,
     cycleTips: plan.cycleTips,
   });
+});
+
+// POST /training/reseed — delete existing plan and re-create with latest seed data
+trainingRouter.post("/reseed", async (c) => {
+  const { userId } = c.get("user");
+  const planId = await reseedPlan(userId);
+  return c.json({ success: true, planId });
 });
 
 export default trainingRouter;

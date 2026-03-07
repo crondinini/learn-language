@@ -2,7 +2,8 @@ import { Outlet, NavLink } from "react-router";
 
 const NAV_ITEMS = [
   { to: "/", icon: "💪", label: "Fit" },
-  { to: "/home", icon: "🌸", label: "Home" },
+  { to: "/plan", icon: "📋", label: "Plan" },
+  { to: "/home", icon: "🩸", label: "Cycle" },
   { to: "/calendar", icon: "📅", label: "Calendar" },
   { to: "/settings", icon: "⚙️", label: "Settings" },
 ];

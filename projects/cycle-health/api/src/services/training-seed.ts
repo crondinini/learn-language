@@ -16,6 +16,21 @@ export async function seedDefaultPlan(userId: string): Promise<string> {
   });
   if (existing) return existing.id;
 
+  return createPlan(userId);
+}
+
+// Delete existing plan and re-create with latest data
+export async function reseedPlan(userId: string): Promise<string> {
+  const existing = await db.query.trainingPlans.findFirst({
+    where: eq(trainingPlans.userId, userId),
+  });
+  if (existing) {
+    await db.delete(trainingPlans).where(eq(trainingPlans.id, existing.id));
+  }
+  return createPlan(userId);
+}
+
+async function createPlan(userId: string): Promise<string> {
   const planId = uuid();
   await db.insert(trainingPlans).values({
     id: planId,
@@ -37,11 +52,11 @@ export async function seedDefaultPlan(userId: string): Promise<string> {
   });
 
   const day1Exercises = [
-    { label: "Warm-up", name: "5 min bike + banded lateral walks", setsReps: null, rest: null, notes: "Mini band above knees, 10 steps each way x 2", isWarmup: true, isFinisher: false },
-    { label: "A1", name: "Barbell hip thrust", setsReps: "4 x 12", rest: null, notes: "Superset with A2", isWarmup: false, isFinisher: false },
-    { label: "A2", name: "Leg curl (seated or lying)", setsReps: "4 x 12", rest: "60s", notes: "Hamstring focus", isWarmup: false, isFinisher: false },
-    { label: "B", name: "Romanian deadlift (DB or barbell)", setsReps: "4 x 10", rest: "60s", notes: "Hinge pattern — core + hamstrings + glutes", isWarmup: false, isFinisher: false },
-    { label: "C1", name: "Bulgarian split squat", setsReps: "3 x 10/side", rest: null, notes: "Back foot on bench", isWarmup: false, isFinisher: false },
+    { label: "Warm-up", name: "5 min bike + banded lateral walks", setsReps: null, rest: null, notes: "Mini band above knees, 10 steps each way x 2 — fires up glute medius", isWarmup: true, isFinisher: false },
+    { label: "A1", name: "Barbell hip thrust", setsReps: "4 x 12", rest: null, notes: "Superset with A2. Follicular phase (days 8-14): try adding 2.5-5kg", isWarmup: false, isFinisher: false },
+    { label: "A2", name: "Leg curl (seated or lying)", setsReps: "4 x 12", rest: "60s", notes: "Hamstring focus. No rest before this — go straight from A1", isWarmup: false, isFinisher: false },
+    { label: "B", name: "Romanian deadlift (DB or barbell)", setsReps: "4 x 10", rest: "60s", notes: "Hinge pattern — core + hamstrings + glutes. Follicular phase: try adding 2.5-5kg", isWarmup: false, isFinisher: false },
+    { label: "C1", name: "Bulgarian split squat", setsReps: "3 x 10/side", rest: null, notes: "Back foot on bench. Superset with C2", isWarmup: false, isFinisher: false },
     { label: "C2", name: "Single-leg glute bridge", setsReps: "3 x 10/side", rest: "60s", notes: "Bodyweight only to start. Squeeze at top for 2 sec", isWarmup: false, isFinisher: false },
     { label: "D", name: "Cable hip abduction (standing)", setsReps: "3 x 15/side", rest: "45s", notes: "Key for glute medius + lower back. Stand sideways, ankle strap, push leg out", isWarmup: false, isFinisher: false },
     { label: "Finisher", name: "Incline treadmill walk", setsReps: "8 min", rest: null, notes: "10-12% incline, moderate pace", isWarmup: false, isFinisher: true },
@@ -69,11 +84,11 @@ export async function seedDefaultPlan(userId: string): Promise<string> {
     { label: "A1", name: "Dumbbell bench press", setsReps: "4 x 12", rest: null, notes: "Superset with A2", isWarmup: false, isFinisher: false },
     { label: "A2", name: "Cable seated row", setsReps: "4 x 12", rest: "60s", notes: "Squeeze shoulder blades", isWarmup: false, isFinisher: false },
     { label: "B1", name: "Dumbbell overhead press", setsReps: "3 x 12", rest: null, notes: "Superset with B2", isWarmup: false, isFinisher: false },
-    { label: "B2", name: "Lat pulldown", setsReps: "3 x 12", rest: "45s", notes: "Wide grip", isWarmup: false, isFinisher: false },
+    { label: "B2", name: "Lat pulldown", setsReps: "3 x 12", rest: "45s", notes: "Wide grip. Luteal phase: take 60s rest instead of 45s if energy dips", isWarmup: false, isFinisher: false },
     { label: "C1", name: "Cable lateral raises", setsReps: "3 x 15", rest: null, notes: "Superset with C2", isWarmup: false, isFinisher: false },
-    { label: "C2", name: "Face pulls", setsReps: "3 x 15", rest: "45s", notes: "Light, rear delts + posture", isWarmup: false, isFinisher: false },
+    { label: "C2", name: "Face pulls", setsReps: "3 x 15", rest: "45s", notes: "Light, rear delts + posture. Luteal: 60s rest if needed", isWarmup: false, isFinisher: false },
     { label: "D1", name: "Incline dumbbell curl", setsReps: "3 x 15", rest: null, notes: "Superset with D2", isWarmup: false, isFinisher: false },
-    { label: "D2", name: "Cable tricep pushdown", setsReps: "3 x 15", rest: "45s", notes: null, isWarmup: false, isFinisher: false },
+    { label: "D2", name: "Cable tricep pushdown", setsReps: "3 x 15", rest: "45s", notes: "Luteal: 60s rest if needed", isWarmup: false, isFinisher: false },
     { label: "Finisher", name: "Spin bike", setsReps: "10 min", rest: null, notes: "Moderate effort", isWarmup: false, isFinisher: true },
   ];
 
@@ -96,11 +111,11 @@ export async function seedDefaultPlan(userId: string): Promise<string> {
 
   const day3Exercises = [
     { label: "Warm-up", name: "5 min bike + banded clamshells", setsReps: null, rest: null, notes: "15/side — glute medius activation", isWarmup: true, isFinisher: false },
-    { label: "A", name: "Goblet squat (to box/bench)", setsReps: "4 x 12", rest: "60s", notes: "Box squat limits knee travel", isWarmup: false, isFinisher: false },
-    { label: "B", name: "Leg press (feet high on platform)", setsReps: "4 x 15", rest: "60s", notes: "Higher reps — your Type I fibres will thank you", isWarmup: false, isFinisher: false },
-    { label: "C1", name: "Walking lunge (DB)", setsReps: "3 x 10/side", rest: null, notes: "Great quad + glute combo. Superset with C2", isWarmup: false, isFinisher: false },
-    { label: "C2", name: "Cable Pallof press", setsReps: "3 x 10/side", rest: "60s", notes: "Anti-rotation = directly addresses lower back", isWarmup: false, isFinisher: false },
-    { label: "D1", name: "Single-leg Romanian deadlift (DB)", setsReps: "3 x 10/side", rest: null, notes: "Balance, hamstrings, glute medius. Hold DB in opposite hand", isWarmup: false, isFinisher: false },
+    { label: "A", name: "Goblet squat (to box/bench)", setsReps: "4 x 12", rest: "60s", notes: "Box squat limits knee travel — go deeper if comfortable", isWarmup: false, isFinisher: false },
+    { label: "B", name: "Leg press (feet high on platform)", setsReps: "4 x 15", rest: "60s", notes: "Higher reps for Type I fibres", isWarmup: false, isFinisher: false },
+    { label: "C1", name: "Walking lunge (DB)", setsReps: "3 x 10/side", rest: null, notes: "Quad + glute combo. Superset with C2. Around ovulation: use controlled tempos", isWarmup: false, isFinisher: false },
+    { label: "C2", name: "Cable Pallof press", setsReps: "3 x 10/side", rest: "60s", notes: "Anti-rotation — directly addresses lower back", isWarmup: false, isFinisher: false },
+    { label: "D1", name: "Single-leg Romanian deadlift (DB)", setsReps: "3 x 10/side", rest: null, notes: "Hold DB in opposite hand. Around ovulation: controlled tempo, no explosive movements", isWarmup: false, isFinisher: false },
     { label: "D2", name: "Dead bug", setsReps: "3 x 10/side", rest: "60s", notes: "Slow and controlled — core stability for lower back", isWarmup: false, isFinisher: false },
     { label: "E", name: "Standing calf raises", setsReps: "3 x 15", rest: "45s", notes: null, isWarmup: false, isFinisher: false },
     { label: "Finisher", name: "Spin bike intervals", setsReps: "8 min", rest: null, notes: "30s hard / 30s easy", isWarmup: false, isFinisher: true },
@@ -120,18 +135,18 @@ export async function seedDefaultPlan(userId: string): Promise<string> {
     planId,
     dayNumber: 6,
     name: "Full Body Functional",
-    emphasis: "Strength, movement quality, glute medius",
+    emphasis: "Strength, movement quality, glute medius — one station, busy-gym friendly",
   });
 
   const day4Exercises = [
-    { label: "Warm-up", name: "5 min bike + banded lateral walks", setsReps: null, rest: null, notes: null, isWarmup: true, isFinisher: false },
-    { label: "A1", name: "Dumbbell bench press (or push-ups)", setsReps: "3 x 12", rest: null, notes: "Upper body push — keeps pressing frequency at 2x/week", isWarmup: false, isFinisher: false },
+    { label: "Warm-up", name: "5 min bike + banded lateral walks", setsReps: null, rest: null, notes: "On period: if energy is low, reduce all weights 10-15% and focus on movement quality", isWarmup: true, isFinisher: false },
+    { label: "A1", name: "Dumbbell bench press (or push-ups)", setsReps: "3 x 12", rest: null, notes: "Upper body push — keeps pressing frequency at 2x/week. Superset with A2", isWarmup: false, isFinisher: false },
     { label: "A2", name: "Single-arm dumbbell row", setsReps: "3 x 12/side", rest: "60s", notes: "Upper body pull", isWarmup: false, isFinisher: false },
-    { label: "B1", name: "Farmer's carry", setsReps: "3 x 30-40m", rest: null, notes: "Heavy dumbbells, walk tall. Works entire core and grip", isWarmup: false, isFinisher: false },
+    { label: "B1", name: "Farmer's carry", setsReps: "3 x 30-40m", rest: null, notes: "Heavy dumbbells, walk tall. Works entire core and grip. Superset with B2", isWarmup: false, isFinisher: false },
     { label: "B2", name: "Cable hip abduction", setsReps: "3 x 15/side", rest: "60s", notes: "More glute medius work", isWarmup: false, isFinisher: false },
-    { label: "C1", name: "Bulgarian split squat", setsReps: "3 x 10/side", rest: null, notes: "Second time this week — builds serious single-leg strength", isWarmup: false, isFinisher: false },
+    { label: "C1", name: "Bulgarian split squat", setsReps: "3 x 10/side", rest: null, notes: "Second time this week — builds serious single-leg strength. Superset with C2", isWarmup: false, isFinisher: false },
     { label: "C2", name: "Cable Pallof press", setsReps: "3 x 10/side", rest: "60s", notes: "Anti-rotation for lower back", isWarmup: false, isFinisher: false },
-    { label: "D1", name: "Dumbbell reverse lunge (short step)", setsReps: "3 x 10/side", rest: null, notes: null, isWarmup: false, isFinisher: false },
+    { label: "D1", name: "Dumbbell reverse lunge (short step)", setsReps: "3 x 10/side", rest: null, notes: "Superset with D2", isWarmup: false, isFinisher: false },
     { label: "D2", name: "Dead bug", setsReps: "3 x 10/side", rest: "60s", notes: null, isWarmup: false, isFinisher: false },
     { label: "Cool-down", name: "Stretching", setsReps: "5-10 min", rest: null, notes: "Pigeon stretch, hip flexor stretch, child's pose", isWarmup: false, isFinisher: true },
   ];
@@ -143,7 +158,7 @@ export async function seedDefaultPlan(userId: string): Promise<string> {
     });
   }
 
-  // Cycle training tips
+  // Cycle training tips (general, phase-level)
   const tips = [
     { phase: "menstruation", tip: "Days 1-5: You might feel lower energy. Reduce weights by 10-15% and focus on technique. If you feel fine, train normally. Prioritise iron-rich foods." },
     { phase: "follicular", tip: "Days 6-14: Estrogen is rising. Many women feel strongest here. Good time to attempt heavier weights or push for extra reps. Your body accesses stored carbs more efficiently." },

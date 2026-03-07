@@ -6,6 +6,7 @@ import { HomePage } from "./pages/HomePage";
 import { CalendarPage } from "./pages/CalendarPage";
 import { DayDetailPage } from "./pages/DayDetailPage";
 import { FitPage } from "./pages/FitPage";
+import { PlanPage } from "./pages/PlanPage";
 import { PartnerPage } from "./pages/PartnerPage";
 import { SettingsPage } from "./pages/SettingsPage";
 
@@ -28,6 +29,7 @@ export function App() {
         }
       >
         <Route index element={<FitPage />} />
+        <Route path="plan" element={<PlanPage />} />
         <Route path="home" element={<HomePage />} />
         <Route path="calendar" element={<CalendarPage />} />
         <Route path="settings" element={<SettingsPage />} />
