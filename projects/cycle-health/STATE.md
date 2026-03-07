@@ -15,8 +15,10 @@
 - Symptom tracking (8 types, severity 1-3)
 - Cycle prediction algorithm (needs 3+ completed periods)
 - Cycle phase detection (Period, Follicular, Ovulation, Luteal)
-- Phase-synced exercise and nutrition recommendations
-- Training plan support with cycle-aware tips
+- 4-day fat loss training plan auto-seeded on signup (Lower Body A, Upper Body, Lower Body B, Full Body Functional)
+- Fit tab is the default landing page with today's training exercises
+- Phase-synced nutrition recommendations
+- Cycle-aware training tips per phase
 - Partner sharing (invite by email, share periods + predictions)
 - PWA: installable, offline font caching, service worker
 
@@ -27,7 +29,7 @@
 
 ## Recent Changes
 
-- Initial project creation: full API + PWA frontend
-- Ported from Flutter period-tracker app (same API, new React frontend)
-- Added training plan support with cycle-phase tips
-- Removed HealthKit sync (not relevant for PWA)
+- Initial project creation: full API + PWA frontend (ported from Flutter period-tracker)
+- Fit tab set as default landing page with training plan exercises
+- Default 4-day fat loss plan auto-seeded on user login
+- Removed generic exercise recommendations in favor of real training plan data
