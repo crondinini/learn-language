@@ -238,14 +238,11 @@ export default function VerbDetailPage({ params }: { params: Promise<{ id: strin
                   <th className="px-4 py-3 text-right text-sm font-medium text-slate-500 dark:text-slate-400">
                     Pronoun
                   </th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-slate-500 dark:text-slate-400">
+                  <th className="px-4 py-3 text-center text-sm font-medium text-slate-500 dark:text-slate-400">
                     Present (المضارع)
                   </th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-slate-500 dark:text-slate-400">
-                    Past (الماضي)
-                  </th>
                   <th className="px-4 py-3 text-center text-sm font-medium text-slate-500 dark:text-slate-400">
-                    Status
+                    Past (الماضي)
                   </th>
                 </tr>
               </thead>
@@ -272,7 +269,7 @@ export default function VerbDetailPage({ params }: { params: Promise<{ id: strin
                       </td>
                       <td dir="rtl" className="px-4 py-3 text-xl font-medium text-slate-800 dark:text-white">
                         {presentConj ? (
-                          <div className="flex items-center justify-end gap-2">
+                          <div className="flex items-center justify-center gap-2">
                             {presentConj.conjugated_form}
                             <SpeakerButton
                               text={presentConj.conjugated_form}
@@ -287,11 +284,11 @@ export default function VerbDetailPage({ params }: { params: Promise<{ id: strin
                             </span>
                           </div>
                         ) : (
-                          <span className="text-sm text-slate-400">—</span>
+                          <span className="text-center text-sm text-slate-400">—</span>
                         )}
                       </td>
                       <td dir="rtl" className="px-4 py-3 text-xl font-medium text-slate-800 dark:text-white">
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center justify-center gap-2">
                           {pastConj.conjugated_form}
                           <SpeakerButton
                             text={pastConj.conjugated_form}
@@ -306,7 +303,6 @@ export default function VerbDetailPage({ params }: { params: Promise<{ id: strin
                           </span>
                         </div>
                       </td>
-                      <td />
                     </tr>
                   );
                 })}
