@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import db from "@/lib/db";
 import {
   getDueConjugations,
   getNewConjugations,
@@ -7,6 +8,7 @@ import {
   logConjugationReview,
   DueConjugation,
 } from "@/lib/verbs";
+import { saveMedia, deleteMedia, parseMediaId } from "@/lib/media";
 import { reviewCard, Rating } from "@/lib/fsrs";
 
 // GET /api/conjugation - Get conjugations for practice
@@ -138,5 +140,63 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Error submitting review:", error);
     return NextResponse.json({ error: "Failed to submit review" }, { status: 500 });
+  }
+}
+
+// PATCH /api/conjugation - Upload audio for a conjugation
+// Body: multipart/form-data with 'file' field and 'conjugationId' field
+// Or JSON body with { conjugationId, audio_url } to set URL directly
+export async function PATCH(request: NextRequest) {
+  try {
+    const contentType = request.headers.get("content-type") || "";
+
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await request.formData();
+      const conjugationId = parseInt(formData.get("conjugationId") as string);
+      const file = formData.get("file") as File | null;
+
+      if (!conjugationId || !file) {
+        return NextResponse.json({ error: "conjugationId and file are required" }, { status: 400 });
+      }
+
+      const conj = db.prepare("SELECT id, audio_url FROM verb_conjugations WHERE id = ?").get(conjugationId) as { id: number; audio_url: string | null } | undefined;
+      if (!conj) {
+        return NextResponse.json({ error: "Conjugation not found" }, { status: 404 });
+      }
+
+      // Delete old media if exists
+      if (conj.audio_url) {
+        const oldMediaId = parseMediaId(conj.audio_url);
+        if (oldMediaId) deleteMedia(oldMediaId);
+      }
+
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const ext = file.name.split(".").pop()?.toLowerCase() || "mp3";
+      const mediaId = saveMedia(buffer, file.type || "audio/mpeg", `conjugation-${conjugationId}.${ext}`);
+      const audioUrl = `/api/media/${mediaId}`;
+
+      db.prepare("UPDATE verb_conjugations SET audio_url = ? WHERE id = ?").run(audioUrl, conjugationId);
+
+      return NextResponse.json({ message: "Audio uploaded", audio_url: audioUrl });
+    } else {
+      const body = await request.json();
+      const { conjugationId, audio_url } = body as { conjugationId: number; audio_url: string };
+
+      if (!conjugationId || !audio_url) {
+        return NextResponse.json({ error: "conjugationId and audio_url are required" }, { status: 400 });
+      }
+
+      const conj = db.prepare("SELECT id FROM verb_conjugations WHERE id = ?").get(conjugationId) as { id: number } | undefined;
+      if (!conj) {
+        return NextResponse.json({ error: "Conjugation not found" }, { status: 404 });
+      }
+
+      db.prepare("UPDATE verb_conjugations SET audio_url = ? WHERE id = ?").run(audio_url, conjugationId);
+
+      return NextResponse.json({ message: "Audio URL updated", audio_url });
+    }
+  } catch (error) {
+    console.error("Error updating conjugation audio:", error);
+    return NextResponse.json({ error: "Failed to update conjugation audio" }, { status: 500 });
   }
 }
