@@ -139,28 +139,28 @@ function ConjugationReviewContent() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+      <div className="min-h-screen bg-bg">
         <Header />
-        <div className="py-12 text-center text-slate-500">Loading...</div>
+        <div className="py-12 text-center text-ink-faint">Loading...</div>
       </div>
     );
   }
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+      <div className="min-h-screen bg-bg">
         <Header />
         <main className="mx-auto max-w-2xl px-6 py-12 text-center">
           <div className="mb-4 text-6xl">🎉</div>
-          <h1 className="mb-2 text-2xl font-bold text-slate-800 dark:text-white">
+          <h1 className="mb-2 text-[28px] font-bold tracking-tight text-ink">
             All caught up!
           </h1>
-          <p className="mb-6 text-slate-500">
+          <p className="mb-6 text-ink-faint">
             No conjugations to practice right now. Add some verbs first!
           </p>
           <Link
             href="/conjugation"
-            className="rounded-lg bg-emerald-600 px-6 py-3 font-medium text-white hover:bg-emerald-700"
+            className="rounded-[var(--radius-md)] bg-accent px-6 py-3 font-medium text-white hover:bg-accent-hover"
           >
             Go to Conjugation
           </Link>
@@ -172,19 +172,19 @@ function ConjugationReviewContent() {
   // Session complete
   if (reviewState === "checking" && currentIndex >= items.length - 1 && !currentItem) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+      <div className="min-h-screen bg-bg">
         <Header />
         <main className="mx-auto max-w-2xl px-6 py-12 text-center">
           <div className="mb-4 text-6xl">✨</div>
-          <h1 className="mb-2 text-2xl font-bold text-slate-800 dark:text-white">
+          <h1 className="mb-2 text-[28px] font-bold tracking-tight text-ink">
             Practice Complete!
           </h1>
-          <div className="mb-6 text-slate-500">
+          <div className="mb-6 text-ink-faint">
             <p>
               {sessionStats.correct} correct, {sessionStats.incorrect} incorrect out of{" "}
               {sessionStats.total} attempts
             </p>
-            <p className="mt-1 text-lg font-semibold text-emerald-600">
+            <p className="mt-1 text-lg font-semibold text-accent">
               {Math.round((sessionStats.correct / sessionStats.total) * 100)}% accuracy
             </p>
           </div>
@@ -197,13 +197,13 @@ function ConjugationReviewContent() {
                 setUserAnswer("");
                 fetchItems();
               }}
-              className="rounded-lg bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700"
+              className="rounded-[var(--radius-md)] bg-accent px-6 py-3 font-medium text-white hover:bg-accent-hover"
             >
               Practice More
             </button>
             <Link
               href="/conjugation"
-              className="rounded-lg border border-slate-300 px-6 py-3 font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+              className="rounded-[var(--radius-md)] border border-line px-6 py-3 font-medium text-ink-soft hover:bg-surface-hover"
             >
               Back to Verbs
             </Link>
@@ -216,20 +216,20 @@ function ConjugationReviewContent() {
   // Check if we've gone past all items
   if (!currentItem) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+      <div className="min-h-screen bg-bg">
         <Header />
         <main className="mx-auto max-w-2xl px-6 py-12 text-center">
           <div className="mb-4 text-6xl">✨</div>
-          <h1 className="mb-2 text-2xl font-bold text-slate-800 dark:text-white">
+          <h1 className="mb-2 text-[28px] font-bold tracking-tight text-ink">
             Practice Complete!
           </h1>
-          <div className="mb-6 text-slate-500">
+          <div className="mb-6 text-ink-faint">
             <p>
               {sessionStats.correct} correct, {sessionStats.incorrect} incorrect out of{" "}
               {sessionStats.total} attempts
             </p>
             {sessionStats.total > 0 && (
-              <p className="mt-1 text-lg font-semibold text-emerald-600">
+              <p className="mt-1 text-lg font-semibold text-accent">
                 {Math.round((sessionStats.correct / sessionStats.total) * 100)}% accuracy
               </p>
             )}
@@ -243,13 +243,13 @@ function ConjugationReviewContent() {
                 setUserAnswer("");
                 fetchItems();
               }}
-              className="rounded-lg bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700"
+              className="rounded-[var(--radius-md)] bg-accent px-6 py-3 font-medium text-white hover:bg-accent-hover"
             >
               Practice More
             </button>
             <Link
               href="/conjugation"
-              className="rounded-lg border border-slate-300 px-6 py-3 font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+              className="rounded-[var(--radius-md)] border border-line px-6 py-3 font-medium text-ink-soft hover:bg-surface-hover"
             >
               Back to Verbs
             </Link>
@@ -260,13 +260,13 @@ function ConjugationReviewContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+    <div className="min-h-screen bg-bg">
       <Header />
 
       <main className="mx-auto max-w-2xl px-6 py-8">
         {/* Progress Bar */}
         <div className="mb-6">
-          <div className="mb-2 flex justify-between text-sm text-slate-500">
+          <div className="mb-2 flex justify-between text-sm text-ink-faint">
             <span>
               {currentIndex + 1} / {items.length}
             </span>
@@ -274,23 +274,23 @@ function ConjugationReviewContent() {
               {sessionStats.correct} correct, {sessionStats.incorrect} incorrect
             </span>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+          <div className="h-2 overflow-hidden rounded-full bg-surface-hover">
             <div
-              className="h-full bg-emerald-500 transition-all"
+              className="h-full bg-accent transition-all"
               style={{ width: `${((currentIndex + 1) / items.length) * 100}%` }}
             />
           </div>
         </div>
 
         {/* Practice Card */}
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-lg dark:border-slate-700 dark:bg-slate-800">
+        <div className="rounded-[var(--radius-md)] border border-line/50 bg-surface p-6" style={{ boxShadow: "var(--shadow-card)" }}>
           {/* Verb Info */}
           <div className="mb-6 text-center">
-            <div className="mb-2 text-sm text-slate-500 dark:text-slate-400">
+            <div className="mb-2 text-sm text-ink-faint">
               {currentItem.meaning}
             </div>
             <div className="mb-4 flex items-center justify-center gap-2">
-              <div dir="rtl" className="text-2xl font-bold text-slate-800 dark:text-white">
+              <div dir="rtl" className="text-2xl font-bold text-ink">
                 {currentItem.past_3ms}
               </div>
               <SpeakerButton
@@ -303,15 +303,15 @@ function ConjugationReviewContent() {
             </div>
 
             {/* Prompt */}
-            <div className="rounded-lg bg-slate-100 p-4 dark:bg-slate-700">
-              <div className="mb-1 text-sm text-slate-500 dark:text-slate-400">
+            <div className="rounded-[var(--radius-sm)] bg-surface-hover p-4">
+              <div className="mb-1 text-sm text-ink-faint">
                 Conjugate in the{" "}
                 <span className="font-semibold">
                   {currentItem.tense === "present" ? "present (المضارع)" : "past (الماضي)"}
                 </span>{" "}
                 for:
               </div>
-              <div dir="rtl" className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+              <div dir="rtl" className="text-3xl font-bold text-accent">
                 {currentItem.pronoun_arabic}
               </div>
             </div>
@@ -329,14 +329,14 @@ function ConjugationReviewContent() {
                   onChange={(e) => setUserAnswer(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Type your answer..."
-                  className="w-full rounded-lg border-2 border-slate-300 px-4 py-4 text-center text-2xl focus:border-blue-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:focus:border-blue-400"
+                  className="w-full rounded-[var(--radius-sm)] border-2 border-line px-4 py-4 text-center text-2xl focus:border-accent focus:outline-none"
                   autoComplete="off"
                   autoCapitalize="off"
                 />
                 <button
                   onClick={checkAnswer}
                   disabled={!userAnswer.trim()}
-                  className="mt-4 w-full rounded-lg bg-blue-600 py-3 text-lg font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                  className="mt-4 w-full rounded-[var(--radius-sm)] bg-accent py-3 text-lg font-medium text-white hover:bg-accent-hover disabled:opacity-50"
                 >
                   Check Answer
                 </button>
@@ -347,17 +347,17 @@ function ConjugationReviewContent() {
               <div>
                 {/* Result Display */}
                 <div
-                  className={`mb-4 rounded-lg p-4 text-center ${
+                  className={`mb-4 rounded-[var(--radius-sm)] p-4 text-center ${
                     isCorrect
-                      ? "bg-emerald-100 dark:bg-emerald-900/30"
-                      : "bg-red-100 dark:bg-red-900/30"
+                      ? "bg-success-subtle"
+                      : "bg-error-subtle"
                   }`}
                 >
                   <div
                     className={`mb-2 text-lg font-medium ${
                       isCorrect
-                        ? "text-emerald-700 dark:text-emerald-400"
-                        : "text-red-700 dark:text-red-400"
+                        ? "text-success"
+                        : "text-ink"
                     }`}
                   >
                     {isCorrect ? "Correct! ✓" : "Not quite..."}
@@ -365,16 +365,16 @@ function ConjugationReviewContent() {
 
                   {!isCorrect && (
                     <div className="mb-2">
-                      <div className="text-sm text-slate-500">Your answer:</div>
-                      <div dir="rtl" className="text-xl text-red-600 line-through dark:text-red-400">
+                      <div className="text-sm text-ink-faint">Your answer:</div>
+                      <div dir="rtl" className="text-xl text-red-600 line-through">
                         {userAnswer || "(empty)"}
                       </div>
                     </div>
                   )}
 
                   <div>
-                    <div className="text-sm text-slate-500">Correct answer:</div>
-                    <div dir="rtl" className="flex items-center justify-center gap-2 text-2xl font-bold text-slate-800 dark:text-white">
+                    <div className="text-sm text-ink-faint">Correct answer:</div>
+                    <div dir="rtl" className="flex items-center justify-center gap-2 text-2xl font-bold text-ink">
                       {currentItem.conjugated_form}
                       <SpeakerButton
                         text={currentItem.conjugated_form}
@@ -391,31 +391,31 @@ function ConjugationReviewContent() {
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                   <button
                     onClick={() => submitRating(1)}
-                    className="rounded-lg bg-red-100 py-3 font-medium text-red-700 transition hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
+                    className="rounded-[var(--radius-sm)] bg-surface border border-line py-3 font-medium text-ink transition hover:bg-surface-hover"
                   >
                     Again
                   </button>
                   <button
                     onClick={() => submitRating(2)}
-                    className="rounded-lg bg-amber-100 py-3 font-medium text-amber-700 transition hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50"
+                    className="rounded-[var(--radius-sm)] bg-surface border border-line py-3 font-medium text-ink transition hover:bg-surface-hover"
                   >
                     Hard
                   </button>
                   <button
                     onClick={() => submitRating(3)}
-                    className="rounded-lg bg-emerald-100 py-3 font-medium text-emerald-700 transition hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50"
+                    className="rounded-[var(--radius-sm)] border-2 border-accent bg-accent py-3 font-medium text-white transition hover:bg-accent-hover"
                   >
                     Good
                   </button>
                   <button
                     onClick={() => submitRating(4)}
-                    className="rounded-lg bg-blue-100 py-3 font-medium text-blue-700 transition hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
+                    className="rounded-[var(--radius-sm)] bg-surface border border-line py-3 font-medium text-ink transition hover:bg-surface-hover"
                   >
                     Easy
                   </button>
                 </div>
 
-                <p className="mt-3 text-center text-sm text-slate-500">
+                <p className="mt-3 text-center text-sm text-ink-faint">
                   Press Enter for {isCorrect ? "Good" : "Again"}
                 </p>
               </div>
@@ -427,7 +427,7 @@ function ConjugationReviewContent() {
         <div className="mt-4 flex justify-between">
           <Link
             href="/conjugation"
-            className="text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+            className="text-sm text-ink-faint hover:text-ink-soft"
           >
             ← Exit Practice
           </Link>
@@ -439,7 +439,7 @@ function ConjugationReviewContent() {
                   setUserAnswer("");
                 }
               }}
-              className="text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+              className="text-sm text-ink-faint hover:text-ink-soft"
             >
               Skip →
             </button>
@@ -454,9 +454,9 @@ export default function ConjugationReviewPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+        <div className="min-h-screen bg-bg">
           <Header />
-          <div className="py-12 text-center text-slate-500">Loading...</div>
+          <div className="py-12 text-center text-ink-faint">Loading...</div>
         </div>
       }
     >

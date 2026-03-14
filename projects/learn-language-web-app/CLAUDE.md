@@ -39,6 +39,17 @@ systemctl restart learn-language
 - Homework files: `/mnt/HC_Volume_104464186/learn-language/data/homework/` (still on filesystem)
 - Env file: `/mnt/HC_Volume_104464186/learn-language/.env.local`
 
+## Design System
+
+See **[DESIGN.md](./DESIGN.md)** for the full design guidelines: color palette, typography, tokens, component patterns, and animations. Key rules:
+
+- **Accent color**: dusty lavender (`--color-accent: #8b7ec8`), used for all primary buttons and interactive elements
+- **Font**: Plus Jakarta Sans (body), Noto Sans Arabic (Arabic text), Geist Mono (code)
+- **Radius tokens**: `--radius-sm` (6px inputs), `--radius-md` (10px cards), `--radius-lg` (14px modals)
+- **Shadow tokens**: `--shadow-card`, `--shadow-card-hover`, `--shadow-lg`, `--shadow-xl`
+- **Buttons**: `bg-accent text-white hover:bg-accent-hover` (never `bg-ink text-surface`)
+- **Modals**: `bg-ink/40 backdrop-blur-sm` overlay, `animate-modal` on content
+
 ## Available Skills
 
 - **add-word**: Add a single Arabic word to the flashcard system

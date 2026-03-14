@@ -36,10 +36,10 @@ const stateLabels: Record<number, string> = {
 };
 
 const stateColors: Record<number, string> = {
-  0: "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300",
-  1: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  2: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-  3: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+  0: "bg-accent-subtle text-accent",
+  1: "bg-amber-50 text-amber-600",
+  2: "bg-success-subtle text-success",
+  3: "bg-error-subtle text-error",
 };
 
 export default function VocabDashboard() {
@@ -132,73 +132,66 @@ export default function VocabDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <Header
-        actions={
-          <>
+    <div className="min-h-screen bg-bg">
+      <Header />
+
+      <main className="mx-auto max-w-5xl px-7 pt-11 pb-20">
+        {/* Breadcrumb */}
+        <nav className="mb-4 flex items-center gap-2 text-sm">
+          <Link href="/" className="text-ink-faint hover:text-accent">
+            Home
+          </Link>
+          <svg className="h-4 w-4 text-ink-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+          <span className="text-ink">Vocabulary</span>
+        </nav>
+
+        {/* Page Title */}
+        <div className="mb-6 flex items-start justify-between">
+          <div>
+            <h1 className="text-[28px] font-bold tracking-tight text-ink">Vocabulary</h1>
+            <p className="mt-1 text-sm text-ink-faint">Track your learning progress across all decks</p>
+          </div>
+          <div className="flex gap-2">
             {dueCount > 0 ? (
               <Link
                 href="/review"
-                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
+                className="rounded-[var(--radius-md)] bg-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-hover hover:-translate-y-px"
               >
                 Study Now ({dueCount})
               </Link>
             ) : (
-              <span className="rounded-lg bg-slate-200 px-4 py-2 text-sm font-medium text-slate-400 dark:bg-slate-700 dark:text-slate-500">
+              <span className="rounded-[var(--radius-md)] bg-surface-active px-4 py-2 text-sm font-medium text-ink-faint">
                 Study Now (0)
               </span>
             )}
-            <Link
-              href="/?newDeck=true"
-              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
-            >
-              + New Deck
-            </Link>
-          </>
-        }
-      />
-
-      <main className="mx-auto max-w-5xl px-6 py-8">
-        {/* Breadcrumb */}
-        <nav className="mb-4 flex items-center gap-2 text-sm">
-          <Link href="/" className="text-slate-500 hover:text-emerald-600 dark:text-slate-400">
-            Home
-          </Link>
-          <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-          <span className="text-slate-700 dark:text-slate-200">Vocabulary</span>
-        </nav>
-
-        {/* Page Title */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Vocabulary</h1>
-          <p className="mt-1 text-sm text-slate-500">Track your learning progress across all decks</p>
+          </div>
         </div>
         {/* Stats Cards */}
         {stats && (
           <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-5">
-            <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
-              <div className="text-3xl font-bold text-slate-700 dark:text-slate-200">
+            <div className="rounded-[var(--radius-md)] border border-line/50 bg-surface p-4" style={{ boxShadow: "var(--shadow-card)" }}>
+              <div className="text-3xl font-bold text-ink">
                 {stats.total}
               </div>
-              <div className="text-sm text-slate-500">Total Words</div>
+              <div className="text-sm text-ink-faint">Total Words</div>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
-              <div className="text-3xl font-bold text-slate-500">{stats.new}</div>
-              <div className="text-sm text-slate-500">Not Learned</div>
+            <div className="rounded-[var(--radius-md)] border border-line/50 bg-surface p-4" style={{ boxShadow: "var(--shadow-card)" }}>
+              <div className="text-3xl font-bold text-ink-faint">{stats.new}</div>
+              <div className="text-sm text-ink-faint">Not Learned</div>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
-              <div className="text-3xl font-bold text-amber-600">{stats.learning}</div>
-              <div className="text-sm text-slate-500">Learning</div>
+            <div className="rounded-[var(--radius-md)] border border-line/50 bg-surface p-4" style={{ boxShadow: "var(--shadow-card)" }}>
+              <div className="text-3xl font-bold text-accent">{stats.learning}</div>
+              <div className="text-sm text-ink-faint">Learning</div>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
-              <div className="text-3xl font-bold text-emerald-600">{stats.mastered}</div>
-              <div className="text-sm text-slate-500">Mastered</div>
+            <div className="rounded-[var(--radius-md)] border border-line/50 bg-surface p-4" style={{ boxShadow: "var(--shadow-card)" }}>
+              <div className="text-3xl font-bold text-success">{stats.mastered}</div>
+              <div className="text-sm text-ink-faint">Mastered</div>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
-              <div className="text-3xl font-bold text-blue-600">{stats.learnedThisWeek}</div>
-              <div className="text-sm text-slate-500">This Week</div>
+            <div className="rounded-[var(--radius-md)] border border-line/50 bg-surface p-4" style={{ boxShadow: "var(--shadow-card)" }}>
+              <div className="text-3xl font-bold text-ink-soft">{stats.learnedThisWeek}</div>
+              <div className="text-sm text-ink-faint">This Week</div>
             </div>
           </div>
         )}
@@ -211,15 +204,15 @@ export default function VocabDashboard() {
               <button
                 key={f.key}
                 onClick={() => setFilter(f.key)}
-                className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+                className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
                   filter === f.key
-                    ? "bg-emerald-600 text-white"
-                    : "bg-white text-slate-600 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                    ? "bg-accent text-white"
+                    : "bg-surface text-ink-soft hover:bg-surface-hover"
                 }`}
               >
                 {f.label}
                 {f.count !== undefined && (
-                  <span className={`ml-1.5 ${filter === f.key ? "text-emerald-200" : "text-slate-400"}`}>
+                  <span className={`ml-1.5 ${filter === f.key ? "text-surface/60" : "text-ink-faint"}`}>
                     {f.count}
                   </span>
                 )}
@@ -235,11 +228,11 @@ export default function VocabDashboard() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search words..."
-                className="w-48 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+                className="w-48 rounded-[5px] border border-line bg-surface px-3 py-1.5 text-sm text-ink focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
               />
               <button
                 type="submit"
-                className="rounded-lg bg-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
+                className="rounded-[5px] bg-surface-active px-3 py-1.5 text-sm font-medium text-ink-soft transition hover:bg-surface-active"
               >
                 Search
               </button>
@@ -247,7 +240,7 @@ export default function VocabDashboard() {
             <button
               onClick={handleExport}
               disabled={isExporting || vocabulary.length === 0}
-              className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-[var(--radius-sm)] bg-accent px-3 py-1.5 text-sm font-medium text-white transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isExporting ? "Exporting..." : "Export"}
             </button>
@@ -256,59 +249,59 @@ export default function VocabDashboard() {
 
         {/* Vocabulary List */}
         {isLoading ? (
-          <div className="py-12 text-center text-slate-500">Loading...</div>
+          <div className="py-12 text-center text-ink-faint">Loading...</div>
         ) : vocabulary.length === 0 ? (
-          <div className="rounded-xl border-2 border-dashed border-slate-300 py-12 text-center dark:border-slate-600">
-            <p className="text-slate-500 dark:text-slate-400">
+          <div className="rounded-[5px] border-2 border-dashed border-line py-12 text-center">
+            <p className="text-ink-faint">
               {filter === "all" ? "No vocabulary yet" : "No words match this filter"}
             </p>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
+          <div className="overflow-hidden rounded-[var(--radius-md)] border border-line/50 bg-surface" style={{ boxShadow: "var(--shadow-card)" }}>
             <table className="w-full">
-              <thead className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/50">
+              <thead className="border-b border-line bg-surface-hover">
                 <tr>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-slate-500 dark:text-slate-400">
+                  <th className="px-4 py-3 text-right text-sm font-medium text-ink-faint">
                     Arabic
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-slate-500 dark:text-slate-400">
+                  <th className="px-4 py-3 text-left text-sm font-medium text-ink-faint">
                     English
                   </th>
-                  <th className="hidden px-4 py-3 text-left text-sm font-medium text-slate-500 dark:text-slate-400 sm:table-cell">
+                  <th className="hidden px-4 py-3 text-left text-sm font-medium text-ink-faint sm:table-cell">
                     Deck
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-slate-500 dark:text-slate-400">
+                  <th className="px-4 py-3 text-left text-sm font-medium text-ink-faint">
                     Status
                   </th>
-                  <th className="hidden px-4 py-3 text-left text-sm font-medium text-slate-500 dark:text-slate-400 md:table-cell">
+                  <th className="hidden px-4 py-3 text-left text-sm font-medium text-ink-faint md:table-cell">
                     Reviews
                   </th>
-                  <th className="hidden px-4 py-3 text-left text-sm font-medium text-slate-500 dark:text-slate-400 lg:table-cell">
+                  <th className="hidden px-4 py-3 text-left text-sm font-medium text-ink-faint lg:table-cell">
                     Last Review
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+              <tbody className="divide-y divide-line">
                 {vocabulary.map((card) => (
                   <tr
                     key={card.id}
-                    className="transition hover:bg-slate-50 dark:hover:bg-slate-700/50"
+                    className="transition hover:bg-surface-hover"
                   >
                     <td className="px-4 py-3">
                       <span
                         dir="rtl"
-                        className="text-lg font-medium text-slate-800 dark:text-white"
+                        className="text-lg font-medium text-ink"
                       >
                         {card.front}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+                    <td className="px-4 py-3 text-ink-soft">
                       {card.back}
                     </td>
                     <td className="hidden px-4 py-3 sm:table-cell">
                       <Link
                         href={`/deck/${card.deck_id}`}
-                        className="text-sm text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400"
+                        className="text-sm text-ink-faint hover:text-accent"
                       >
                         {card.deck_name}
                       </Link>
@@ -321,7 +314,7 @@ export default function VocabDashboard() {
                       </span>
                     </td>
                     <td className="hidden px-4 py-3 md:table-cell">
-                      <span className="text-sm text-slate-500 dark:text-slate-400">
+                      <span className="text-sm text-ink-faint">
                         {card.reps}
                         {card.lapses > 0 && (
                           <span className="ml-1 text-orange-500">({card.lapses} lapses)</span>
@@ -329,7 +322,7 @@ export default function VocabDashboard() {
                       </span>
                     </td>
                     <td className="hidden px-4 py-3 lg:table-cell">
-                      <span className="text-sm text-slate-500 dark:text-slate-400">
+                      <span className="text-sm text-ink-faint">
                         {formatDate(card.last_review)}
                       </span>
                     </td>

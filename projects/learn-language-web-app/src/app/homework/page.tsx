@@ -369,30 +369,32 @@ export default function HomeworkPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <Header
-        actions={
+    <div className="min-h-screen bg-bg">
+      <Header />
+
+      {/* Main Content */}
+      <main className="mx-auto max-w-5xl px-7 pt-11 pb-20">
+        {/* Page title and action */}
+        <div className="mb-6 flex items-start justify-between">
+          <h1 className="text-[28px] font-bold tracking-tight text-ink">Homework</h1>
           <button
             onClick={() => setShowModal(true)}
-            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
+            className="rounded-[var(--radius-sm)] bg-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-hover hover:-translate-y-px"
           >
             + New Homework
           </button>
-        }
-      />
+        </div>
 
-      {/* Main Content */}
-      <main className="mx-auto max-w-5xl px-6 py-8">
         {/* Filter tabs */}
         <div className="mb-6 flex gap-2">
           {(["all", "pending", "completed"] as const).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+              className={`rounded-[var(--radius-sm)] px-4 py-2 text-sm font-medium transition ${
                 filter === f
-                  ? "bg-emerald-600 text-white"
-                  : "bg-white text-slate-600 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-300"
+                  ? "bg-accent text-white"
+                  : "bg-surface text-ink-soft hover:bg-surface-hover"
               }`}
             >
               {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -401,16 +403,16 @@ export default function HomeworkPage() {
         </div>
 
         {isLoading ? (
-          <div className="text-center text-slate-500">Loading...</div>
+          <div className="text-center text-ink-faint">Loading...</div>
         ) : homework.length === 0 ? (
-          <div className="rounded-xl border-2 border-dashed border-slate-300 p-12 text-center dark:border-slate-600">
-            <p className="text-lg text-slate-500 dark:text-slate-400">No homework yet</p>
-            <p className="mt-1 text-sm text-slate-400 dark:text-slate-500">
+          <div className="rounded-[var(--radius-md)] border-2 border-dashed border-line p-12 text-center">
+            <p className="text-lg text-ink-faint">No homework yet</p>
+            <p className="mt-1 text-sm text-ink-faint">
               Create your first homework assignment
             </p>
             <button
               onClick={() => setShowModal(true)}
-              className="mt-4 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
+              className="mt-4 rounded-[var(--radius-sm)] bg-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-hover"
             >
               Create Homework
             </button>
@@ -420,7 +422,8 @@ export default function HomeworkPage() {
             {homework.map((hw) => (
               <div
                 key={hw.id}
-                className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800"
+                className="rounded-[var(--radius-md)] border border-line/50 bg-surface p-5"
+                style={{ boxShadow: "var(--shadow-card)" }}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -428,8 +431,8 @@ export default function HomeworkPage() {
                       <span
                         className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
                           hw.status === "completed"
-                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                            : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                            ? "bg-success-subtle text-success"
+                            : "bg-amber-50 text-amber-600"
                         }`}
                       >
                         {hw.status}
@@ -437,19 +440,19 @@ export default function HomeworkPage() {
                       <span
                         className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
                           hw.type === "recording"
-                            ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                            ? "bg-surface-hover text-ink-soft"
                             : hw.type === "listening"
-                            ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
-                            : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
+                            ? "bg-surface-hover text-ink-soft"
+                            : "bg-surface-hover text-ink-soft"
                         }`}
                       >
                         {hw.type}
                       </span>
-                      <span className="text-xs text-slate-400">
+                      <span className="text-xs text-ink-faint">
                         {formatDate(hw.created_at)}
                       </span>
                     </div>
-                    <p className="mt-2 text-slate-800 dark:text-white">{hw.description}</p>
+                    <p className="mt-2 text-ink">{hw.description}</p>
 
                     {/* Recording UI - for recording type */}
                     {hw.type === "recording" && hw.status === "pending" && (
@@ -464,7 +467,7 @@ export default function HomeworkPage() {
                                 </div>
                                 <button
                                   onClick={stopRecording}
-                                  className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700"
+                                  className="rounded-[var(--radius-sm)] bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700"
                                 >
                                   Stop
                                 </button>
@@ -474,13 +477,13 @@ export default function HomeworkPage() {
                                 <audio src={audioUrl} controls className="h-10" />
                                 <button
                                   onClick={submitRecording}
-                                  className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700"
+                                  className="rounded-[var(--radius-sm)] bg-accent px-3 py-1.5 text-sm font-medium text-white hover:bg-accent-hover"
                                 >
                                   Submit
                                 </button>
                                 <button
                                   onClick={cancelRecording}
-                                  className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300"
+                                  className="rounded-[var(--radius-sm)] border border-line px-3 py-1.5 text-sm font-medium text-ink-soft hover:bg-surface-hover"
                                 >
                                   Cancel
                                 </button>
@@ -490,7 +493,7 @@ export default function HomeworkPage() {
                         ) : (
                           <button
                             onClick={() => startRecording(hw.id)}
-                            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                            className="inline-flex items-center gap-2 rounded-[var(--radius-sm)] bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover"
                           >
                             <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
                               <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
@@ -513,7 +516,7 @@ export default function HomeworkPage() {
                               placeholder="Type your answer here..."
                               rows={4}
                               dir="auto"
-                              className="w-full rounded-lg border border-slate-300 px-4 py-3 text-xl leading-relaxed focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                              className="w-full rounded-[var(--radius-sm)] border border-line px-4 py-3 text-xl leading-relaxed focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
                               style={{ fontFamily: "var(--font-arabic), sans-serif" }}
                             />
                             <div className="flex items-center gap-3">
@@ -527,21 +530,21 @@ export default function HomeworkPage() {
                               />
                               <label
                                 htmlFor={`image-upload-${hw.id}`}
-                                className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+                                className="inline-flex cursor-pointer items-center gap-2 rounded-[var(--radius-sm)] border border-line px-3 py-1.5 text-sm font-medium text-ink-soft hover:bg-surface-hover"
                               >
                                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
                                 Upload Image
                               </label>
-                              <span className="text-xs text-slate-400">or type text above</span>
+                              <span className="text-xs text-ink-faint">or type text above</span>
                             </div>
                             {imagePreview && (
                               <div className="relative inline-block">
                                 <img
                                   src={imagePreview}
                                   alt="Preview"
-                                  className="max-h-48 rounded-lg border border-slate-200 dark:border-slate-600"
+                                  className="max-h-48 rounded-[var(--radius-sm)] border border-line"
                                 />
                                 <button
                                   type="button"
@@ -558,14 +561,14 @@ export default function HomeworkPage() {
                               <button
                                 onClick={submitWritten}
                                 disabled={isSubmitting || (!writtenText.trim() && !selectedImage)}
-                                className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+                                className="rounded-[var(--radius-sm)] bg-accent px-3 py-1.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50"
                               >
                                 {isSubmitting ? "Submitting..." : "Submit"}
                               </button>
                               <button
                                 onClick={cancelWritten}
                                 disabled={isSubmitting}
-                                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300"
+                                className="rounded-[var(--radius-sm)] border border-line px-3 py-1.5 text-sm font-medium text-ink-soft hover:bg-surface-hover"
                               >
                                 Cancel
                               </button>
@@ -574,7 +577,7 @@ export default function HomeworkPage() {
                         ) : (
                           <button
                             onClick={() => startWritten(hw.id)}
-                            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                            className="inline-flex items-center gap-2 rounded-[var(--radius-sm)] bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover"
                           >
                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -596,7 +599,7 @@ export default function HomeworkPage() {
                           <div>
                             <button
                               onClick={() => toggleTranscription(hw.id)}
-                              className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+                              className="inline-flex items-center gap-2 rounded-[var(--radius-sm)] border border-line px-3 py-1.5 text-sm font-medium text-ink-soft hover:bg-surface-hover"
                             >
                               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 {showTranscription[hw.id] ? (
@@ -608,10 +611,10 @@ export default function HomeworkPage() {
                               {showTranscription[hw.id] ? "Hide Transcription" : "Show Transcription"}
                             </button>
                             {showTranscription[hw.id] && (
-                              <div className="mt-3 rounded-lg bg-slate-50 p-4 dark:bg-slate-700/50">
+                              <div className="mt-3 rounded-[var(--radius-sm)] bg-surface-hover p-4">
                                 <p
                                   dir="rtl"
-                                  className="text-xl leading-relaxed text-slate-700 dark:text-slate-300"
+                                  className="text-xl leading-relaxed text-ink-soft"
                                   style={{ fontFamily: "var(--font-arabic), sans-serif" }}
                                 >
                                   {hw.transcription}
@@ -623,7 +626,7 @@ export default function HomeworkPage() {
                           <button
                             onClick={() => transcribeRecording(hw.id)}
                             disabled={transcribingId === hw.id}
-                            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+                            className="inline-flex items-center gap-2 rounded-[var(--radius-sm)] border border-line px-3 py-1.5 text-sm font-medium text-ink-soft hover:bg-surface-hover disabled:opacity-50"
                           >
                             {transcribingId === hw.id ? (
                               <>
@@ -653,21 +656,21 @@ export default function HomeworkPage() {
                               placeholder="Write your response..."
                               rows={4}
                               dir="auto"
-                              className="w-full rounded-lg border border-slate-300 px-4 py-3 text-xl leading-relaxed focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                              className="w-full rounded-[var(--radius-sm)] border border-line px-4 py-3 text-xl leading-relaxed focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
                               style={{ fontFamily: "var(--font-arabic), sans-serif" }}
                             />
                             <div className="flex items-center gap-2">
                               <button
                                 onClick={() => submitListening(hw.id)}
                                 disabled={isSubmitting}
-                                className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+                                className="rounded-[var(--radius-sm)] bg-accent px-3 py-1.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50"
                               >
                                 {isSubmitting ? "Submitting..." : "Submit"}
                               </button>
                               <button
                                 onClick={cancelListening}
                                 disabled={isSubmitting}
-                                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300"
+                                className="rounded-[var(--radius-sm)] border border-line px-3 py-1.5 text-sm font-medium text-ink-soft hover:bg-surface-hover"
                               >
                                 Cancel
                               </button>
@@ -676,7 +679,7 @@ export default function HomeworkPage() {
                         ) : (
                           <button
                             onClick={() => startListening(hw.id)}
-                            className="mt-2 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                            className="mt-2 inline-flex items-center gap-2 rounded-[var(--radius-sm)] bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover"
                           >
                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -694,22 +697,22 @@ export default function HomeworkPage() {
 
                         {/* Transcription section */}
                         {hw.transcription ? (
-                          <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-700/50">
+                          <div className="rounded-[var(--radius-sm)] bg-surface-hover p-4">
                             <div className="mb-2 flex items-center justify-between">
-                              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                              <span className="text-xs font-medium text-ink-faint">
                                 Transcription
                               </span>
                               <button
                                 onClick={() => transcribeRecording(hw.id)}
                                 disabled={transcribingId === hw.id}
-                                className="text-xs text-blue-600 hover:text-blue-700 disabled:opacity-50 dark:text-blue-400"
+                                className="text-xs text-accent hover:text-accent-hover disabled:opacity-50"
                               >
                                 {transcribingId === hw.id ? "Transcribing..." : "Re-transcribe"}
                               </button>
                             </div>
                             <p
                               dir="rtl"
-                              className="text-xl leading-relaxed text-slate-700 dark:text-slate-300"
+                              className="text-xl leading-relaxed text-ink-soft"
                               style={{ fontFamily: "var(--font-arabic), sans-serif" }}
                             >
                               {hw.transcription}
@@ -719,7 +722,7 @@ export default function HomeworkPage() {
                           <button
                             onClick={() => transcribeRecording(hw.id)}
                             disabled={transcribingId === hw.id}
-                            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+                            className="inline-flex items-center gap-2 rounded-[var(--radius-sm)] border border-line px-3 py-1.5 text-sm font-medium text-ink-soft hover:bg-surface-hover disabled:opacity-50"
                           >
                             {transcribingId === hw.id ? (
                               <>
@@ -741,7 +744,7 @@ export default function HomeworkPage() {
                         )}
 
                         {hw.completed_at && (
-                          <p className="text-xs text-slate-400">
+                          <p className="text-xs text-ink-faint">
                             Completed {formatDate(hw.completed_at)}
                           </p>
                         )}
@@ -760,7 +763,7 @@ export default function HomeworkPage() {
                               placeholder="Type your answer here..."
                               rows={4}
                               dir="auto"
-                              className="w-full rounded-lg border border-slate-300 px-4 py-3 text-xl leading-relaxed focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                              className="w-full rounded-[var(--radius-sm)] border border-line px-4 py-3 text-xl leading-relaxed focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
                               style={{ fontFamily: "var(--font-arabic), sans-serif" }}
                             />
                             <div className="flex items-center gap-3">
@@ -774,7 +777,7 @@ export default function HomeworkPage() {
                               />
                               <label
                                 htmlFor={`image-edit-${hw.id}`}
-                                className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+                                className="inline-flex cursor-pointer items-center gap-2 rounded-[var(--radius-sm)] border border-line px-3 py-1.5 text-sm font-medium text-ink-soft hover:bg-surface-hover"
                               >
                                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -787,7 +790,7 @@ export default function HomeworkPage() {
                                 <img
                                   src={imagePreview}
                                   alt="Preview"
-                                  className="max-h-48 rounded-lg border border-slate-200 dark:border-slate-600"
+                                  className="max-h-48 rounded-[var(--radius-sm)] border border-line"
                                 />
                                 <button
                                   type="button"
@@ -801,7 +804,7 @@ export default function HomeworkPage() {
                               </div>
                             )}
                             {!imagePreview && hw.image_url && (
-                              <div className="text-xs text-slate-400">
+                              <div className="text-xs text-ink-faint">
                                 Current image will be kept unless you upload a new one
                               </div>
                             )}
@@ -809,14 +812,14 @@ export default function HomeworkPage() {
                               <button
                                 onClick={submitWritten}
                                 disabled={isSubmitting || (!writtenText.trim() && !selectedImage && !hw.image_url)}
-                                className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+                                className="rounded-[var(--radius-sm)] bg-accent px-3 py-1.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50"
                               >
                                 {isSubmitting ? "Saving..." : "Save"}
                               </button>
                               <button
                                 onClick={cancelWritten}
                                 disabled={isSubmitting}
-                                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300"
+                                className="rounded-[var(--radius-sm)] border border-line px-3 py-1.5 text-sm font-medium text-ink-soft hover:bg-surface-hover"
                               >
                                 Cancel
                               </button>
@@ -826,10 +829,10 @@ export default function HomeworkPage() {
                           /* Display mode */
                           <>
                             {hw.written_text && (
-                              <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-700/50">
+                              <div className="rounded-[var(--radius-sm)] bg-surface-hover p-4">
                                 <p
                                   dir="auto"
-                                  className="whitespace-pre-wrap text-xl leading-relaxed text-slate-700 dark:text-slate-300"
+                                  className="whitespace-pre-wrap text-xl leading-relaxed text-ink-soft"
                                   style={{ fontFamily: "var(--font-arabic), sans-serif" }}
                                 >
                                   {hw.written_text}
@@ -840,18 +843,18 @@ export default function HomeworkPage() {
                               <img
                                 src={hw.image_url}
                                 alt="Homework submission"
-                                className="max-h-64 rounded-lg border border-slate-200 dark:border-slate-600"
+                                className="max-h-64 rounded-[var(--radius-sm)] border border-line"
                               />
                             )}
                             <div className="flex items-center gap-3">
                               {hw.completed_at && (
-                                <p className="text-xs text-slate-400">
+                                <p className="text-xs text-ink-faint">
                                   Completed {formatDate(hw.completed_at)}
                                 </p>
                               )}
                               <button
                                 onClick={() => startWritten(hw.id, hw.written_text)}
-                                className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                                className="inline-flex items-center gap-1 text-xs text-accent hover:text-accent-hover"
                               >
                                 <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -874,13 +877,13 @@ export default function HomeworkPage() {
 
                         {/* Transcription (always visible when completed) */}
                         {hw.transcription && (
-                          <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-700/50">
-                            <span className="mb-2 block text-xs font-medium text-slate-500 dark:text-slate-400">
+                          <div className="rounded-[var(--radius-sm)] bg-surface-hover p-4">
+                            <span className="mb-2 block text-xs font-medium text-ink-faint">
                               Transcription
                             </span>
                             <p
                               dir="rtl"
-                              className="text-xl leading-relaxed text-slate-700 dark:text-slate-300"
+                              className="text-xl leading-relaxed text-ink-soft"
                               style={{ fontFamily: "var(--font-arabic), sans-serif" }}
                             >
                               {hw.transcription}
@@ -890,13 +893,13 @@ export default function HomeworkPage() {
 
                         {/* User's response */}
                         {hw.written_text && (
-                          <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
-                            <span className="mb-2 block text-xs font-medium text-blue-600 dark:text-blue-400">
+                          <div className="rounded-[var(--radius-sm)] bg-accent-subtle p-4">
+                            <span className="mb-2 block text-xs font-medium text-accent">
                               Your Response
                             </span>
                             <p
                               dir="auto"
-                              className="whitespace-pre-wrap text-xl leading-relaxed text-slate-700 dark:text-slate-300"
+                              className="whitespace-pre-wrap text-xl leading-relaxed text-ink-soft"
                               style={{ fontFamily: "var(--font-arabic), sans-serif" }}
                             >
                               {hw.written_text}
@@ -905,7 +908,7 @@ export default function HomeworkPage() {
                         )}
 
                         {hw.completed_at && (
-                          <p className="text-xs text-slate-400">
+                          <p className="text-xs text-ink-faint">
                             Completed {formatDate(hw.completed_at)}
                           </p>
                         )}
@@ -914,7 +917,7 @@ export default function HomeworkPage() {
                   </div>
                   <button
                     onClick={() => deleteHomework(hw.id)}
-                    className="rounded p-1 text-slate-400 transition hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
+                    className="rounded p-1 text-ink-faint transition hover:bg-red-50 hover:text-red-500"
                   >
                     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -929,12 +932,12 @@ export default function HomeworkPage() {
 
       {/* Create Homework Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-slate-800">
-            <h2 className="text-xl font-semibold text-slate-800 dark:text-white">New Homework</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-[var(--radius-md)] bg-surface p-6 animate-modal">
+            <h2 className="text-xl font-semibold text-ink">New Homework</h2>
             <form onSubmit={createHomework} className="mt-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                <label className="block text-sm font-medium text-ink-soft">
                   Description
                 </label>
                 <textarea
@@ -942,18 +945,18 @@ export default function HomeworkPage() {
                   onChange={(e) => setNewDescription(e.target.value)}
                   placeholder="Read chapter 3 and record yourself reading the dialogue..."
                   rows={3}
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                  className="mt-1 w-full rounded-[var(--radius-sm)] border border-line px-3 py-2 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
                   autoFocus
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                <label className="block text-sm font-medium text-ink-soft">
                   Type
                 </label>
                 <select
                   value={newType}
                   onChange={(e) => setNewType(e.target.value as "recording" | "written" | "listening")}
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                  className="mt-1 w-full rounded-[var(--radius-sm)] border border-line px-3 py-2 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
                 >
                   <option value="recording">Recording</option>
                   <option value="written">Written</option>
@@ -964,7 +967,7 @@ export default function HomeworkPage() {
               {/* Listening-specific fields */}
               {newType === "listening" && (
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  <label className="block text-sm font-medium text-ink-soft">
                     Audio File
                   </label>
                   <input
@@ -972,12 +975,12 @@ export default function HomeworkPage() {
                     type="file"
                     accept="audio/*"
                     onChange={(e) => setListeningAudio(e.target.files?.[0] || null)}
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm file:mr-4 file:rounded file:border-0 file:bg-emerald-50 file:px-3 file:py-1 file:text-sm file:font-medium file:text-emerald-700 hover:file:bg-emerald-100 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:file:bg-emerald-900/30 dark:file:text-emerald-400"
+                    className="mt-1 w-full rounded-[var(--radius-sm)] border border-line px-3 py-2 text-sm file:mr-4 file:rounded file:border-0 file:bg-accent-subtle file:px-3 file:py-1 file:text-sm file:font-medium file:text-accent hover:file:bg-accent-subtle/80"
                   />
                   {listeningAudio && (
-                    <p className="mt-1 text-xs text-slate-500">{listeningAudio.name}</p>
+                    <p className="mt-1 text-xs text-ink-faint">{listeningAudio.name}</p>
                   )}
-                  <p className="mt-1 text-xs text-slate-400">
+                  <p className="mt-1 text-xs text-ink-faint">
                     The audio will be automatically transcribed after upload
                   </p>
                 </div>
@@ -987,13 +990,13 @@ export default function HomeworkPage() {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="flex-1 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+                  className="flex-1 rounded-[var(--radius-sm)] border border-line px-4 py-2 text-sm font-medium text-ink-soft transition hover:bg-surface-hover"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
+                  className="flex-1 rounded-[var(--radius-sm)] bg-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-hover"
                 >
                   Create
                 </button>

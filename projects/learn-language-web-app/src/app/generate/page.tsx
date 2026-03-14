@@ -218,39 +218,39 @@ export default function GeneratePage() {
   const wordCount = parseWords().length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+    <div className="min-h-screen bg-bg">
       <Header />
 
-      <main className="mx-auto max-w-5xl px-6 py-8">
+      <main className="mx-auto max-w-5xl px-7 pt-11 pb-20">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-slate-800 dark:text-white">
+          <h1 className="text-[28px] font-bold tracking-tight text-ink">
             Generate Vocabulary
           </h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-sm text-ink-faint">
             Enter English words and Claude will translate them to Arabic and add
             them to the best matching deck.
           </p>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <div className="rounded-[var(--radius-md)] border border-line/50 bg-surface p-6" style={{ boxShadow: "var(--shadow-card)" }}>
           {/* Input mode toggle */}
           <div className="mb-4 flex gap-2">
             <button
               onClick={() => setInputMode("paste")}
-              className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+              className={`rounded-[var(--radius-sm)] px-4 py-2 text-sm font-medium transition ${
                 inputMode === "paste"
-                  ? "bg-emerald-600 text-white"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
+                  ? "bg-accent text-white"
+                  : "bg-surface-hover text-ink-soft hover:bg-surface-active"
               }`}
             >
               Paste Text
             </button>
             <button
               onClick={() => setInputMode("upload")}
-              className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+              className={`rounded-[var(--radius-sm)] px-4 py-2 text-sm font-medium transition ${
                 inputMode === "upload"
-                  ? "bg-emerald-600 text-white"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
+                  ? "bg-accent text-white"
+                  : "bg-surface-hover text-ink-soft hover:bg-surface-active"
               }`}
             >
               Upload File
@@ -267,13 +267,13 @@ export default function GeneratePage() {
               }
               rows={6}
               disabled={isGenerating}
-              className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder-slate-400"
+              className="w-full rounded-[var(--radius-sm)] border border-line px-4 py-3 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-50"
             />
           ) : (
             <div className="space-y-3">
-              <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 p-8 transition hover:border-emerald-400 hover:bg-emerald-50/50 dark:border-slate-600 dark:hover:border-emerald-600 dark:hover:bg-emerald-900/10">
+              <label className="flex cursor-pointer flex-col items-center justify-center rounded-[var(--radius-md)] border-2 border-dashed border-line p-8 transition hover:border-accent hover:bg-accent-subtle/50">
                 <svg
-                  className="mb-2 h-8 w-8 text-slate-400"
+                  className="mb-2 h-8 w-8 text-ink-faint"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -285,7 +285,7 @@ export default function GeneratePage() {
                     d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
                   />
                 </svg>
-                <span className="text-sm text-slate-500 dark:text-slate-400">
+                <span className="text-sm text-ink-faint">
                   {fileName ? fileName : "Click to upload a text file"}
                 </span>
                 <input
@@ -296,11 +296,11 @@ export default function GeneratePage() {
                 />
               </label>
               {text && (
-                <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-700/50">
-                  <p className="mb-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+                <div className="rounded-[var(--radius-sm)] bg-surface-hover p-4">
+                  <p className="mb-2 text-xs font-medium text-ink-faint">
                     File contents:
                   </p>
-                  <pre className="max-h-40 overflow-auto text-sm text-slate-700 dark:text-slate-300">
+                  <pre className="max-h-40 overflow-auto text-sm text-ink-soft">
                     {text}
                   </pre>
                 </div>
@@ -311,14 +311,14 @@ export default function GeneratePage() {
                 placeholder="Instructions for Claude (e.g. &quot;extract the nouns from this text&quot;, &quot;only add words from page 2&quot;)..."
                 rows={3}
                 disabled={isGenerating}
-                className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder-slate-400"
+                className="w-full rounded-[var(--radius-sm)] border border-line px-4 py-3 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-50"
               />
             </div>
           )}
 
           {/* Word count and generate button */}
           <div className="mt-4 flex items-center justify-between">
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-ink-faint">
               {wordCount > 0
                 ? `${wordCount} word${wordCount !== 1 ? "s" : ""} detected`
                 : "No words entered"}
@@ -326,7 +326,7 @@ export default function GeneratePage() {
             <button
               onClick={handleGenerate}
               disabled={wordCount === 0 || isGenerating}
-              className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-[var(--radius-sm)] bg-accent px-6 py-2.5 text-sm font-medium text-white transition hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isGenerating ? (
                 <>
@@ -360,21 +360,21 @@ export default function GeneratePage() {
 
         {/* Output section */}
         {(logs.length > 0 || isGenerating) && (
-          <div className="mt-6 rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
-            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-3 dark:border-slate-700">
+          <div className="mt-6 rounded-[var(--radius-md)] border border-line bg-surface">
+            <div className="flex items-center justify-between border-b border-line px-6 py-3">
               <div className="flex items-center gap-3">
-                <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                <h2 className="text-sm font-semibold text-ink-soft">
                   Output
                 </h2>
                 {sessionId && (
-                  <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-mono text-slate-400 dark:bg-slate-700">
+                  <span className="rounded bg-surface-hover px-2 py-0.5 text-xs font-mono text-ink-faint">
                     {sessionId.slice(0, 8)}
                   </span>
                 )}
               </div>
               {isGenerating && (
-                <span className="flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400">
-                  <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
+                <span className="flex items-center gap-2 text-xs text-accent">
+                  <span className="h-2 w-2 animate-pulse rounded-full bg-accent" />
                   Claude is working...
                 </span>
               )}
@@ -388,7 +388,7 @@ export default function GeneratePage() {
                   return (
                     <div
                       key={i}
-                      className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300"
+                      className="whitespace-pre-wrap text-sm text-ink-soft"
                     >
                       {entry.content}
                     </div>
@@ -398,10 +398,10 @@ export default function GeneratePage() {
                   return (
                     <div
                       key={i}
-                      className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 dark:border-blue-800 dark:bg-blue-900/20"
+                      className="flex items-center gap-2 rounded-[var(--radius-sm)] border border-line bg-surface-hover px-4 py-2"
                     >
                       <svg
-                        className="h-4 w-4 flex-shrink-0 text-blue-500"
+                        className="h-4 w-4 flex-shrink-0 text-ink-faint"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -419,7 +419,7 @@ export default function GeneratePage() {
                           d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
                         />
                       </svg>
-                      <span className="text-xs font-medium text-blue-700 dark:text-blue-400">
+                      <span className="text-xs font-medium text-ink-soft">
                         Running: {entry.tool}
                       </span>
                     </div>
@@ -429,11 +429,11 @@ export default function GeneratePage() {
                   return (
                     <div
                       key={i}
-                      className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 dark:border-blue-800 dark:bg-blue-900/20"
+                      className="rounded-[var(--radius-sm)] border border-line bg-surface-hover px-4 py-2"
                     >
                       <div className="flex items-center gap-2">
                         <svg
-                          className="h-4 w-4 flex-shrink-0 text-blue-500"
+                          className="h-4 w-4 flex-shrink-0 text-ink-faint"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -445,12 +445,12 @@ export default function GeneratePage() {
                             d="M5 13l4 4L19 7"
                           />
                         </svg>
-                        <span className="text-xs font-medium text-blue-700 dark:text-blue-400">
+                        <span className="text-xs font-medium text-ink-soft">
                           {entry.tool}
                         </span>
                       </div>
                       {entry.input && (
-                        <pre className="mt-1 max-h-24 overflow-auto text-xs text-blue-600 dark:text-blue-300">
+                        <pre className="mt-1 max-h-24 overflow-auto text-xs text-ink-soft">
                           {entry.input}
                         </pre>
                       )}
@@ -459,7 +459,7 @@ export default function GeneratePage() {
                 }
                 if (entry.type === "status") {
                   return (
-                    <div key={i} className="text-xs italic text-slate-400">
+                    <div key={i} className="text-xs italic text-ink-faint">
                       {entry.content}
                     </div>
                   );
@@ -468,13 +468,13 @@ export default function GeneratePage() {
                   return (
                     <div
                       key={i}
-                      className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-800 dark:bg-emerald-900/20"
+                      className="rounded-[var(--radius-sm)] border border-accent bg-accent-subtle px-4 py-3"
                     >
-                      <div className="whitespace-pre-wrap text-sm text-emerald-800 dark:text-emerald-300">
+                      <div className="whitespace-pre-wrap text-sm text-ink">
                         {entry.content}
                       </div>
                       {(entry.cost || entry.duration) && (
-                        <div className="mt-2 flex gap-4 text-xs text-emerald-600 dark:text-emerald-400">
+                        <div className="mt-2 flex gap-4 text-xs text-accent">
                           {entry.duration && (
                             <span>
                               {Math.round(entry.duration / 1000)}s
@@ -492,7 +492,7 @@ export default function GeneratePage() {
                   return (
                     <div
                       key={i}
-                      className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400"
+                      className="rounded-[var(--radius-sm)] border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-600"
                     >
                       {entry.content}
                     </div>
@@ -502,9 +502,9 @@ export default function GeneratePage() {
               })}
               {/* Currently streaming text */}
               {streamingText && (
-                <div className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300">
+                <div className="whitespace-pre-wrap text-sm text-ink-soft">
                   {streamingText}
-                  <span className="inline-block h-4 w-1 animate-pulse bg-emerald-500" />
+                  <span className="inline-block h-4 w-1 animate-pulse bg-accent" />
                 </div>
               )}
             </div>
@@ -513,7 +513,7 @@ export default function GeneratePage() {
         {/* History section */}
         {history.length > 0 && (
           <div className="mt-8">
-            <h2 className="mb-4 text-lg font-semibold text-slate-700 dark:text-slate-300">
+            <h2 className="mb-4 text-lg font-semibold text-ink-soft">
               History
             </h2>
             <div className="space-y-3">
@@ -525,7 +525,8 @@ export default function GeneratePage() {
                 return (
                   <div
                     key={gen.id}
-                    className="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800"
+                    className="rounded-[var(--radius-md)] border border-line bg-surface"
+                    style={{ boxShadow: "var(--shadow-card)" }}
                   >
                     <button
                       onClick={() => setExpandedId(isExpanded ? null : gen.id)}
@@ -536,13 +537,13 @@ export default function GeneratePage() {
                           {words.map((w, i) => (
                             <span
                               key={i}
-                              className="inline-block rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-700 dark:text-slate-300"
+                              className="inline-block rounded-full bg-surface-hover px-2.5 py-0.5 text-xs font-medium text-ink-soft"
                             >
                               {w}
                             </span>
                           ))}
                         </div>
-                        <div className="flex items-center gap-3 text-xs text-slate-400">
+                        <div className="flex items-center gap-3 text-xs text-ink-faint">
                           <span>
                             {new Date(gen.created_at + "Z").toLocaleDateString(undefined, {
                               month: "short",
@@ -560,7 +561,7 @@ export default function GeneratePage() {
                         </div>
                       </div>
                       <svg
-                        className={`ml-3 mt-1 h-4 w-4 flex-shrink-0 text-slate-400 transition-transform ${
+                        className={`ml-3 mt-1 h-4 w-4 flex-shrink-0 text-ink-faint transition-transform ${
                           isExpanded ? "rotate-180" : ""
                         }`}
                         fill="none"
@@ -576,8 +577,8 @@ export default function GeneratePage() {
                       </svg>
                     </button>
                     {isExpanded && gen.result && (
-                      <div className="border-t border-slate-200 px-5 py-4 dark:border-slate-700">
-                        <pre className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300">
+                      <div className="border-t border-line px-5 py-4">
+                        <pre className="whitespace-pre-wrap text-sm text-ink-soft">
                           {gen.result}
                         </pre>
                       </div>

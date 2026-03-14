@@ -181,24 +181,24 @@ export default function ReviewSession({ deckId, lessonId, backUrl, backLabel }: 
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-        <div className="text-slate-500">Loading cards...</div>
+      <div className="flex min-h-screen items-center justify-center bg-bg">
+        <div className="text-ink-faint">Loading cards...</div>
       </div>
     );
   }
 
   if (cards.length === 0) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+      <div className="flex min-h-screen items-center justify-center bg-bg">
         <div className="text-center">
           <div className="mb-4 text-6xl">🎉</div>
-          <h2 className="text-2xl font-bold text-slate-800 dark:text-white">All Done!</h2>
-          <p className="mt-2 text-slate-500">
+          <h2 className="text-2xl font-bold text-ink">All Done!</h2>
+          <p className="mt-2 text-ink-faint">
             {lessonId ? "This lesson has no cards yet." : "No cards due for review right now."}
           </p>
           <Link
             href={backUrl}
-            className="mt-6 inline-block rounded-lg bg-emerald-600 px-6 py-3 text-white transition hover:bg-emerald-700"
+            className="mt-6 inline-block rounded-[var(--radius-md)] bg-accent px-6 py-3 text-white transition hover:bg-accent-hover"
           >
             {backLabel}
           </Link>
@@ -213,53 +213,53 @@ export default function ReviewSession({ deckId, lessonId, backUrl, backLabel }: 
     const seconds = duration % 60;
 
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-        <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-xl dark:border-slate-700 dark:bg-slate-800">
+      <div className="flex min-h-screen items-center justify-center bg-bg">
+        <div className="animate-modal w-full max-w-md rounded-[var(--radius-lg)] border border-line/50 bg-surface p-8" style={{ boxShadow: "var(--shadow-lg)" }}>
           <div className="mb-6 text-center text-6xl">🎉</div>
-          <h2 className="text-center text-2xl font-bold text-slate-800 dark:text-white">
+          <h2 className="text-center text-2xl font-bold text-ink">
             Review Complete!
           </h2>
 
           <div className="mt-6 space-y-4">
-            <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-700/50">
+            <div className="rounded-[var(--radius-md)] bg-surface-hover p-4">
               <div className="text-center">
-                <div className="text-3xl font-bold text-emerald-600">{session.cardsReviewed}</div>
-                <div className="text-sm text-slate-500">Cards Reviewed</div>
+                <div className="text-3xl font-bold text-ink">{session.cardsReviewed}</div>
+                <div className="text-sm text-ink-faint">Cards Reviewed</div>
               </div>
             </div>
 
-            <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-700/50">
+            <div className="rounded-[var(--radius-md)] bg-surface-hover p-4">
               <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600">
+                <div className="font-mono text-3xl font-bold text-ink-soft">
                   {minutes}:{seconds.toString().padStart(2, "0")}
                 </div>
-                <div className="text-sm text-slate-500">Time Spent</div>
+                <div className="text-sm text-ink-faint">Time Spent</div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <div className="rounded-lg bg-red-50 p-3 dark:bg-red-900/20">
+            <div className="grid grid-cols-4 gap-2">
+              <div className="rounded-[var(--radius-sm)] border border-error/20 bg-error-subtle p-3">
                 <div className="text-center">
-                  <div className="text-xl font-bold text-red-600">{session.ratings[1]}</div>
-                  <div className="text-xs text-slate-500">Again</div>
+                  <div className="text-xl font-bold text-error">{session.ratings[1]}</div>
+                  <div className="text-xs text-ink-faint">Again</div>
                 </div>
               </div>
-              <div className="rounded-lg bg-amber-50 p-3 dark:bg-amber-900/20">
+              <div className="rounded-[var(--radius-sm)] border border-amber-200 bg-amber-50 p-3">
                 <div className="text-center">
                   <div className="text-xl font-bold text-amber-600">{session.ratings[2]}</div>
-                  <div className="text-xs text-slate-500">Hard</div>
+                  <div className="text-xs text-ink-faint">Hard</div>
                 </div>
               </div>
-              <div className="rounded-lg bg-emerald-50 p-3 dark:bg-emerald-900/20">
+              <div className="rounded-[var(--radius-sm)] border border-accent/20 bg-accent-subtle p-3">
                 <div className="text-center">
-                  <div className="text-xl font-bold text-emerald-600">{session.ratings[3]}</div>
-                  <div className="text-xs text-slate-500">Good</div>
+                  <div className="text-xl font-bold text-accent">{session.ratings[3]}</div>
+                  <div className="text-xs text-ink-faint">Good</div>
                 </div>
               </div>
-              <div className="rounded-lg bg-blue-50 p-3 dark:bg-blue-900/20">
+              <div className="rounded-[var(--radius-sm)] border border-success/20 bg-success-subtle p-3">
                 <div className="text-center">
-                  <div className="text-xl font-bold text-blue-600">{session.ratings[4]}</div>
-                  <div className="text-xs text-slate-500">Easy</div>
+                  <div className="text-xl font-bold text-success">{session.ratings[4]}</div>
+                  <div className="text-xs text-ink-faint">Easy</div>
                 </div>
               </div>
             </div>
@@ -267,7 +267,7 @@ export default function ReviewSession({ deckId, lessonId, backUrl, backLabel }: 
 
           <Link
             href={backUrl}
-            className="mt-6 block w-full rounded-lg bg-emerald-600 py-3 text-center font-medium text-white transition hover:bg-emerald-700"
+            className="mt-6 block w-full rounded-[var(--radius-md)] bg-accent py-3 text-center font-medium text-white transition hover:bg-accent-hover"
           >
             {backLabel}
           </Link>
@@ -280,26 +280,26 @@ export default function ReviewSession({ deckId, lessonId, backUrl, backLabel }: 
   const progress = ((currentIndex + 1) / cards.length) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <header className="border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-700 dark:bg-slate-900/80">
-        <div className="mx-auto max-w-4xl px-6 py-4">
+    <div className="min-h-screen bg-bg">
+      <header className="sticky top-0 z-10 h-14 border-b border-line/50 bg-bg/80 backdrop-blur-xl">
+        <div className="mx-auto max-w-4xl h-full px-7 flex flex-col justify-center">
           <div className="flex items-center justify-between">
             <Link
               href={backUrl}
-              className="flex items-center gap-2 text-slate-500 transition hover:text-slate-700 dark:hover:text-slate-300"
+              className="flex items-center gap-2 text-ink-faint transition hover:text-ink-soft"
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
               <span className="text-sm font-medium">Back</span>
             </Link>
-            <div className="text-sm font-medium text-slate-600 dark:text-slate-400">
+            <div className="text-sm font-medium text-ink-soft">
               Card {currentIndex + 1} of {cards.length}
             </div>
           </div>
-          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-surface-active">
             <div
-              className="h-full bg-emerald-600 transition-all duration-300"
+              className="h-full rounded-full bg-accent transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -322,8 +322,8 @@ export default function ReviewSession({ deckId, lessonId, backUrl, backLabel }: 
             >
               {/* Front */}
               <div
-                className="absolute inset-0 flex items-center justify-center rounded-2xl border border-slate-200 bg-white p-12 shadow-xl dark:border-slate-700 dark:bg-slate-800"
-                style={{ backfaceVisibility: "hidden" }}
+                className="absolute inset-0 flex items-center justify-center rounded-[var(--radius-lg)] border border-line/50 bg-surface p-12"
+                style={{ backfaceVisibility: "hidden", boxShadow: "var(--shadow-lg)" }}
               >
                 <div className="text-center">
                   {currentCard.image_url && (
@@ -335,7 +335,7 @@ export default function ReviewSession({ deckId, lessonId, backUrl, backLabel }: 
                   )}
                   {(!imageOnly || !currentCard.image_url) && (
                     <div dir="rtl">
-                      <p className="text-5xl font-medium text-slate-800 dark:text-white">
+                      <p className="text-5xl font-medium text-ink">
                         {currentCard.front}
                       </p>
                     </div>
@@ -352,11 +352,11 @@ export default function ReviewSession({ deckId, lessonId, backUrl, backLabel }: 
                         e.stopPropagation();
                         copyToClipboard(currentCard.front);
                       }}
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-700 dark:bg-slate-700 dark:text-slate-400 dark:hover:bg-slate-600"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-surface-hover text-ink-faint transition-colors hover:bg-surface-active hover:text-ink-soft"
                       title={copied ? "Copied!" : "Copy Arabic text"}
                     >
                       {copied ? (
-                        <svg className="h-5 w-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="h-5 w-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
                       ) : (
@@ -373,8 +373,8 @@ export default function ReviewSession({ deckId, lessonId, backUrl, backLabel }: 
                         }}
                         className={`inline-flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
                           imageOnly
-                            ? "bg-emerald-100 text-emerald-600 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400"
-                            : "bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-400"
+                            ? "bg-accent-subtle text-accent"
+                            : "bg-surface-hover text-ink-faint hover:bg-surface-active"
                         }`}
                         title={imageOnly ? "Show text" : "Image only"}
                       >
@@ -389,7 +389,7 @@ export default function ReviewSession({ deckId, lessonId, backUrl, backLabel }: 
                     )}
                   </div>
                   {!isFlipped && (
-                    <p className="mt-4 text-sm text-slate-400">
+                    <p className="mt-4 text-sm text-ink-faint">
                       Click or press Space to reveal
                     </p>
                   )}
@@ -398,16 +398,17 @@ export default function ReviewSession({ deckId, lessonId, backUrl, backLabel }: 
 
               {/* Back */}
               <div
-                className="absolute inset-0 flex flex-col rounded-2xl border border-slate-200 bg-white p-8 shadow-xl dark:border-slate-700 dark:bg-slate-800"
+                className="absolute inset-0 flex flex-col rounded-[var(--radius-lg)] border border-line/50 bg-surface p-8"
                 style={{
                   backfaceVisibility: "hidden",
                   transform: "rotateY(180deg)",
+                  boxShadow: "var(--shadow-lg)",
                 }}
               >
                 {/* Fixed header: Arabic + English */}
                 <div className="flex-shrink-0 text-center">
                   <div className="mb-3 flex items-center justify-center gap-2" dir="rtl">
-                    <span className="text-2xl text-slate-400 dark:text-slate-500">
+                    <span className="text-2xl text-ink-faint">
                       {currentCard.front}
                     </span>
                     <SpeakerButton
@@ -421,11 +422,11 @@ export default function ReviewSession({ deckId, lessonId, backUrl, backLabel }: 
                         e.stopPropagation();
                         copyToClipboard(currentCard.front);
                       }}
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-700 dark:bg-slate-700 dark:text-slate-400 dark:hover:bg-slate-600"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-surface-hover text-ink-faint transition-colors hover:bg-surface-active hover:text-ink-soft"
                       title={copied ? "Copied!" : "Copy Arabic text"}
                     >
                       {copied ? (
-                        <svg className="h-4 w-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="h-4 w-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
                       ) : (
@@ -435,7 +436,7 @@ export default function ReviewSession({ deckId, lessonId, backUrl, backLabel }: 
                       )}
                     </button>
                   </div>
-                  <p className="text-4xl font-medium text-slate-800 dark:text-white">
+                  <p className="text-4xl font-medium text-ink">
                     {currentCard.back}
                   </p>
                 </div>
@@ -444,7 +445,7 @@ export default function ReviewSession({ deckId, lessonId, backUrl, backLabel }: 
                   <div className="mt-4 flex-1 overflow-y-auto">
                     <MarkdownNotes
                       content={currentCard.notes}
-                      className="text-lg text-slate-500 dark:text-slate-400"
+                      className="text-lg text-ink-faint"
                     />
                   </div>
                 )}
@@ -457,49 +458,49 @@ export default function ReviewSession({ deckId, lessonId, backUrl, backLabel }: 
               <button
                 onClick={() => submitReview(1)}
                 disabled={isSubmitting}
-                className="group relative rounded-xl border-2 border-red-200 bg-red-50 p-2 sm:p-4 transition hover:border-red-300 hover:bg-red-100 disabled:opacity-50 dark:border-red-900/50 dark:bg-red-900/20 dark:hover:bg-red-900/30"
+                className="group relative rounded-[var(--radius-md)] border border-error/20 bg-error-subtle p-2 sm:p-4 transition hover:border-error/40 disabled:opacity-50"
               >
-                <div className="mb-1 sm:mb-2 text-base sm:text-2xl font-bold text-red-600">Again</div>
-                <div className="text-xs sm:text-sm font-medium text-red-500">
+                <div className="mb-1 sm:mb-2 text-base sm:text-2xl font-bold text-error">Again</div>
+                <div className="font-mono text-xs sm:text-sm text-ink-faint">
                   {formatInterval(schedulingInfo.again.card.scheduled_days)}
                 </div>
-                <div className="mt-1 text-xs text-slate-400 hidden sm:block">Press 1</div>
+                <div className="mt-1 text-xs text-ink-faint hidden sm:block">Press 1</div>
               </button>
 
               <button
                 onClick={() => submitReview(2)}
                 disabled={isSubmitting}
-                className="group relative rounded-xl border-2 border-amber-200 bg-amber-50 p-2 sm:p-4 transition hover:border-amber-300 hover:bg-amber-100 disabled:opacity-50 dark:border-amber-900/50 dark:bg-amber-900/20 dark:hover:bg-amber-900/30"
+                className="group relative rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 p-2 sm:p-4 transition hover:border-amber-300 disabled:opacity-50"
               >
                 <div className="mb-1 sm:mb-2 text-base sm:text-2xl font-bold text-amber-600">Hard</div>
-                <div className="text-xs sm:text-sm font-medium text-amber-500">
+                <div className="font-mono text-xs sm:text-sm text-ink-faint">
                   {formatInterval(schedulingInfo.hard.card.scheduled_days)}
                 </div>
-                <div className="mt-1 text-xs text-slate-400 hidden sm:block">Press 2</div>
+                <div className="mt-1 text-xs text-ink-faint hidden sm:block">Press 2</div>
               </button>
 
               <button
                 onClick={() => submitReview(3)}
                 disabled={isSubmitting}
-                className="group relative rounded-xl border-2 border-emerald-200 bg-emerald-50 p-2 sm:p-4 transition hover:border-emerald-300 hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-900/50 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/30"
+                className="group relative rounded-[var(--radius-md)] border-2 border-accent bg-accent text-white p-2 sm:p-4 transition hover:bg-accent-hover disabled:opacity-50"
               >
-                <div className="mb-1 sm:mb-2 text-base sm:text-2xl font-bold text-emerald-600">Good</div>
-                <div className="text-xs sm:text-sm font-medium text-emerald-500">
+                <div className="mb-1 sm:mb-2 text-base sm:text-2xl font-bold">Good</div>
+                <div className="font-mono text-xs sm:text-sm text-white/70">
                   {formatInterval(schedulingInfo.good.card.scheduled_days)}
                 </div>
-                <div className="mt-1 text-xs text-slate-400 hidden sm:block">Press 3</div>
+                <div className="mt-1 text-xs text-white/50 hidden sm:block">Press 3</div>
               </button>
 
               <button
                 onClick={() => submitReview(4)}
                 disabled={isSubmitting}
-                className="group relative rounded-xl border-2 border-blue-200 bg-blue-50 p-2 sm:p-4 transition hover:border-blue-300 hover:bg-blue-100 disabled:opacity-50 dark:border-blue-900/50 dark:bg-blue-900/20 dark:hover:bg-blue-900/30"
+                className="group relative rounded-[var(--radius-md)] border border-success/20 bg-success-subtle p-2 sm:p-4 transition hover:border-success/40 disabled:opacity-50"
               >
-                <div className="mb-1 sm:mb-2 text-base sm:text-2xl font-bold text-blue-600">Easy</div>
-                <div className="text-xs sm:text-sm font-medium text-blue-500">
+                <div className="mb-1 sm:mb-2 text-base sm:text-2xl font-bold text-success">Easy</div>
+                <div className="font-mono text-xs sm:text-sm text-ink-faint">
                   {formatInterval(schedulingInfo.easy.card.scheduled_days)}
                 </div>
-                <div className="mt-1 text-xs text-slate-400 hidden sm:block">Press 4</div>
+                <div className="mt-1 text-xs text-ink-faint hidden sm:block">Press 4</div>
               </button>
             </div>
           )}

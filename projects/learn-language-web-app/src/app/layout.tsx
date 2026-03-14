@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Noto_Sans_Arabic } from "next/font/google";
+import { Plus_Jakarta_Sans, Geist_Mono, Noto_Sans_Arabic } from "next/font/google";
 import "./globals.css";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const jakartaSans = Plus_Jakarta_Sans({
+  variable: "--font-jakarta",
   subsets: ["latin"],
 });
 
@@ -20,7 +20,7 @@ const notoSansArabic = Noto_Sans_Arabic({
 });
 
 export const viewport: Viewport = {
-  themeColor: "#0a0a0a",
+  themeColor: "#f5f5f3",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -52,7 +52,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${notoSansArabic.variable} antialiased`}
+        className={`${jakartaSans.variable} ${geistMono.variable} ${notoSansArabic.variable} antialiased`}
       >
         {children}
         <ServiceWorkerRegistration />

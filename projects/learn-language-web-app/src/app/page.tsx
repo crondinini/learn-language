@@ -60,107 +60,142 @@ export default function Home() {
 
   const totalDue = decks.reduce((sum, d) => sum + d.due_cards, 0);
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <Header
-        actions={
-          <>
-            {totalDue > 0 ? (
-              <Link
-                href="/review"
-                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
-              >
-                Study Now ({totalDue})
-              </Link>
-            ) : (
-              <span className="rounded-lg bg-slate-200 px-4 py-2 text-sm font-medium text-slate-400 dark:bg-slate-700 dark:text-slate-500">
-                Study Now (0)
-              </span>
-            )}
-            <button
-              onClick={() => setShowModal(true)}
-              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
-            >
-              + New Deck
-            </button>
-          </>
-        }
-      />
+  function progressPercent(deck: Deck) {
+    if (deck.total_cards === 0) return 0;
+    return Math.round((deck.learned_cards / deck.total_cards) * 100);
+  }
 
-      {/* Main Content */}
-      <main className="mx-auto max-w-5xl px-6 py-8">
+  return (
+    <div className="min-h-screen bg-bg">
+      <Header />
+
+      <main className="mx-auto max-w-5xl px-7 pt-11 pb-20">
+        {/* Page Head */}
+        <div className="mb-8 flex items-end justify-between">
+          <div>
+            <h1 className="text-[28px] font-bold tracking-tight text-ink">Decks</h1>
+            {totalDue > 0 && (
+              <p className="mt-1 text-sm text-ink-soft">
+                <span className="font-medium tabular-nums text-accent">{totalDue}</span> cards due across {decks.length} decks
+              </p>
+            )}
+          </div>
+          {totalDue > 0 ? (
+            <Link
+              href="/review"
+              className="rounded-[var(--radius-md)] bg-accent px-5 py-2.5 text-sm font-medium text-white transition hover:bg-accent-hover hover:-translate-y-px"
+            >
+              Study All Due ({totalDue})
+            </Link>
+          ) : (
+            <span className="rounded-[var(--radius-md)] bg-surface-active px-5 py-2.5 text-sm font-medium text-ink-faint">
+              Study Now (0)
+            </span>
+          )}
+        </div>
+
         {isLoading ? (
-          <div className="text-center text-slate-500">Loading...</div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="skeleton h-40 rounded-[var(--radius-md)]" />
+            ))}
+          </div>
         ) : decks.length === 0 ? (
-          <div className="rounded-xl border-2 border-dashed border-slate-300 p-12 text-center dark:border-slate-600">
-            <p className="text-lg text-slate-500 dark:text-slate-400">No decks yet</p>
-            <p className="mt-1 text-sm text-slate-400 dark:text-slate-500">
+          <div className="rounded-[var(--radius-md)] border-2 border-dashed border-line p-12 text-center">
+            <p className="text-lg text-ink-faint">No decks yet</p>
+            <p className="mt-1 text-sm text-ink-faint">
               Create your first deck to start learning Arabic
             </p>
             <button
               onClick={() => setShowModal(true)}
-              className="mt-4 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
+              className="mt-4 rounded-[var(--radius-md)] bg-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-hover"
             >
               Create Deck
             </button>
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {decks.map((deck) => (
-              <div
-                key={deck.id}
-                className="group relative flex min-h-[140px] flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md dark:border-slate-700 dark:bg-slate-800"
-              >
-                <Link href={`/deck/${deck.id}`} className="flex flex-1 flex-col">
-                  <div className="flex-1">
-                    <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                      {deck.name}
-                    </h2>
-                    {deck.description && (
-                      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                        {deck.description}
-                      </p>
-                    )}
+          <div className="stagger-children grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {decks.map((deck) => {
+              const pct = progressPercent(deck);
+              return (
+                <div
+                  key={deck.id}
+                  className="group relative rounded-[var(--radius-md)] border border-line/50 bg-surface p-5 transition-all duration-200 hover:shadow-[var(--shadow-card-hover)] hover:-translate-y-0.5"
+                  style={{ boxShadow: "var(--shadow-card)" }}
+                >
+                  <Link href={`/deck/${deck.id}`} className="absolute inset-0 z-[1] rounded-[var(--radius-md)]" />
+                  <div className="flex items-start justify-between">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-[15px] font-semibold text-ink truncate">{deck.name}</h3>
+                      {deck.description && (
+                        <p className="mt-0.5 text-sm text-ink-faint truncate">{deck.description}</p>
+                      )}
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        deleteDeck(deck.id);
+                      }}
+                      className="relative z-[2] -mr-1 -mt-1 rounded-full p-1.5 text-ink-faint opacity-0 transition hover:bg-error-subtle hover:text-error group-hover:opacity-100"
+                    >
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
                   </div>
+
+                  {/* Stats */}
+                  <div className="mt-4 flex items-center gap-3 text-sm">
+                    {deck.due_cards > 0 && (
+                      <span className="rounded-full bg-accent-subtle px-2.5 py-0.5 text-xs font-medium text-accent">
+                        {deck.due_cards} due
+                      </span>
+                    )}
+                    <span className="text-ink-faint tabular-nums">
+                      {deck.total_cards} card{deck.total_cards !== 1 ? "s" : ""}
+                    </span>
+                  </div>
+
+                  {/* Progress bar */}
                   <div className="mt-4">
-                    <p className="text-sm text-slate-600 dark:text-slate-300">
-                      <span className="font-semibold text-emerald-600">{deck.learned_cards}</span>
-                      <span className="text-slate-400"> / </span>
-                      <span className="font-semibold">{deck.learning_cards + deck.learned_cards}</span>
-                      <span className="text-slate-400"> words learned</span>
-                    </p>
-                    <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[11px] font-medium text-ink-faint">Progress</span>
+                      <span className="text-[11px] font-medium tabular-nums text-ink-faint">{pct}%</span>
+                    </div>
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-active">
                       <div
-                        className="h-full rounded-full bg-emerald-500 transition-all"
-                        style={{
-                          width: `${deck.learning_cards + deck.learned_cards > 0 ? (deck.learned_cards / (deck.learning_cards + deck.learned_cards)) * 100 : 0}%`,
-                        }}
+                        className="h-full rounded-full bg-accent transition-all duration-500"
+                        style={{ width: `${pct}%`, animation: "progress-fill 0.8s ease-out" }}
                       />
                     </div>
                   </div>
-                </Link>
-                <button
-                  onClick={() => deleteDeck(deck.id)}
-                  className="absolute right-3 top-3 rounded p-1 text-slate-400 opacity-0 transition hover:bg-red-50 hover:text-red-500 group-hover:opacity-100 dark:hover:bg-red-900/20"
-                >
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            ))}
+                </div>
+              );
+            })}
+
+            {/* New Deck ghost card */}
+            <button
+              onClick={() => setShowModal(true)}
+              className="flex flex-col items-center justify-center rounded-[var(--radius-md)] border-2 border-dashed border-line p-5 text-ink-faint transition-all hover:border-accent hover:text-accent hover:bg-accent-subtle/50 min-h-[140px]"
+            >
+              <svg className="h-8 w-8 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
+              </svg>
+              <span className="text-sm font-medium">New Deck</span>
+            </button>
           </div>
         )}
       </main>
 
       {/* Create Deck Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-slate-800">
-            <h2 className="text-xl font-semibold text-slate-800 dark:text-white">Create New Deck</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 backdrop-blur-sm p-4">
+          <div className="animate-modal w-full max-w-md rounded-[var(--radius-lg)] bg-surface p-6 border border-line/50" style={{ boxShadow: "var(--shadow-xl)" }}>
+            <h2 className="text-xl font-semibold text-ink">Create New Deck</h2>
             <form onSubmit={createDeck} className="mt-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                <label className="block text-sm font-medium text-ink-soft">
                   Name
                 </label>
                 <input
@@ -168,12 +203,12 @@ export default function Home() {
                   value={newDeckName}
                   onChange={(e) => setNewDeckName(e.target.value)}
                   placeholder="Arabic Basics"
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                  className="mt-1 w-full rounded-[var(--radius-sm)] border border-line px-3 py-2 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
                   autoFocus
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                <label className="block text-sm font-medium text-ink-soft">
                   Description (optional)
                 </label>
                 <input
@@ -181,20 +216,20 @@ export default function Home() {
                   value={newDeckDesc}
                   onChange={(e) => setNewDeckDesc(e.target.value)}
                   placeholder="Essential vocabulary for beginners"
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                  className="mt-1 w-full rounded-[var(--radius-sm)] border border-line px-3 py-2 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
                 />
               </div>
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="flex-1 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+                  className="flex-1 rounded-[var(--radius-sm)] border border-line px-4 py-2 text-sm font-medium text-ink-soft transition hover:bg-surface-hover"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
+                  className="flex-1 rounded-[var(--radius-sm)] bg-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-hover"
                 >
                   Create
                 </button>

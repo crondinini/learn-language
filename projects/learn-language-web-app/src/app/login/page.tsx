@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
@@ -38,14 +37,16 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <div className="flex justify-center mb-6">
-          <Image src="/logo.png" alt="Learn" width={120} height={64} unoptimized />
+    <div className="min-h-screen flex items-center justify-center bg-bg" style={{ background: 'radial-gradient(ellipse at center, #f5f3ff 0%, #f5f5f3 60%)' }}>
+      <div className="animate-modal bg-surface p-8 rounded-[var(--radius-lg)] border border-line/50 w-full max-w-md" style={{ boxShadow: 'var(--shadow-lg)' }}>
+        <div className="flex justify-center mb-8">
+          <span className="text-3xl font-bold text-ink">
+            Learn<span className="text-accent">.</span>
+          </span>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="email" className="block text-sm font-medium text-ink-soft">
               Email
             </label>
             <input
@@ -53,12 +54,12 @@ export default function LoginPage() {
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-[var(--radius-sm)] border border-line px-3 py-2.5 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
               required
             />
           </div>
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="password" className="block text-sm font-medium text-ink-soft">
               Password
             </label>
             <input
@@ -66,17 +67,19 @@ export default function LoginPage() {
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-[var(--radius-sm)] border border-line px-3 py-2.5 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
               required
             />
           </div>
           {error && (
-            <p className="text-red-500 text-sm">{error}</p>
+            <div className="rounded-[var(--radius-sm)] bg-error-subtle border border-error/20 px-3 py-2 text-error text-sm">
+              {error}
+            </div>
           )}
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+            className="w-full bg-accent text-white py-2.5 px-4 rounded-[var(--radius-md)] hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 disabled:opacity-50 font-medium transition"
           >
             {loading ? 'Signing in...' : 'Sign In'}
           </button>

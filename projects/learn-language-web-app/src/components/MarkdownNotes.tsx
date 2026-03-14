@@ -10,17 +10,17 @@ interface MarkdownNotesProps {
 
 export function MarkdownNotes({ content, className = '' }: MarkdownNotesProps) {
   return (
-    <div className={`prose prose-slate dark:prose-invert prose-sm max-w-none ${className}`}>
+    <div className={`prose prose-slate prose-sm max-w-none ${className}`}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
-          // Style links to be visible in both light and dark mode
+          // Style links to be visible
           a: ({ children, href }) => (
             <a
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sky-600 dark:text-sky-400 hover:underline"
+              className="text-accent hover:underline"
             >
               {children}
             </a>
@@ -33,7 +33,7 @@ export function MarkdownNotes({ content, className = '' }: MarkdownNotesProps) {
           li: ({ children }) => <li className="my-0">{children}</li>,
           // Style code
           code: ({ children }) => (
-            <code className="rounded bg-slate-100 dark:bg-slate-800 px-1 py-0.5 text-sm">
+            <code className="rounded bg-surface-active px-1 py-0.5 text-sm">
               {children}
             </code>
           ),
@@ -47,15 +47,15 @@ export function MarkdownNotes({ content, className = '' }: MarkdownNotesProps) {
             </table>
           ),
           thead: ({ children }) => (
-            <thead className="bg-slate-100 dark:bg-slate-800">{children}</thead>
+            <thead className="bg-surface-hover">{children}</thead>
           ),
           th: ({ children }) => (
-            <th className="border border-slate-300 dark:border-slate-600 px-2 py-1 text-left font-medium">
+            <th className="border border-line px-2 py-1 text-left font-medium">
               {children}
             </th>
           ),
           td: ({ children }) => (
-            <td className="border border-slate-300 dark:border-slate-600 px-2 py-1">
+            <td className="border border-line px-2 py-1">
               {children}
             </td>
           ),

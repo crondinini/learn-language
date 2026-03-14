@@ -283,10 +283,10 @@ export default function LessonDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+      <div className="min-h-screen bg-bg">
         <Header />
-        <main className="mx-auto max-w-5xl px-6 py-8">
-          <div className="text-center text-slate-500">Loading...</div>
+        <main className="mx-auto max-w-5xl px-7 pt-11 pb-20">
+          <div className="text-center text-ink-faint">Loading...</div>
         </main>
       </div>
     );
@@ -294,38 +294,38 @@ export default function LessonDetailPage() {
 
   if (!lesson) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+      <div className="min-h-screen bg-bg">
         <Header />
-        <main className="mx-auto max-w-5xl px-6 py-8">
-          <div className="text-center text-slate-500">Lesson not found</div>
+        <main className="mx-auto max-w-5xl px-7 pt-11 pb-20">
+          <div className="text-center text-ink-faint">Lesson not found</div>
         </main>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+    <div className="min-h-screen bg-bg">
       <Header />
 
-      <main className="mx-auto max-w-5xl px-6 py-8 space-y-6">
+      <main className="mx-auto max-w-5xl px-7 pt-11 pb-20 space-y-6">
         {/* Title + Date */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
           <input
             type="text"
             value={title}
             onChange={(e) => handleTitleChange(e.target.value)}
-            className="flex-1 rounded-lg border border-transparent bg-transparent px-2 py-1 text-2xl font-bold text-slate-800 hover:border-slate-300 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:text-white dark:hover:border-slate-600"
+            className="flex-1 rounded-[var(--radius-sm)] border border-transparent bg-transparent px-2 py-1 text-2xl font-bold text-ink hover:border-line focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
           />
           <input
             type="date"
             value={lessonDate}
             onChange={(e) => handleDateChange(e.target.value)}
-            className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+            className="rounded-[var(--radius-sm)] border border-line px-3 py-1.5 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
           />
           {lesson.cards.length > 0 && (
             <Link
               href={`/lessons/${id}/study`}
-              className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-emerald-700"
+              className="inline-flex items-center gap-2 rounded-[var(--radius-sm)] bg-accent px-4 py-1.5 text-sm font-medium text-white transition hover:bg-accent-hover"
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -336,21 +336,21 @@ export default function LessonDetailPage() {
         </div>
 
         {/* Transcript */}
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <div className="rounded-[var(--radius-md)] border border-line/50 bg-surface" style={{ boxShadow: "var(--shadow-card)" }}>
           <button
             onClick={() => setShowTranscript(!showTranscript)}
             className="flex w-full items-center justify-between px-6 py-4"
           >
-            <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+            <h2 className="text-sm font-semibold text-ink-soft">
               Transcript
               {transcript && (
-                <span className="ml-2 text-xs font-normal text-slate-400">
+                <span className="ml-2 text-xs font-normal text-ink-faint">
                   ({transcript.length} chars)
                 </span>
               )}
             </h2>
             <svg
-              className={`h-4 w-4 text-slate-400 transition-transform ${showTranscript ? "rotate-180" : ""}`}
+              className={`h-4 w-4 text-ink-faint transition-transform ${showTranscript ? "rotate-180" : ""}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -359,13 +359,13 @@ export default function LessonDetailPage() {
             </svg>
           </button>
           {showTranscript && (
-            <div className="border-t border-slate-200 px-6 py-4 dark:border-slate-700">
+            <div className="border-t border-line px-6 py-4">
               <textarea
                 value={transcript}
                 onChange={(e) => handleTranscriptChange(e.target.value)}
                 placeholder="Paste your class transcript here..."
                 rows={12}
-                className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder-slate-400"
+                className="w-full rounded-[var(--radius-sm)] border border-line px-4 py-3 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
               />
             </div>
           )}
@@ -376,7 +376,7 @@ export default function LessonDetailPage() {
           <button
             onClick={handleSummarize}
             disabled={isSummarizing || !transcript.trim()}
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-[var(--radius-sm)] bg-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isSummarizing ? (
               <>
@@ -396,25 +396,25 @@ export default function LessonDetailPage() {
             )}
           </button>
           {lesson.summary && (
-            <span className="text-xs text-slate-400">Summary saved</span>
+            <span className="text-xs text-ink-faint">Summary saved</span>
           )}
         </div>
 
         {/* Summarize streaming output */}
         {isSummarizing && summarizeStream && (
-          <div className="rounded-xl border border-blue-200 bg-blue-50 p-6 dark:border-blue-800 dark:bg-blue-900/20">
-            <div className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300">
+          <div className="rounded-[var(--radius-md)] border border-line bg-surface-hover p-6">
+            <div className="whitespace-pre-wrap text-sm text-ink-soft">
               {summarizeStream}
-              <span className="inline-block h-4 w-1 animate-pulse bg-blue-500" />
+              <span className="inline-block h-4 w-1 animate-pulse bg-accent" />
             </div>
           </div>
         )}
 
         {/* Summary section */}
         {lesson.summary && !isSummarizing && (
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-            <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300">Summary</h2>
-            <div className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+          <div className="rounded-[var(--radius-md)] border border-line/50 bg-surface p-6" style={{ boxShadow: "var(--shadow-card)" }}>
+            <h2 className="mb-3 text-sm font-semibold text-ink-soft">Summary</h2>
+            <div className="whitespace-pre-wrap text-sm leading-relaxed text-ink-soft">
               {lesson.summary}
             </div>
           </div>
@@ -422,20 +422,20 @@ export default function LessonDetailPage() {
 
         {/* Grammar Notes section */}
         {lesson.grammar_notes && !isSummarizing && (
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-            <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300">Grammar Notes</h2>
-            <div className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+          <div className="rounded-[var(--radius-md)] border border-line/50 bg-surface p-6" style={{ boxShadow: "var(--shadow-card)" }}>
+            <h2 className="mb-3 text-sm font-semibold text-ink-soft">Grammar Notes</h2>
+            <div className="whitespace-pre-wrap text-sm leading-relaxed text-ink-soft">
               {lesson.grammar_notes}
             </div>
           </div>
         )}
 
         {/* Generate Cards section */}
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-          <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300">
+        <div className="rounded-[var(--radius-md)] border border-line/50 bg-surface p-6" style={{ boxShadow: "var(--shadow-card)" }}>
+          <h2 className="mb-3 text-sm font-semibold text-ink-soft">
             Generate Cards
             {lesson.session_id && (
-              <span className="ml-2 rounded bg-slate-100 px-2 py-0.5 text-xs font-mono font-normal text-slate-400 dark:bg-slate-700">
+              <span className="ml-2 rounded bg-surface-hover px-2 py-0.5 text-xs font-mono font-normal text-ink-faint">
                 Session: {lesson.session_id.slice(0, 8)}
               </span>
             )}
@@ -452,12 +452,12 @@ export default function LessonDetailPage() {
                   : "What cards should be created? (e.g. 'Create cards for all vocabulary from this class')..."
               }
               disabled={isGenerating}
-              className="flex-1 rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder-slate-400"
+              className="flex-1 rounded-[var(--radius-sm)] border border-line px-4 py-2 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-50"
             />
             <button
               onClick={handleGenerate}
               disabled={!generateMessage.trim() || isGenerating}
-              className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-[var(--radius-sm)] bg-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isGenerating ? (
                 <>
@@ -477,24 +477,24 @@ export default function LessonDetailPage() {
           {(generateLogs.length > 0 || isGenerating) && (
             <div
               ref={generateOutputRef}
-              className="mt-4 max-h-[400px] overflow-auto rounded-lg border border-slate-200 p-4 space-y-2 dark:border-slate-600"
+              className="mt-4 max-h-[400px] overflow-auto rounded-[var(--radius-sm)] border border-line p-4 space-y-2"
             >
               {generateLogs.map((entry, i) => {
                 if (entry.type === "text") {
                   return (
-                    <div key={i} className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300">
+                    <div key={i} className="whitespace-pre-wrap text-sm text-ink-soft">
                       {entry.content}
                     </div>
                   );
                 }
                 if (entry.type === "tool_start") {
                   return (
-                    <div key={i} className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 dark:border-blue-800 dark:bg-blue-900/20">
-                      <svg className="h-4 w-4 flex-shrink-0 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div key={i} className="flex items-center gap-2 rounded-[var(--radius-sm)] border border-line bg-surface-hover px-4 py-2">
+                      <svg className="h-4 w-4 flex-shrink-0 text-ink-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
-                      <span className="text-xs font-medium text-blue-700 dark:text-blue-400">
+                      <span className="text-xs font-medium text-ink-soft">
                         Running: {entry.tool}
                       </span>
                     </div>
@@ -502,27 +502,27 @@ export default function LessonDetailPage() {
                 }
                 if (entry.type === "tool") {
                   return (
-                    <div key={i} className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 dark:border-blue-800 dark:bg-blue-900/20">
+                    <div key={i} className="rounded-[var(--radius-sm)] border border-line bg-surface-hover px-4 py-2">
                       <div className="flex items-center gap-2">
-                        <svg className="h-4 w-4 flex-shrink-0 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="h-4 w-4 flex-shrink-0 text-ink-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
-                        <span className="text-xs font-medium text-blue-700 dark:text-blue-400">{entry.tool}</span>
+                        <span className="text-xs font-medium text-ink-soft">{entry.tool}</span>
                       </div>
                       {entry.input && (
-                        <pre className="mt-1 max-h-24 overflow-auto text-xs text-blue-600 dark:text-blue-300">{entry.input}</pre>
+                        <pre className="mt-1 max-h-24 overflow-auto text-xs text-ink-soft">{entry.input}</pre>
                       )}
                     </div>
                   );
                 }
                 if (entry.type === "result") {
                   return (
-                    <div key={i} className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-800 dark:bg-emerald-900/20">
-                      <div className="whitespace-pre-wrap text-sm text-emerald-800 dark:text-emerald-300">
+                    <div key={i} className="rounded-[var(--radius-sm)] border border-accent bg-accent-subtle px-4 py-3">
+                      <div className="whitespace-pre-wrap text-sm text-ink">
                         {entry.content}
                       </div>
                       {(entry.cost || entry.duration) && (
-                        <div className="mt-2 flex gap-4 text-xs text-emerald-600 dark:text-emerald-400">
+                        <div className="mt-2 flex gap-4 text-xs text-accent">
                           {entry.duration && <span>{Math.round(entry.duration / 1000)}s</span>}
                           {entry.cost && <span>${entry.cost.toFixed(4)}</span>}
                         </div>
@@ -532,29 +532,29 @@ export default function LessonDetailPage() {
                 }
                 if (entry.type === "cards_linked") {
                   return (
-                    <div key={i} className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400">
+                    <div key={i} className="rounded-[var(--radius-sm)] border border-accent bg-accent-subtle px-4 py-2 text-sm text-accent">
                       {entry.count} card{entry.count !== 1 ? "s" : ""} linked to this lesson
                     </div>
                   );
                 }
                 if (entry.type === "error") {
                   return (
-                    <div key={i} className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+                    <div key={i} className="rounded-[var(--radius-sm)] border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-600">
                       {entry.content}
                     </div>
                   );
                 }
                 if (entry.type === "status") {
                   return (
-                    <div key={i} className="text-xs italic text-slate-400">{entry.content}</div>
+                    <div key={i} className="text-xs italic text-ink-faint">{entry.content}</div>
                   );
                 }
                 return null;
               })}
               {streamingText && (
-                <div className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300">
+                <div className="whitespace-pre-wrap text-sm text-ink-soft">
                   {streamingText}
-                  <span className="inline-block h-4 w-1 animate-pulse bg-emerald-500" />
+                  <span className="inline-block h-4 w-1 animate-pulse bg-accent" />
                 </div>
               )}
             </div>
@@ -563,27 +563,27 @@ export default function LessonDetailPage() {
 
         {/* Cards linked to this lesson */}
         {lesson.cards.length > 0 && (
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-            <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300">
+          <div className="rounded-[var(--radius-md)] border border-line/50 bg-surface p-6" style={{ boxShadow: "var(--shadow-card)" }}>
+            <h2 className="mb-3 text-sm font-semibold text-ink-soft">
               Cards from this lesson ({lesson.cards.length})
             </h2>
             <div className="space-y-2">
               {lesson.cards.map((card) => (
                 <div
                   key={card.id}
-                  className="flex items-center justify-between rounded-lg border border-slate-100 px-4 py-2 dark:border-slate-700"
+                  className="flex items-center justify-between rounded-[var(--radius-sm)] border border-line px-4 py-2"
                 >
                   <div className="flex items-center gap-4">
                     <span
-                      className="text-lg text-slate-800 dark:text-white"
+                      className="text-lg text-ink"
                       dir="rtl"
                       style={{ fontFamily: "var(--font-arabic), sans-serif" }}
                     >
                       {card.front}
                     </span>
-                    <span className="text-sm text-slate-500 dark:text-slate-400">{card.back}</span>
+                    <span className="text-sm text-ink-faint">{card.back}</span>
                   </div>
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500 dark:bg-slate-700 dark:text-slate-400">
+                  <span className="rounded-full bg-surface-hover px-2 py-0.5 text-xs font-medium text-ink-faint">
                     {card.deck_name}
                   </span>
                 </div>
@@ -593,14 +593,14 @@ export default function LessonDetailPage() {
         )}
 
         {/* Notes section */}
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-          <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300">Notes</h2>
+        <div className="rounded-[var(--radius-md)] border border-line/50 bg-surface p-6" style={{ boxShadow: "var(--shadow-card)" }}>
+          <h2 className="mb-3 text-sm font-semibold text-ink-soft">Notes</h2>
           <textarea
             value={notes}
             onChange={(e) => handleNotesChange(e.target.value)}
             placeholder="Your personal notes about this lesson..."
             rows={4}
-            className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder-slate-400"
+            className="w-full rounded-[var(--radius-sm)] border border-line px-4 py-3 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
           />
         </div>
       </main>
