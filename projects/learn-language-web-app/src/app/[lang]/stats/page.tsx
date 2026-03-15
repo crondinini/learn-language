@@ -1205,13 +1205,13 @@ function StudyNowButton({ language }: { language: string }) {
     }));
     setParticles(newParticles);
 
-    // Navigate after a short delay so the confetti is visible
+    // Navigate after confetti has mostly played out
     setTimeout(() => {
       router.push(`/${language}/review`);
-    }, 400);
+    }, 750);
 
     // Clean up particles
-    setTimeout(() => setParticles([]), 1000);
+    setTimeout(() => setParticles([]), 1200);
   };
 
   return (
@@ -1252,7 +1252,7 @@ function StudyNowButton({ language }: { language: string }) {
         <svg className="arrow-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
         </svg>
-        <span>Study Now</span>
+        <span>Keep the streak going</span>
       </button>
     </div>
   );
