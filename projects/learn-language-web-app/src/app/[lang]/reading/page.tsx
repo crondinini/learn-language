@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useParams } from "next/navigation";
 import { useRecorder } from "@/hooks/useRecorder";
 import Header from "@/components/Header";
+import { useFeatureGuard } from "@/hooks/useFeatureGuard";
 
 interface Text {
   id: number;
@@ -22,8 +22,7 @@ interface Card {
 }
 
 export default function ReadingPage() {
-  const params = useParams();
-  const lang = params.lang as string;
+  const lang = useFeatureGuard("reading");
   const [texts, setTexts] = useState<Text[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedText, setSelectedText] = useState<Text | null>(null);

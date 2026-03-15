@@ -1,3 +1,6 @@
+// Features that can be enabled per language
+export type LanguageFeature = 'conjugation' | 'reading' | 'homework' | 'lessons' | 'generate';
+
 export interface LanguageConfig {
   code: string;
   name: string;
@@ -6,6 +9,7 @@ export interface LanguageConfig {
   font: string | null;  // null means use default font
   speechCode: string;    // for Google TTS
   browserSpeechCode: string;  // for browser SpeechSynthesis
+  features: LanguageFeature[];  // enabled features for this language
 }
 
 export const SUPPORTED_LANGUAGES: Record<string, LanguageConfig> = {
@@ -17,6 +21,7 @@ export const SUPPORTED_LANGUAGES: Record<string, LanguageConfig> = {
     font: 'var(--font-arabic)',
     speechCode: 'ar-XA',
     browserSpeechCode: 'ar-SA',
+    features: ['conjugation', 'reading', 'homework', 'lessons', 'generate'],
   },
   en: {
     code: 'en',
@@ -26,8 +31,13 @@ export const SUPPORTED_LANGUAGES: Record<string, LanguageConfig> = {
     font: null,
     speechCode: 'en-US',
     browserSpeechCode: 'en-US',
+    features: [],  // only decks, vocab, review for now
   },
 };
+
+export function hasFeature(langCode: string, feature: LanguageFeature): boolean {
+  return getLanguageConfig(langCode).features.includes(feature);
+}
 
 export function getLanguageConfig(code: string): LanguageConfig {
   return SUPPORTED_LANGUAGES[code] || SUPPORTED_LANGUAGES['ar'];

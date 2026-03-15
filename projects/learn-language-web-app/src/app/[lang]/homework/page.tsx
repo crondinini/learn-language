@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Header from "@/components/Header";
+import { useFeatureGuard } from "@/hooks/useFeatureGuard";
 
 interface Homework {
   id: number;
@@ -18,6 +19,7 @@ interface Homework {
 }
 
 export default function HomeworkPage() {
+  useFeatureGuard("homework");
   const [homework, setHomework] = useState<Homework[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);

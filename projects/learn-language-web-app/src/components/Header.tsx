@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import { SUPPORTED_LANGUAGES } from "@/lib/languages";
+import { SUPPORTED_LANGUAGES, LanguageFeature, hasFeature } from "@/lib/languages";
 
 const LANGUAGE_FLAGS: Record<string, string> = {
   ar: "\u{1F1F8}\u{1F1E6}",
@@ -18,16 +18,20 @@ export default function Header() {
 
   const lang = (params.lang as string) || "ar";
 
-  const navItems = [
+  const allNavItems: { href: string; label: string; feature?: LanguageFeature }[] = [
     { href: `/${lang}/stats`, label: "Stats" },
     { href: `/${lang}`, label: "Decks" },
     { href: `/${lang}/vocab`, label: "Vocabulary" },
-    { href: `/${lang}/conjugation`, label: "Conjugation" },
-    { href: `/${lang}/reading`, label: "Reading" },
-    { href: `/${lang}/homework`, label: "Homework" },
-    { href: `/${lang}/lessons`, label: "Lessons" },
-    { href: `/${lang}/generate`, label: "Generate" },
+    { href: `/${lang}/conjugation`, label: "Conjugation", feature: "conjugation" },
+    { href: `/${lang}/reading`, label: "Reading", feature: "reading" },
+    { href: `/${lang}/homework`, label: "Homework", feature: "homework" },
+    { href: `/${lang}/lessons`, label: "Lessons", feature: "lessons" },
+    { href: `/${lang}/generate`, label: "Generate", feature: "generate" },
   ];
+
+  const navItems = allNavItems.filter(
+    (item) => !item.feature || hasFeature(lang, item.feature)
+  );
 
   function isActive(href: string) {
     if (href === `/${lang}`) {
@@ -40,7 +44,21 @@ export default function Header() {
     // Set cookie
     document.cookie = `lang=${newLang};path=/;max-age=${365 * 24 * 60 * 60};samesite=lax`;
     // Navigate to same page under new lang prefix
-    const newPath = pathname.replace(`/${lang}`, `/${newLang}`);
+    let newPath = pathname.replace(`/${lang}`, `/${newLang}`);
+    // If the current page is a feature not available in the new language, go to home
+    const featureRoutes: { segment: string; feature: LanguageFeature }[] = [
+      { segment: "/conjugation", feature: "conjugation" },
+      { segment: "/reading", feature: "reading" },
+      { segment: "/homework", feature: "homework" },
+      { segment: "/lessons", feature: "lessons" },
+      { segment: "/generate", feature: "generate" },
+    ];
+    for (const route of featureRoutes) {
+      if (newPath.includes(route.segment) && !hasFeature(newLang, route.feature)) {
+        newPath = `/${newLang}`;
+        break;
+      }
+    }
     router.push(newPath);
   }
 

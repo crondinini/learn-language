@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
 import Header from "@/components/Header";
+import { useFeatureGuard } from "@/hooks/useFeatureGuard";
 
 interface Lesson {
   id: number;
@@ -16,8 +16,7 @@ interface Lesson {
 }
 
 export default function LessonsPage() {
-  const params = useParams();
-  const lang = params.lang as string;
+  const lang = useFeatureGuard("lessons");
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import mammoth from "mammoth";
 import Header from "@/components/Header";
+import { useFeatureGuard } from "@/hooks/useFeatureGuard";
 
 type InputMode = "paste" | "upload";
 
@@ -27,6 +28,7 @@ interface GenerationRecord {
 }
 
 export default function GeneratePage() {
+  useFeatureGuard("generate");
   const [inputMode, setInputMode] = useState<InputMode>("paste");
   const [text, setText] = useState("");
   const [fileName, setFileName] = useState<string | null>(null);

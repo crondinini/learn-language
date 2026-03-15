@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
 import Header from "@/components/Header";
 import { PersonInfo } from "@/lib/constants";
+import { useFeatureGuard } from "@/hooks/useFeatureGuard";
 
 interface VerbWithStats {
   id: number;
@@ -23,8 +23,7 @@ interface VerbWithStats {
 }
 
 export default function ConjugationPage() {
-  const params = useParams();
-  const lang = params.lang as string;
+  const lang = useFeatureGuard("conjugation");
   const [verbs, setVerbs] = useState<VerbWithStats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
