@@ -90,7 +90,7 @@ export default function ReviewSession({ deckId, lessonId, mode, language, backUr
         if (deckId) params.set("deckId", deckId);
         if (mode) params.set("mode", mode);
         if (language) params.set("language", language);
-        params.set("limit", "50");
+        params.set("limit", "10");
         url = `/api/review?${params}`;
       }
       const res = await fetch(url);

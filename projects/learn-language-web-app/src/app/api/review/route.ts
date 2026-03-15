@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
   const deckId = searchParams.get("deckId");
   const lessonId = searchParams.get("lessonId");
   const mode = searchParams.get("mode"); // 'struggling' | 'new' | null (default due)
-  const limit = parseInt(searchParams.get("limit") || "20");
+  const limit = parseInt(searchParams.get("limit") || "10");
   const language = searchParams.get("language") || undefined;
 
   try {
