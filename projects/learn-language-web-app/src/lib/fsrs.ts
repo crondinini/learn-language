@@ -50,8 +50,9 @@ export interface Card {
   last_review: string | null;
 }
 
-// Initialize FSRS with default parameters
-const params = generatorParameters();
+// Initialize FSRS - disable short-term learning steps since reviews
+// happen daily/weekly, not in continuous 30-min sessions
+const params = generatorParameters({ enable_short_term: false });
 const f = fsrs(params);
 
 /**

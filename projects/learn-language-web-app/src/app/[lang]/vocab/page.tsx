@@ -11,6 +11,7 @@ interface VocabStats {
   learning: number;
   mastered: number;
   learnedThisWeek: number;
+  struggling: number;
 }
 
 interface VocabCard {
@@ -27,7 +28,7 @@ interface VocabCard {
   due: string;
 }
 
-type FilterType = "all" | "new" | "learning" | "mastered" | "week";
+type FilterType = "all" | "new" | "learning" | "mastered" | "week" | "struggling";
 
 const stateLabels: Record<number, string> = {
   0: "New",
@@ -131,6 +132,7 @@ export default function VocabDashboard() {
     { key: "new", label: "Not Learned", count: stats?.new },
     { key: "learning", label: "Learning", count: stats?.learning },
     { key: "mastered", label: "Mastered", count: stats?.mastered },
+    { key: "struggling", label: "Struggling", count: stats?.struggling },
     { key: "week", label: "This Week", count: stats?.learnedThisWeek },
   ];
 
@@ -156,18 +158,30 @@ export default function VocabDashboard() {
             <h1 className="text-[28px] font-bold tracking-tight text-ink">Vocabulary</h1>
             <p className="mt-1 text-sm text-ink-faint">Track your learning progress across all decks</p>
           </div>
-          <div className="flex gap-2">
-            {dueCount > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {dueCount > 0 && (
               <Link
                 href={`/${lang}/review`}
                 className="rounded-[var(--radius-md)] bg-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-hover hover:-translate-y-px"
               >
-                Study Now ({dueCount})
+                Study Due ({dueCount})
               </Link>
-            ) : (
-              <span className="rounded-[var(--radius-md)] bg-surface-active px-4 py-2 text-sm font-medium text-ink-faint">
-                Study Now (0)
-              </span>
+            )}
+            {stats && stats.struggling > 0 && (
+              <Link
+                href={`/${lang}/review?mode=struggling`}
+                className="rounded-[var(--radius-md)] border border-error/30 bg-error-subtle px-4 py-2 text-sm font-medium text-error transition hover:border-error/50 hover:-translate-y-px"
+              >
+                Practice Struggling ({stats.struggling})
+              </Link>
+            )}
+            {stats && stats.new > 0 && (
+              <Link
+                href={`/${lang}/review?mode=new`}
+                className="rounded-[var(--radius-md)] border border-line bg-surface px-4 py-2 text-sm font-medium text-ink-soft transition hover:bg-surface-hover hover:-translate-y-px"
+              >
+                Learn New ({stats.new})
+              </Link>
             )}
           </div>
         </div>

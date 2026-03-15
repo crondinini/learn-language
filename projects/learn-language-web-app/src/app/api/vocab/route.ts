@@ -7,6 +7,7 @@ interface VocabStats {
   learning: number;
   mastered: number;
   learnedThisWeek: number;
+  struggling: number;
 }
 
 interface VocabCard extends Card {
@@ -26,7 +27,8 @@ export async function GET(request: NextRequest) {
       SUM(CASE WHEN state = 0 THEN 1 ELSE 0 END) as new,
       SUM(CASE WHEN state IN (1, 3) THEN 1 ELSE 0 END) as learning,
       SUM(CASE WHEN state = 2 THEN 1 ELSE 0 END) as mastered,
-      SUM(CASE WHEN state = 2 AND last_review >= datetime('now', '-7 days') THEN 1 ELSE 0 END) as learnedThisWeek
+      SUM(CASE WHEN state = 2 AND last_review >= datetime('now', '-7 days') THEN 1 ELSE 0 END) as learnedThisWeek,
+      SUM(CASE WHEN reps > 0 AND (difficulty > 7 OR lapses > 0) THEN 1 ELSE 0 END) as struggling
     FROM cards
   `);
   const stats = statsQuery.get() as VocabStats;
@@ -57,6 +59,8 @@ export async function GET(request: NextRequest) {
   } else if (filter === "week") {
     query += " AND cards.state = ? AND cards.last_review >= datetime('now', '-7 days')";
     params.push(CardState.Review);
+  } else if (filter === "struggling") {
+    query += " AND cards.reps > 0 AND (cards.difficulty > 7 OR cards.lapses > 0)";
   }
 
   if (search) {

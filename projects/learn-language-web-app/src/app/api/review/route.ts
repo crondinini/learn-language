@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import db, { Card } from "@/lib/db";
-import { getDueCards, getCardById, getLessonCards } from "@/lib/cards";
+import { getDueCards, getCardById, getLessonCards, getStrugglingCards, getNewCards } from "@/lib/cards";
 import { reviewCard } from "@/lib/fsrs";
 
 /**
@@ -11,6 +11,7 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const deckId = searchParams.get("deckId");
   const lessonId = searchParams.get("lessonId");
+  const mode = searchParams.get("mode"); // 'struggling' | 'new' | null (default due)
   const limit = parseInt(searchParams.get("limit") || "20");
 
   try {
@@ -18,7 +19,20 @@ export async function GET(request: NextRequest) {
       const cards = getLessonCards(parseInt(lessonId));
       return NextResponse.json(cards);
     }
-    const dueCards = getDueCards(deckId ? parseInt(deckId) : undefined, limit);
+
+    const parsedDeckId = deckId ? parseInt(deckId) : undefined;
+
+    if (mode === "struggling") {
+      const cards = getStrugglingCards(parsedDeckId, limit);
+      return NextResponse.json(cards);
+    }
+
+    if (mode === "new") {
+      const cards = getNewCards(parsedDeckId, limit);
+      return NextResponse.json(cards);
+    }
+
+    const dueCards = getDueCards(parsedDeckId, limit);
     return NextResponse.json(dueCards);
   } catch (error) {
     console.error("Error fetching due cards:", error);

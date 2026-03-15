@@ -36,11 +36,12 @@ interface ReviewSessionState {
 interface ReviewSessionProps {
   deckId?: string;
   lessonId?: string;
+  mode?: "struggling" | "new";
   backUrl: string;
   backLabel: string;
 }
 
-export default function ReviewSession({ deckId, lessonId, backUrl, backLabel }: ReviewSessionProps) {
+export default function ReviewSession({ deckId, lessonId, mode, backUrl, backLabel }: ReviewSessionProps) {
   const [cards, setCards] = useState<Card[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -68,7 +69,7 @@ export default function ReviewSession({ deckId, lessonId, backUrl, backLabel }: 
 
   useEffect(() => {
     fetchCards();
-  }, [deckId, lessonId]);
+  }, [deckId, lessonId, mode]);
 
   useEffect(() => {
     if (cards.length > 0 && currentIndex < cards.length) {
@@ -83,10 +84,12 @@ export default function ReviewSession({ deckId, lessonId, backUrl, backLabel }: 
       let url: string;
       if (lessonId) {
         url = `/api/review?lessonId=${lessonId}`;
-      } else if (deckId) {
-        url = `/api/review?deckId=${deckId}&limit=50`;
       } else {
-        url = `/api/review?limit=50`;
+        const params = new URLSearchParams();
+        if (deckId) params.set("deckId", deckId);
+        if (mode) params.set("mode", mode);
+        params.set("limit", "50");
+        url = `/api/review?${params}`;
       }
       const res = await fetch(url);
       if (res.ok) {
@@ -194,7 +197,13 @@ export default function ReviewSession({ deckId, lessonId, backUrl, backLabel }: 
           <div className="mb-4 text-6xl">🎉</div>
           <h2 className="text-2xl font-bold text-ink">All Done!</h2>
           <p className="mt-2 text-ink-faint">
-            {lessonId ? "This lesson has no cards yet." : "No cards due for review right now."}
+            {lessonId
+              ? "This lesson has no cards yet."
+              : mode === "struggling"
+                ? "No struggling cards — great job!"
+                : mode === "new"
+                  ? "No new cards to learn."
+                  : "No cards due for review right now."}
           </p>
           <Link
             href={backUrl}

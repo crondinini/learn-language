@@ -111,21 +111,66 @@ export function getLessonCards(lessonId: number): Card[] {
   return stmt.all(lessonId) as Card[];
 }
 
+const NEW_CARDS_PER_SESSION = 10;
+
 export function getDueCards(deckId?: number, limit: number = 20): Card[] {
-  let query = `
+  const deckFilter = deckId ? " AND deck_id = ?" : "";
+  const deckParams = deckId ? [deckId] : [];
+
+  // 1. Review/Relearning cards that are due (highest priority)
+  const reviewCards = db.prepare(`
     SELECT * FROM cards
-    WHERE due <= datetime('now')
-  `;
-  const params: (number | string)[] = [];
+    WHERE due <= datetime('now') AND state IN (2, 3)${deckFilter}
+    ORDER BY due ASC
+    LIMIT ?
+  `).all(...deckParams, limit) as Card[];
 
-  if (deckId) {
-    query += " AND deck_id = ?";
-    params.push(deckId);
-  }
+  const remaining = limit - reviewCards.length;
+  if (remaining <= 0) return reviewCards;
 
-  query += " ORDER BY RANDOM() LIMIT ?";
-  params.push(limit);
+  // 2. Learning cards that are due
+  const learningCards = db.prepare(`
+    SELECT * FROM cards
+    WHERE due <= datetime('now') AND state = 1${deckFilter}
+    ORDER BY due ASC
+    LIMIT ?
+  `).all(...deckParams, remaining) as Card[];
 
-  const stmt = db.prepare(query);
-  return stmt.all(...params) as Card[];
+  const remaining2 = Math.min(remaining - learningCards.length, NEW_CARDS_PER_SESSION);
+  if (remaining2 <= 0) return [...reviewCards, ...learningCards];
+
+  // 3. New cards (capped)
+  const newCards = db.prepare(`
+    SELECT * FROM cards
+    WHERE due <= datetime('now') AND state = 0${deckFilter}
+    ORDER BY RANDOM()
+    LIMIT ?
+  `).all(...deckParams, remaining2) as Card[];
+
+  return [...reviewCards, ...learningCards, ...newCards];
+}
+
+export function getStrugglingCards(deckId?: number, limit: number = 50): Card[] {
+  const deckFilter = deckId ? " AND deck_id = ?" : "";
+  const deckParams = deckId ? [deckId] : [];
+
+  // Cards with high difficulty (>7) or lapses, that have been reviewed at least once
+  return db.prepare(`
+    SELECT * FROM cards
+    WHERE reps > 0 AND (difficulty > 7 OR lapses > 0)${deckFilter}
+    ORDER BY difficulty DESC, lapses DESC
+    LIMIT ?
+  `).all(...deckParams, limit) as Card[];
+}
+
+export function getNewCards(deckId?: number, limit: number = 20): Card[] {
+  const deckFilter = deckId ? " AND deck_id = ?" : "";
+  const deckParams = deckId ? [deckId] : [];
+
+  return db.prepare(`
+    SELECT * FROM cards
+    WHERE state = 0${deckFilter}
+    ORDER BY RANDOM()
+    LIMIT ?
+  `).all(...deckParams, limit) as Card[];
 }

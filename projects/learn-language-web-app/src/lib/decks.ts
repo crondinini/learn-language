@@ -24,7 +24,7 @@ export function getAllDecks(): DeckWithStats[] {
     SELECT
       d.*,
       COUNT(c.id) as total_cards,
-      SUM(CASE WHEN c.due <= datetime('now') THEN 1 ELSE 0 END) as due_cards,
+      SUM(CASE WHEN c.due <= datetime('now') AND c.state > 0 THEN 1 ELSE 0 END) as due_cards,
       SUM(CASE WHEN c.state = 0 THEN 1 ELSE 0 END) as new_cards,
       SUM(CASE WHEN c.state IN (0, 1) THEN 1 ELSE 0 END) as learning_cards,
       SUM(CASE WHEN c.state IN (2, 3) THEN 1 ELSE 0 END) as learned_cards
@@ -41,7 +41,7 @@ export function getDeckById(id: number): DeckWithStats | undefined {
     SELECT
       d.*,
       COUNT(c.id) as total_cards,
-      SUM(CASE WHEN c.due <= datetime('now') THEN 1 ELSE 0 END) as due_cards,
+      SUM(CASE WHEN c.due <= datetime('now') AND c.state > 0 THEN 1 ELSE 0 END) as due_cards,
       SUM(CASE WHEN c.state = 0 THEN 1 ELSE 0 END) as new_cards,
       SUM(CASE WHEN c.state IN (0, 1) THEN 1 ELSE 0 END) as learning_cards,
       SUM(CASE WHEN c.state IN (2, 3) THEN 1 ELSE 0 END) as learned_cards
