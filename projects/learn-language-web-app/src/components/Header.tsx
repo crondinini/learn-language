@@ -19,6 +19,7 @@ export default function Header() {
   const lang = (params.lang as string) || "ar";
 
   const navItems = [
+    { href: `/${lang}/stats`, label: "Stats" },
     { href: `/${lang}`, label: "Decks" },
     { href: `/${lang}/vocab`, label: "Vocabulary" },
     { href: `/${lang}/conjugation`, label: "Conjugation" },
