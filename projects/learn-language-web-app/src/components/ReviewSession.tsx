@@ -37,11 +37,12 @@ interface ReviewSessionProps {
   deckId?: string;
   lessonId?: string;
   mode?: "struggling" | "new";
+  language?: string;
   backUrl: string;
   backLabel: string;
 }
 
-export default function ReviewSession({ deckId, lessonId, mode, backUrl, backLabel }: ReviewSessionProps) {
+export default function ReviewSession({ deckId, lessonId, mode, language, backUrl, backLabel }: ReviewSessionProps) {
   const [cards, setCards] = useState<Card[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -69,7 +70,7 @@ export default function ReviewSession({ deckId, lessonId, mode, backUrl, backLab
 
   useEffect(() => {
     fetchCards();
-  }, [deckId, lessonId, mode]);
+  }, [deckId, lessonId, mode, language]);
 
   useEffect(() => {
     if (cards.length > 0 && currentIndex < cards.length) {
@@ -88,6 +89,7 @@ export default function ReviewSession({ deckId, lessonId, mode, backUrl, backLab
         const params = new URLSearchParams();
         if (deckId) params.set("deckId", deckId);
         if (mode) params.set("mode", mode);
+        if (language) params.set("language", language);
         params.set("limit", "50");
         url = `/api/review?${params}`;
       }

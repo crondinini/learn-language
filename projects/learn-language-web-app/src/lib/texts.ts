@@ -18,13 +18,16 @@ export interface TextWithCards extends Text {
   cards: Card[];
 }
 
-// Get all texts
-export function getAllTexts(): Text[] {
-  const stmt = db.prepare(`
-    SELECT * FROM texts
-    ORDER BY created_at DESC
-  `);
-  return stmt.all() as Text[];
+// Get all texts (optionally filtered by language)
+export function getAllTexts(language?: string): Text[] {
+  if (language) {
+    return db.prepare(`
+      SELECT * FROM texts WHERE language = ? ORDER BY created_at DESC
+    `).all(language) as Text[];
+  }
+  return db.prepare(`
+    SELECT * FROM texts ORDER BY created_at DESC
+  `).all() as Text[];
 }
 
 // Get texts by category

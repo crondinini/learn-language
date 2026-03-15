@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
   const filter = searchParams.get("filter");
   const search = searchParams.get("search");
   const deckId = searchParams.get("deckId");
+  const language = searchParams.get("language");
 
   // Build query using same logic as vocab route
   let query = `
@@ -22,6 +23,11 @@ export async function GET(request: NextRequest) {
     WHERE 1=1
   `;
   const params: (string | number)[] = [];
+
+  if (language) {
+    query += " AND decks.language = ?";
+    params.push(language);
+  }
 
   if (deckId) {
     query += " AND cards.deck_id = ?";

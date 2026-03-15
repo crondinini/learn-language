@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
   const lessonId = searchParams.get("lessonId");
   const mode = searchParams.get("mode"); // 'struggling' | 'new' | null (default due)
   const limit = parseInt(searchParams.get("limit") || "20");
+  const language = searchParams.get("language") || undefined;
 
   try {
     if (lessonId) {
@@ -23,16 +24,16 @@ export async function GET(request: NextRequest) {
     const parsedDeckId = deckId ? parseInt(deckId) : undefined;
 
     if (mode === "struggling") {
-      const cards = getStrugglingCards(parsedDeckId, limit);
+      const cards = getStrugglingCards(parsedDeckId, limit, language);
       return NextResponse.json(cards);
     }
 
     if (mode === "new") {
-      const cards = getNewCards(parsedDeckId, limit);
+      const cards = getNewCards(parsedDeckId, limit, language);
       return NextResponse.json(cards);
     }
 
-    const dueCards = getDueCards(parsedDeckId, limit);
+    const dueCards = getDueCards(parsedDeckId, limit, language);
     return NextResponse.json(dueCards);
   } catch (error) {
     console.error("Error fetching due cards:", error);

@@ -58,12 +58,13 @@ export default function VocabDashboard() {
   useEffect(() => {
     fetchVocabulary();
     fetchDueCount();
-  }, [filter]);
+  }, [filter, lang]);
 
   async function fetchDueCount() {
     const res = await fetch("/api/decks");
     const decks = await res.json();
-    setDueCount(decks.reduce((sum: number, d: { due_cards: number }) => sum + d.due_cards, 0));
+    const filtered = decks.filter((d: { language: string }) => d.language === lang);
+    setDueCount(filtered.reduce((sum: number, d: { due_cards: number }) => sum + d.due_cards, 0));
   }
 
   async function fetchVocabulary() {
@@ -71,6 +72,7 @@ export default function VocabDashboard() {
     const params = new URLSearchParams();
     if (filter !== "all") params.set("filter", filter);
     if (search) params.set("search", search);
+    params.set("language", lang);
 
     const res = await fetch(`/api/vocab?${params}`);
     const data = await res.json();
@@ -90,6 +92,7 @@ export default function VocabDashboard() {
       const params = new URLSearchParams();
       if (filter !== "all") params.set("filter", filter);
       if (search) params.set("search", search);
+      params.set("language", lang);
 
       const res = await fetch(`/api/vocab/export?${params}`);
       if (!res.ok) {

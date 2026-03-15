@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useParams } from "next/navigation";
 import { useRecorder } from "@/hooks/useRecorder";
 import Header from "@/components/Header";
 
@@ -21,6 +22,8 @@ interface Card {
 }
 
 export default function ReadingPage() {
+  const params = useParams();
+  const lang = params.lang as string;
   const [texts, setTexts] = useState<Text[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedText, setSelectedText] = useState<Text | null>(null);
@@ -36,10 +39,10 @@ export default function ReadingPage() {
 
   useEffect(() => {
     fetchTexts();
-  }, []);
+  }, [lang]);
 
   async function fetchTexts() {
-    const res = await fetch("/api/texts");
+    const res = await fetch(`/api/texts?language=${lang}`);
     const data = await res.json();
     setTexts(data);
     setIsLoading(false);

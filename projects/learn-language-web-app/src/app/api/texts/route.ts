@@ -11,7 +11,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(categories);
   }
 
-  const texts = getAllTexts();
+  const language = searchParams.get("language") || undefined;
+  const texts = getAllTexts(language);
   return NextResponse.json(texts);
 }
 

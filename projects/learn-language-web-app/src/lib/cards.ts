@@ -113,64 +113,72 @@ export function getLessonCards(lessonId: number): Card[] {
 
 const NEW_CARDS_PER_SESSION = 10;
 
-export function getDueCards(deckId?: number, limit: number = 20): Card[] {
-  const deckFilter = deckId ? " AND deck_id = ?" : "";
+export function getDueCards(deckId?: number, limit: number = 20, language?: string): Card[] {
+  const deckFilter = deckId ? " AND cards.deck_id = ?" : "";
+  const langFilter = language ? " AND decks.language = ?" : "";
   const deckParams = deckId ? [deckId] : [];
+  const langParams = language ? [language] : [];
+  const joinClause = language ? " JOIN decks ON cards.deck_id = decks.id" : "";
 
   // 1. Review/Relearning cards that are due (highest priority)
   const reviewCards = db.prepare(`
-    SELECT * FROM cards
-    WHERE due <= datetime('now') AND state IN (2, 3)${deckFilter}
-    ORDER BY due ASC
+    SELECT cards.* FROM cards${joinClause}
+    WHERE cards.due <= datetime('now') AND cards.state IN (2, 3)${deckFilter}${langFilter}
+    ORDER BY cards.due ASC
     LIMIT ?
-  `).all(...deckParams, limit) as Card[];
+  `).all(...deckParams, ...langParams, limit) as Card[];
 
   const remaining = limit - reviewCards.length;
   if (remaining <= 0) return reviewCards;
 
   // 2. Learning cards that are due
   const learningCards = db.prepare(`
-    SELECT * FROM cards
-    WHERE due <= datetime('now') AND state = 1${deckFilter}
-    ORDER BY due ASC
+    SELECT cards.* FROM cards${joinClause}
+    WHERE cards.due <= datetime('now') AND cards.state = 1${deckFilter}${langFilter}
+    ORDER BY cards.due ASC
     LIMIT ?
-  `).all(...deckParams, remaining) as Card[];
+  `).all(...deckParams, ...langParams, remaining) as Card[];
 
   const remaining2 = Math.min(remaining - learningCards.length, NEW_CARDS_PER_SESSION);
   if (remaining2 <= 0) return [...reviewCards, ...learningCards];
 
   // 3. New cards (capped)
   const newCards = db.prepare(`
-    SELECT * FROM cards
-    WHERE due <= datetime('now') AND state = 0${deckFilter}
+    SELECT cards.* FROM cards${joinClause}
+    WHERE cards.due <= datetime('now') AND cards.state = 0${deckFilter}${langFilter}
     ORDER BY RANDOM()
     LIMIT ?
-  `).all(...deckParams, remaining2) as Card[];
+  `).all(...deckParams, ...langParams, remaining2) as Card[];
 
   return [...reviewCards, ...learningCards, ...newCards];
 }
 
-export function getStrugglingCards(deckId?: number, limit: number = 50): Card[] {
-  const deckFilter = deckId ? " AND deck_id = ?" : "";
+export function getStrugglingCards(deckId?: number, limit: number = 50, language?: string): Card[] {
+  const deckFilter = deckId ? " AND cards.deck_id = ?" : "";
+  const langFilter = language ? " AND decks.language = ?" : "";
   const deckParams = deckId ? [deckId] : [];
+  const langParams = language ? [language] : [];
+  const joinClause = language ? " JOIN decks ON cards.deck_id = decks.id" : "";
 
-  // Cards with high difficulty (>7) or lapses, that have been reviewed at least once
   return db.prepare(`
-    SELECT * FROM cards
-    WHERE reps > 0 AND (difficulty > 7 OR lapses > 0)${deckFilter}
-    ORDER BY difficulty DESC, lapses DESC
+    SELECT cards.* FROM cards${joinClause}
+    WHERE cards.reps > 0 AND (cards.difficulty > 7 OR cards.lapses > 0)${deckFilter}${langFilter}
+    ORDER BY cards.difficulty DESC, cards.lapses DESC
     LIMIT ?
-  `).all(...deckParams, limit) as Card[];
+  `).all(...deckParams, ...langParams, limit) as Card[];
 }
 
-export function getNewCards(deckId?: number, limit: number = 20): Card[] {
-  const deckFilter = deckId ? " AND deck_id = ?" : "";
+export function getNewCards(deckId?: number, limit: number = 20, language?: string): Card[] {
+  const deckFilter = deckId ? " AND cards.deck_id = ?" : "";
+  const langFilter = language ? " AND decks.language = ?" : "";
   const deckParams = deckId ? [deckId] : [];
+  const langParams = language ? [language] : [];
+  const joinClause = language ? " JOIN decks ON cards.deck_id = decks.id" : "";
 
   return db.prepare(`
-    SELECT * FROM cards
-    WHERE state = 0${deckFilter}
+    SELECT cards.* FROM cards${joinClause}
+    WHERE cards.state = 0${deckFilter}${langFilter}
     ORDER BY RANDOM()
     LIMIT ?
-  `).all(...deckParams, limit) as Card[];
+  `).all(...deckParams, ...langParams, limit) as Card[];
 }
