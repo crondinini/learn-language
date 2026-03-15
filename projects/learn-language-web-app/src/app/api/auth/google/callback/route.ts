@@ -23,19 +23,21 @@ export async function GET(request: NextRequest) {
   const state = searchParams.get('state')
   const error = searchParams.get('error')
 
+  const baseUrl = process.env.NEXT_PUBLIC_URL || request.url
+
   if (error) {
-    return NextResponse.redirect(new URL('/login?error=google_denied', request.url))
+    return NextResponse.redirect(new URL('/login?error=google_denied', baseUrl))
   }
 
   if (!code || !state) {
-    return NextResponse.redirect(new URL('/login?error=google_invalid', request.url))
+    return NextResponse.redirect(new URL('/login?error=google_invalid', baseUrl))
   }
 
   // Verify state parameter
   const cookieStore = await cookies()
   const savedState = cookieStore.get('google-oauth-state')?.value
   if (!savedState || savedState !== state) {
-    return NextResponse.redirect(new URL('/login?error=google_csrf', request.url))
+    return NextResponse.redirect(new URL('/login?error=google_csrf', baseUrl))
   }
 
   const clientId = process.env.GOOGLE_CLIENT_ID
@@ -43,7 +45,7 @@ export async function GET(request: NextRequest) {
   const redirectUri = `${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/api/auth/google/callback`
 
   if (!clientId || !clientSecret) {
-    return NextResponse.redirect(new URL('/login?error=google_config', request.url))
+    return NextResponse.redirect(new URL('/login?error=google_config', baseUrl))
   }
 
   try {
@@ -61,7 +63,7 @@ export async function GET(request: NextRequest) {
     })
 
     if (!tokenRes.ok) {
-      return NextResponse.redirect(new URL('/login?error=google_token', request.url))
+      return NextResponse.redirect(new URL('/login?error=google_token', baseUrl))
     }
 
     const tokens: GoogleTokenResponse = await tokenRes.json()
@@ -72,18 +74,19 @@ export async function GET(request: NextRequest) {
     })
 
     if (!userRes.ok) {
-      return NextResponse.redirect(new URL('/login?error=google_user', request.url))
+      return NextResponse.redirect(new URL('/login?error=google_user', baseUrl))
     }
 
     const user: GoogleUserInfo = await userRes.json()
 
-    if (!user.email_verified) {
-      return NextResponse.redirect(new URL('/login?error=google_unverified', request.url))
+    // v2 userinfo returns `verified_email`, not `email_verified`
+    if (user.email_verified === false || (user as Record<string, unknown>).verified_email === false) {
+      return NextResponse.redirect(new URL('/login?error=google_unverified', baseUrl))
     }
 
     // Check allowlist
     if (!isEmailAllowed(user.email)) {
-      return NextResponse.redirect(new URL('/login?error=not_allowed', request.url))
+      return NextResponse.redirect(new URL('/login?error=not_allowed', baseUrl))
     }
 
     // Ensure user exists in DB
@@ -106,8 +109,8 @@ export async function GET(request: NextRequest) {
 
     // Redirect to app
     const lang = cookieStore.get('lang')?.value || 'ar'
-    return NextResponse.redirect(new URL(`/${lang}`, request.url))
+    return NextResponse.redirect(new URL(`/${lang}`, baseUrl))
   } catch {
-    return NextResponse.redirect(new URL('/login?error=google_failed', request.url))
+    return NextResponse.redirect(new URL('/login?error=google_failed', baseUrl))
   }
 }
