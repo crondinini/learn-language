@@ -103,6 +103,20 @@ export default function Header() {
             ))}
           </select>
 
+          {/* Logout button */}
+          <button
+            onClick={async () => {
+              await fetch("/api/auth/logout", { method: "POST" });
+              router.push("/login");
+            }}
+            className="hidden sm:flex items-center p-2 rounded-full text-ink-faint hover:text-ink-soft hover:bg-surface-hover transition"
+            title="Log out"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+          </button>
+
           {/* Mobile menu button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -139,6 +153,15 @@ export default function Header() {
                 {item.label}
               </Link>
             ))}
+            <button
+              onClick={async () => {
+                await fetch("/api/auth/logout", { method: "POST" });
+                router.push("/login");
+              }}
+              className="px-3 py-1.5 rounded-full text-sm font-medium bg-surface-hover text-ink-soft hover:bg-surface-active transition"
+            >
+              Log out
+            </button>
           </div>
         </nav>
       )}
