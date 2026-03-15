@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import Header from "@/components/Header";
 import SpeakerButton from "@/components/SpeakerButton";
 
@@ -888,7 +889,7 @@ function HardestWords({ words }: { words: HardWord[] }) {
 }
 
 // This Week — shows Mon-Sun with review counts and visual indicator
-function ThisWeek({ daily }: { daily: DayStats[] }) {
+function ThisWeek({ daily, language }: { daily: DayStats[]; language: string }) {
   const today = new Date();
   const todayStr = today.toISOString().split("T")[0];
   const dow = (today.getDay() + 6) % 7; // Mon=0
@@ -914,6 +915,7 @@ function ThisWeek({ daily }: { daily: DayStats[] }) {
   const weekDaysPracticed = weekDays.filter(
     (d) => (reviewMap.get(d)?.reviews || 0) > 0
   ).length;
+  const practicedToday = (reviewMap.get(todayStr)?.reviews || 0) > 0;
 
   return (
     <div>
@@ -922,7 +924,7 @@ function ThisWeek({ daily }: { daily: DayStats[] }) {
           <span className="font-medium text-ink tabular-nums">
             {weekReviews}
           </span>{" "}
-          reviews
+          words reviewed
           <span className="mx-1.5 text-ink-faint">·</span>
           <span className="tabular-nums">{weekDaysPracticed}/7</span> days
         </span>
@@ -992,12 +994,13 @@ function ThisWeek({ daily }: { daily: DayStats[] }) {
                   practiced ? "text-ink font-medium" : "text-ink-faint"
                 }`}
               >
-                {practiced ? reviews : isFuture ? "" : "0"}
+                {practiced ? `${reviews}` : isFuture ? "" : "0"}
               </span>
             </div>
           );
         })}
       </div>
+
     </div>
   );
 }
@@ -1176,6 +1179,85 @@ function ReviewRate({
   );
 }
 
+// Confetti particle colors — mix of accent and warm tones
+const CONFETTI_COLORS = [
+  "#8b7ec8", "#c4b5fd", "#e07356", "#f0abfc", "#fbbf24", "#34d399", "#f472b6",
+];
+
+function StudyNowButton({ language }: { language: string }) {
+  const router = useRouter();
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const [particles, setParticles] = useState<
+    { id: number; x: number; y: number; color: string; angle: number; distance: number; size: number; rotation: number }[]
+  >([]);
+
+  const handleClick = () => {
+    // Spawn confetti particles from the button
+    const newParticles = Array.from({ length: 24 }, (_, i) => ({
+      id: Date.now() + i,
+      x: 0,
+      y: 0,
+      color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
+      angle: Math.random() * 360,
+      distance: 40 + Math.random() * 80,
+      size: 4 + Math.random() * 6,
+      rotation: Math.random() * 720 - 360,
+    }));
+    setParticles(newParticles);
+
+    // Navigate after a short delay so the confetti is visible
+    setTimeout(() => {
+      router.push(`/${language}/review`);
+    }, 400);
+
+    // Clean up particles
+    setTimeout(() => setParticles([]), 1000);
+  };
+
+  return (
+    <div className="relative">
+      {/* Confetti particles */}
+      {particles.map((p) => {
+        const rad = (p.angle * Math.PI) / 180;
+        const tx = Math.cos(rad) * p.distance;
+        const ty = Math.sin(rad) * p.distance;
+        return (
+          <span
+            key={p.id}
+            className="confetti-particle"
+            style={{
+              "--tx": `${tx}px`,
+              "--ty": `${ty}px`,
+              "--rot": `${p.rotation}deg`,
+              "--size": `${p.size}px`,
+              backgroundColor: p.color,
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              width: `${p.size}px`,
+              height: `${p.size * 0.6}px`,
+              borderRadius: "2px",
+              pointerEvents: "none",
+              zIndex: 50,
+            } as React.CSSProperties}
+          />
+        );
+      })}
+
+      <button
+        ref={btnRef}
+        onClick={handleClick}
+        className="study-now-btn group inline-flex items-center gap-2 rounded-[var(--radius-md)] px-5 py-2.5 text-sm font-medium text-white cursor-pointer"
+      >
+        <svg className="arrow-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+        </svg>
+        <span>Study Now</span>
+      </button>
+    </div>
+  );
+}
+
 export default function StatsPage() {
   const params = useParams();
   const language = params.lang as string;
@@ -1197,9 +1279,22 @@ export default function StatsPage() {
       <Header />
 
       <main className="mx-auto max-w-5xl px-7 pt-11 pb-20">
-        <h1 className="text-[28px] font-bold tracking-tight text-ink mb-8">
-          Stats
-        </h1>
+        {(() => {
+          const todayStr = new Date().toISOString().split("T")[0];
+          const practicedToday = stats?.daily.some(
+            (d) => d.date === todayStr && d.reviews > 0
+          );
+          return (
+            <div className="mb-8 flex items-end justify-between">
+              <h1 className="text-[28px] font-bold tracking-tight text-ink">
+                Stats
+              </h1>
+              {!isLoading && stats && !practicedToday && (
+                <StudyNowButton language={language} />
+              )}
+            </div>
+          );
+        })()}
 
         {isLoading ? (
           <div className="space-y-4">
@@ -1245,7 +1340,7 @@ export default function StatsPage() {
               <h2 className="text-[13px] font-medium uppercase tracking-wide text-ink-faint mb-4">
                 Weekly Streak
               </h2>
-              <ThisWeek daily={stats.daily} />
+              <ThisWeek daily={stats.daily} language={language} />
             </section>
 
             {/* Review Rate */}
