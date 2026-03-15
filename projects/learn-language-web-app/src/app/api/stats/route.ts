@@ -49,20 +49,22 @@ export async function GET(request: NextRequest) {
       unique_cards: number;
     }[];
 
-    // Daily conjugation review counts
-    const dailyConjReviews = db
-      .prepare(
-        `
-      SELECT
-        date(cr.review_time) as date,
-        COUNT(*) as reviews
-      FROM conjugation_reviews cr
-      WHERE cr.review_time >= datetime('now', ?)
-      GROUP BY date(cr.review_time)
-      ORDER BY date ASC
-    `
-      )
-      .all(`-${range} days`) as { date: string; reviews: number }[];
+    // Daily conjugation review counts (conjugations are Arabic-only for now)
+    const dailyConjReviews = language === "ar"
+      ? db
+          .prepare(
+            `
+        SELECT
+          date(cr.review_time) as date,
+          COUNT(*) as reviews
+        FROM conjugation_reviews cr
+        WHERE cr.review_time >= datetime('now', ?)
+        GROUP BY date(cr.review_time)
+        ORDER BY date ASC
+      `
+          )
+          .all(`-${range} days`) as { date: string; reviews: number }[]
+      : [];
 
     // Daily cards added
     const dailyAdded = db
