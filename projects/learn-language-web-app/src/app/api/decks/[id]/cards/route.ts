@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDeckById } from "@/lib/decks";
 import { getCardsByDeckId, createCard, createCards } from "@/lib/cards";
+import { getCurrentUser } from "@/lib/auth";
 
 type Params = { params: Promise<{ id: string }> };
 
 // GET /api/decks/:id/cards - List all cards in a deck
 export async function GET(_request: NextRequest, { params }: Params) {
+  const user = await getCurrentUser();
   const { id } = await params;
   const deckId = parseInt(id);
 
-  const deck = getDeckById(deckId);
+  const deck = getDeckById(deckId, user.id);
   if (!deck) {
     return NextResponse.json({ error: "Deck not found" }, { status: 404 });
   }
@@ -20,10 +22,11 @@ export async function GET(_request: NextRequest, { params }: Params) {
 
 // POST /api/decks/:id/cards - Create card(s) in a deck
 export async function POST(request: NextRequest, { params }: Params) {
+  const user = await getCurrentUser();
   const { id } = await params;
   const deckId = parseInt(id);
 
-  const deck = getDeckById(deckId);
+  const deck = getDeckById(deckId, user.id);
   if (!deck) {
     return NextResponse.json({ error: "Deck not found" }, { status: 404 });
   }

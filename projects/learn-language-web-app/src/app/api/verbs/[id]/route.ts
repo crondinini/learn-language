@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getVerbById, updateVerb, deleteVerb, UpdateVerbInput } from "@/lib/verbs";
+import { getCurrentUser } from "@/lib/auth";
 
 // GET /api/verbs/[id] - Get a single verb with conjugations
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const user = await getCurrentUser();
     const { id } = await params;
-    const verb = getVerbById(parseInt(id));
+    const verb = getVerbById(parseInt(id), user.id);
 
     if (!verb) {
       return NextResponse.json({ error: "Verb not found" }, { status: 404 });
@@ -21,10 +23,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 // PATCH /api/verbs/[id] - Update a verb
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const user = await getCurrentUser();
     const { id } = await params;
     const body = (await request.json()) as UpdateVerbInput;
 
-    const verb = updateVerb(parseInt(id), body);
+    const verb = updateVerb(parseInt(id), body, user.id);
 
     if (!verb) {
       return NextResponse.json({ error: "Verb not found" }, { status: 404 });
@@ -40,8 +43,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 // DELETE /api/verbs/[id] - Delete a verb
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const user = await getCurrentUser();
     const { id } = await params;
-    const success = deleteVerb(parseInt(id));
+    const success = deleteVerb(parseInt(id), user.id);
 
     if (!success) {
       return NextResponse.json({ error: "Verb not found" }, { status: 404 });

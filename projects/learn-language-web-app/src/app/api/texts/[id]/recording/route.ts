@@ -3,6 +3,7 @@ import { writeFile, mkdir } from "fs/promises";
 import { existsSync } from "fs";
 import path from "path";
 import db, { Text } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -13,12 +14,13 @@ type Params = { params: Promise<{ id: string }> };
  */
 export async function POST(request: NextRequest, { params }: Params) {
   try {
+    const user = await getCurrentUser();
     const { id } = await params;
 
-    // Check text exists
+    // Check text exists and belongs to user
     const text = db
-      .prepare("SELECT * FROM texts WHERE id = ?")
-      .get(id) as Text | undefined;
+      .prepare("SELECT * FROM texts WHERE id = ? AND user_id = ?")
+      .get(id, user.id) as Text | undefined;
 
     if (!text) {
       return NextResponse.json({ error: "Text not found" }, { status: 404 });
@@ -80,11 +82,12 @@ export async function POST(request: NextRequest, { params }: Params) {
  */
 export async function DELETE(_request: NextRequest, { params }: Params) {
   try {
+    const user = await getCurrentUser();
     const { id } = await params;
 
     const text = db
-      .prepare("SELECT * FROM texts WHERE id = ?")
-      .get(id) as Text | undefined;
+      .prepare("SELECT * FROM texts WHERE id = ? AND user_id = ?")
+      .get(id, user.id) as Text | undefined;
 
     if (!text) {
       return NextResponse.json({ error: "Text not found" }, { status: 404 });

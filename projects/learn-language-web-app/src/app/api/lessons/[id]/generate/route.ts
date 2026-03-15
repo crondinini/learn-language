@@ -2,14 +2,16 @@ import { NextRequest } from "next/server";
 import { spawn } from "child_process";
 import db from "@/lib/db";
 import { getLessonById, updateLesson, linkCardsToLesson } from "@/lib/lessons";
+import { getCurrentUser } from "@/lib/auth";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const user = await getCurrentUser();
   const { id: idStr } = await params;
   const lessonId = Number(idStr);
-  const lesson = getLessonById(lessonId);
+  const lesson = getLessonById(lessonId, user.id);
 
   if (!lesson) {
     return new Response(JSON.stringify({ error: "Lesson not found" }), {

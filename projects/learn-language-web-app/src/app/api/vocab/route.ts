@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import db, { Card, CardState } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth";
 
 interface VocabStats {
   total: number;
@@ -15,14 +16,17 @@ interface VocabCard extends Card {
 }
 
 export async function GET(request: NextRequest) {
+  const user = await getCurrentUser();
   const searchParams = request.nextUrl.searchParams;
   const filter = searchParams.get("filter"); // 'new', 'learning', 'mastered', 'week'
   const search = searchParams.get("search");
   const deckId = searchParams.get("deckId");
   const language = searchParams.get("language");
 
-  // Get stats (filtered by language if provided)
-  const langStatsFilter = language ? " JOIN decks ON cards.deck_id = decks.id WHERE decks.language = ?" : "";
+  // Get stats (filtered by language if provided, scoped to user)
+  const langStatsFilter = language
+    ? " WHERE decks.language = ? AND decks.user_id = ?"
+    : " WHERE decks.user_id = ?";
   const statsQuery = db.prepare(`
     SELECT
       COUNT(*) as total,
@@ -31,18 +35,18 @@ export async function GET(request: NextRequest) {
       SUM(CASE WHEN cards.state = 2 THEN 1 ELSE 0 END) as mastered,
       SUM(CASE WHEN cards.state = 2 AND cards.last_review >= datetime('now', '-7 days') THEN 1 ELSE 0 END) as learnedThisWeek,
       SUM(CASE WHEN cards.reps > 0 AND (cards.difficulty > 7 OR cards.lapses > 0) THEN 1 ELSE 0 END) as struggling
-    FROM cards${langStatsFilter}
+    FROM cards JOIN decks ON cards.deck_id = decks.id${langStatsFilter}
   `);
-  const stats = (language ? statsQuery.get(language) : statsQuery.get()) as VocabStats;
+  const stats = (language ? statsQuery.get(language, user.id) : statsQuery.get(user.id)) as VocabStats;
 
   // Build vocabulary query with filters
   let query = `
     SELECT cards.*, decks.name as deck_name
     FROM cards
     JOIN decks ON cards.deck_id = decks.id
-    WHERE 1=1
+    WHERE decks.user_id = ?
   `;
-  const params: (string | number)[] = [];
+  const params: (string | number)[] = [user.id];
 
   if (language) {
     query += " AND decks.language = ?";

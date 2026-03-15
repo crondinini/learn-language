@@ -19,36 +19,38 @@ export interface TextWithCards extends Text {
 }
 
 // Get all texts (optionally filtered by language)
-export function getAllTexts(language?: string): Text[] {
+export function getAllTexts(userId: number, language?: string): Text[] {
   if (language) {
     return db.prepare(`
-      SELECT * FROM texts WHERE language = ? ORDER BY created_at DESC
-    `).all(language) as Text[];
+      SELECT * FROM texts WHERE user_id = ? AND language = ? ORDER BY created_at DESC
+    `).all(userId, language) as Text[];
   }
   return db.prepare(`
-    SELECT * FROM texts ORDER BY created_at DESC
-  `).all() as Text[];
+    SELECT * FROM texts WHERE user_id = ? ORDER BY created_at DESC
+  `).all(userId) as Text[];
 }
 
 // Get texts by category
-export function getTextsByCategory(category: string): Text[] {
+export function getTextsByCategory(category: string, userId: number): Text[] {
   const stmt = db.prepare(`
     SELECT * FROM texts
-    WHERE category = ?
+    WHERE category = ? AND user_id = ?
     ORDER BY created_at DESC
   `);
-  return stmt.all(category) as Text[];
+  return stmt.all(category, userId) as Text[];
 }
 
 // Get a single text by ID
-export function getTextById(id: number): Text | undefined {
-  const stmt = db.prepare("SELECT * FROM texts WHERE id = ?");
-  return stmt.get(id) as Text | undefined;
+export function getTextById(id: number, userId?: number): Text | undefined {
+  if (userId) {
+    return db.prepare("SELECT * FROM texts WHERE id = ? AND user_id = ?").get(id, userId) as Text | undefined;
+  }
+  return db.prepare("SELECT * FROM texts WHERE id = ?").get(id) as Text | undefined;
 }
 
 // Get a text with its linked cards
-export function getTextWithCards(id: number): TextWithCards | undefined {
-  const text = getTextById(id);
+export function getTextWithCards(id: number, userId?: number): TextWithCards | undefined {
+  const text = getTextById(id, userId);
   if (!text) return undefined;
 
   const stmt = db.prepare(`
@@ -63,25 +65,26 @@ export function getTextWithCards(id: number): TextWithCards | undefined {
 }
 
 // Create a new text
-export function createText(input: CreateTextInput): Text {
+export function createText(input: CreateTextInput, userId: number): Text {
   const stmt = db.prepare(`
-    INSERT INTO texts (title, arabic, translation, category)
-    VALUES (?, ?, ?, ?)
+    INSERT INTO texts (title, arabic, translation, category, user_id)
+    VALUES (?, ?, ?, ?, ?)
   `);
   const result = stmt.run(
     input.title || null,
     input.arabic,
     input.translation,
-    input.category || null
+    input.category || null,
+    userId
   );
   return getTextById(result.lastInsertRowid as number) as Text;
 }
 
 // Create multiple texts at once
-export function createTexts(texts: CreateTextInput[]): Text[] {
+export function createTexts(texts: CreateTextInput[], userId: number): Text[] {
   const stmt = db.prepare(`
-    INSERT INTO texts (title, arabic, translation, category)
-    VALUES (?, ?, ?, ?)
+    INSERT INTO texts (title, arabic, translation, category, user_id)
+    VALUES (?, ?, ?, ?, ?)
   `);
 
   const insertMany = db.transaction((items: CreateTextInput[]) => {
@@ -91,7 +94,8 @@ export function createTexts(texts: CreateTextInput[]): Text[] {
         text.title || null,
         text.arabic,
         text.translation,
-        text.category || null
+        text.category || null,
+        userId
       );
       ids.push(result.lastInsertRowid as number);
     }
@@ -103,8 +107,8 @@ export function createTexts(texts: CreateTextInput[]): Text[] {
 }
 
 // Update a text
-export function updateText(id: number, input: UpdateTextInput): Text | undefined {
-  const text = getTextById(id);
+export function updateText(id: number, input: UpdateTextInput, userId: number): Text | undefined {
+  const text = getTextById(id, userId);
   if (!text) return undefined;
 
   const stmt = db.prepare(`
@@ -123,9 +127,9 @@ export function updateText(id: number, input: UpdateTextInput): Text | undefined
 }
 
 // Delete a text
-export function deleteText(id: number): boolean {
-  const stmt = db.prepare("DELETE FROM texts WHERE id = ?");
-  const result = stmt.run(id);
+export function deleteText(id: number, userId: number): boolean {
+  const stmt = db.prepare("DELETE FROM texts WHERE id = ? AND user_id = ?");
+  const result = stmt.run(id, userId);
   return result.changes > 0;
 }
 
@@ -187,13 +191,13 @@ export function getTextCardById(id: number): TextCard | undefined {
 }
 
 // Get all categories
-export function getTextCategories(): string[] {
+export function getTextCategories(userId: number): string[] {
   const stmt = db.prepare(`
     SELECT DISTINCT category FROM texts
-    WHERE category IS NOT NULL
+    WHERE category IS NOT NULL AND user_id = ?
     ORDER BY category
   `);
-  const results = stmt.all() as { category: string }[];
+  const results = stmt.all(userId) as { category: string }[];
   return results.map((r) => r.category);
 }
 

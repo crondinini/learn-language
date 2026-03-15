@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import db from "@/lib/db";
 import { saveMedia, deleteMedia, parseMediaId } from "@/lib/media";
 import { generateTTSAudio, TTS_PROVIDER } from "@/lib/tts";
+import { getCurrentUser } from "@/lib/auth";
 
 type EntityType = "card" | "verb" | "conjugation";
 
@@ -44,6 +45,7 @@ function getConfig(entityType: string): EntityConfig | null {
  */
 export async function POST(request: NextRequest) {
   try {
+    const user = await getCurrentUser();
     const body = await request.json();
     const { entityType, entityId, regenerate } = body;
 
@@ -62,10 +64,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Look up the entity
-    const entity = db
-      .prepare(`SELECT id, ${config.textColumn}, ${config.audioColumn} FROM ${config.table} WHERE id = ?`)
-      .get(entityId) as Record<string, unknown> | undefined;
+    // Look up the entity with ownership check
+    let entity: Record<string, unknown> | undefined;
+    if (entityType === "card") {
+      entity = db.prepare(
+        `SELECT c.id, c.${config.textColumn}, c.${config.audioColumn} FROM cards c JOIN decks d ON c.deck_id = d.id WHERE c.id = ? AND d.user_id = ?`
+      ).get(entityId, user.id) as Record<string, unknown> | undefined;
+    } else if (entityType === "verb") {
+      entity = db.prepare(
+        `SELECT id, ${config.textColumn}, ${config.audioColumn} FROM verbs WHERE id = ? AND user_id = ?`
+      ).get(entityId, user.id) as Record<string, unknown> | undefined;
+    } else if (entityType === "conjugation") {
+      entity = db.prepare(
+        `SELECT vc.id, vc.${config.textColumn}, vc.${config.audioColumn} FROM verb_conjugations vc JOIN verbs v ON vc.verb_id = v.id WHERE vc.id = ? AND v.user_id = ?`
+      ).get(entityId, user.id) as Record<string, unknown> | undefined;
+    }
 
     if (!entity) {
       return NextResponse.json(
@@ -138,6 +151,7 @@ export async function POST(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   try {
+    const user = await getCurrentUser();
     const searchParams = request.nextUrl.searchParams;
     const entityType = searchParams.get("entityType");
     const entityId = searchParams.get("entityId");
@@ -157,9 +171,21 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const entity = db
-      .prepare(`SELECT id, ${config.audioColumn} FROM ${config.table} WHERE id = ?`)
-      .get(parseInt(entityId)) as Record<string, unknown> | undefined;
+    let entity: Record<string, unknown> | undefined;
+    const eid = parseInt(entityId);
+    if (entityType === "card") {
+      entity = db.prepare(
+        `SELECT c.id, c.${config.audioColumn} FROM cards c JOIN decks d ON c.deck_id = d.id WHERE c.id = ? AND d.user_id = ?`
+      ).get(eid, user.id) as Record<string, unknown> | undefined;
+    } else if (entityType === "verb") {
+      entity = db.prepare(
+        `SELECT id, ${config.audioColumn} FROM verbs WHERE id = ? AND user_id = ?`
+      ).get(eid, user.id) as Record<string, unknown> | undefined;
+    } else if (entityType === "conjugation") {
+      entity = db.prepare(
+        `SELECT vc.id, vc.${config.audioColumn} FROM verb_conjugations vc JOIN verbs v ON vc.verb_id = v.id WHERE vc.id = ? AND v.user_id = ?`
+      ).get(eid, user.id) as Record<string, unknown> | undefined;
+    }
 
     if (!entity) {
       return NextResponse.json(

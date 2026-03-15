@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAllLessons, createLesson } from "@/lib/lessons";
+import { getCurrentUser } from "@/lib/auth";
 
 export async function GET() {
-  const lessons = getAllLessons();
+  const user = await getCurrentUser();
+  const lessons = getAllLessons(user.id);
   return NextResponse.json(lessons);
 }
 
 export async function POST(request: NextRequest) {
+  const user = await getCurrentUser();
   const body = await request.json();
 
   if (!body.title || typeof body.title !== "string") {
@@ -20,7 +23,7 @@ export async function POST(request: NextRequest) {
     title: body.title,
     lesson_date: body.lesson_date,
     transcript: body.transcript,
-  });
+  }, user.id);
 
   return NextResponse.json(lesson, { status: 201 });
 }

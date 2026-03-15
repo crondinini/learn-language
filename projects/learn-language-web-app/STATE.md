@@ -65,6 +65,7 @@ Endpoint: `https://learn.rocksbythesea.uk/mcp`
 
 <!-- Keep only relevant/current changes. Remove entries that are superseded or no longer applicable. -->
 
+- **2026-03**: Multi-user support — `users` table, `user_id` on all data tables, email allowlist via `ALLOWED_EMAILS` env var, automatic data backfill on first login
 - **2026-03**: UI redesign — teal accent, Plus Jakarta Sans font, card grid layout, frosted glass header, shadows/animations, design token system (see DESIGN.md)
 - **2026-03**: Extracted shared TTS module, unified audio generation endpoint for cards/verbs/conjugations
 - **2026-03**: Moved audio/image storage from filesystem to SQLite `media` table — media now survives deploys without symlinks

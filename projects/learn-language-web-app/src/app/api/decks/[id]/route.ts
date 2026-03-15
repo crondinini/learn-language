@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDeckById, updateDeck, deleteDeck } from "@/lib/decks";
+import { getCurrentUser } from "@/lib/auth";
 
 type Params = { params: Promise<{ id: string }> };
 
 // GET /api/decks/:id - Get a single deck
 export async function GET(_request: NextRequest, { params }: Params) {
+  const user = await getCurrentUser();
   const { id } = await params;
-  const deck = getDeckById(parseInt(id));
+  const deck = getDeckById(parseInt(id), user.id);
 
   if (!deck) {
     return NextResponse.json({ error: "Deck not found" }, { status: 404 });
@@ -17,13 +19,14 @@ export async function GET(_request: NextRequest, { params }: Params) {
 
 // PATCH /api/decks/:id - Update a deck
 export async function PATCH(request: NextRequest, { params }: Params) {
+  const user = await getCurrentUser();
   const { id } = await params;
   const body = await request.json();
 
   const deck = updateDeck(parseInt(id), {
     name: body.name,
     description: body.description,
-  });
+  }, user.id);
 
   if (!deck) {
     return NextResponse.json({ error: "Deck not found" }, { status: 404 });
@@ -34,8 +37,9 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
 // DELETE /api/decks/:id - Delete a deck
 export async function DELETE(_request: NextRequest, { params }: Params) {
+  const user = await getCurrentUser();
   const { id } = await params;
-  const deleted = deleteDeck(parseInt(id));
+  const deleted = deleteDeck(parseInt(id), user.id);
 
   if (!deleted) {
     return NextResponse.json({ error: "Deck not found" }, { status: 404 });

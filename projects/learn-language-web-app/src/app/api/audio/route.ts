@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import db from "@/lib/db";
-import { getCardById } from "@/lib/cards";
+import { getCardById, verifyCardOwnership } from "@/lib/cards";
 import { saveMedia, deleteMedia, parseMediaId } from "@/lib/media";
 import { generateTTSAudio, TTS_PROVIDER } from "@/lib/tts";
+import { getCurrentUser } from "@/lib/auth";
 
 /**
  * POST /api/audio
@@ -11,6 +12,7 @@ import { generateTTSAudio, TTS_PROVIDER } from "@/lib/tts";
  */
 export async function POST(request: NextRequest) {
   try {
+    const user = await getCurrentUser();
     const body = await request.json();
     const { cardId, regenerate } = body;
 
@@ -18,8 +20,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "cardId is required" }, { status: 400 });
     }
 
-    // Get the card
-    const card = getCardById(cardId);
+    // Get the card and verify ownership
+    const card = verifyCardOwnership(cardId, user.id);
     if (!card) {
       return NextResponse.json({ error: "Card not found" }, { status: 404 });
     }
@@ -82,6 +84,7 @@ export async function POST(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   try {
+    const user = await getCurrentUser();
     const searchParams = request.nextUrl.searchParams;
     const cardId = searchParams.get("cardId");
 
@@ -89,7 +92,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "cardId is required" }, { status: 400 });
     }
 
-    const card = getCardById(parseInt(cardId));
+    const card = verifyCardOwnership(parseInt(cardId), user.id);
     if (!card) {
       return NextResponse.json({ error: "Card not found" }, { status: 404 });
     }

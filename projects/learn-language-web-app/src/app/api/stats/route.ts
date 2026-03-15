@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import db from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth";
 
 interface DayStats {
   date: string;
@@ -21,6 +22,7 @@ interface WeekStats {
  * Get study statistics
  */
 export async function GET(request: NextRequest) {
+  const user = await getCurrentUser();
   const searchParams = request.nextUrl.searchParams;
   const language = searchParams.get("language") || "ar";
   const range = parseInt(searchParams.get("range") || "90"); // days
@@ -38,12 +40,13 @@ export async function GET(request: NextRequest) {
       JOIN cards c ON r.card_id = c.id
       JOIN decks d ON c.deck_id = d.id
       WHERE d.language = ?
+        AND d.user_id = ?
         AND r.review_time >= datetime('now', ?)
       GROUP BY date(r.review_time)
       ORDER BY date ASC
     `
       )
-      .all(language, `-${range} days`) as {
+      .all(language, user.id, `-${range} days`) as {
       date: string;
       reviews: number;
       unique_cards: number;
@@ -58,12 +61,16 @@ export async function GET(request: NextRequest) {
           date(cr.review_time) as date,
           COUNT(*) as reviews
         FROM conjugation_reviews cr
-        WHERE cr.review_time >= datetime('now', ?)
+        JOIN conjugation_progress cp ON cr.conjugation_progress_id = cp.id
+        JOIN verb_conjugations vc ON cp.verb_conjugation_id = vc.id
+        JOIN verbs v ON vc.verb_id = v.id
+        WHERE v.user_id = ?
+          AND cr.review_time >= datetime('now', ?)
         GROUP BY date(cr.review_time)
         ORDER BY date ASC
       `
           )
-          .all(`-${range} days`) as { date: string; reviews: number }[]
+          .all(user.id, `-${range} days`) as { date: string; reviews: number }[]
       : [];
 
     // Daily cards added
@@ -76,12 +83,13 @@ export async function GET(request: NextRequest) {
       FROM cards c
       JOIN decks d ON c.deck_id = d.id
       WHERE d.language = ?
+        AND d.user_id = ?
         AND c.created_at >= datetime('now', ?)
       GROUP BY date(c.created_at)
       ORDER BY date ASC
     `
       )
-      .all(language, `-${range} days`) as {
+      .all(language, user.id, `-${range} days`) as {
       date: string;
       cards_added: number;
     }[];
@@ -119,6 +127,7 @@ export async function GET(request: NextRequest) {
         JOIN cards c ON r.card_id = c.id
         JOIN decks d ON c.deck_id = d.id
         WHERE d.language = ?
+          AND d.user_id = ?
         GROUP BY r.card_id
         HAVING MIN(r.review_time) >= datetime('now', ?)
       )
@@ -126,7 +135,7 @@ export async function GET(request: NextRequest) {
       ORDER BY week_start ASC
     `
       )
-      .all(language, `-${range} days`) as {
+      .all(language, user.id, `-${range} days`) as {
       week_start: string;
       cards_learned: number;
     }[];
@@ -238,11 +247,11 @@ export async function GET(request: NextRequest) {
         COUNT(*) as count
       FROM cards c
       JOIN decks d ON c.deck_id = d.id
-      WHERE d.language = ?
+      WHERE d.language = ? AND d.user_id = ?
       GROUP BY c.state
     `
       )
-      .all(language) as { state: number; count: number }[];
+      .all(language, user.id) as { state: number; count: number }[];
 
     const totalCards = cardStates.reduce((s, c) => s + c.count, 0);
     const stateMap = new Map(cardStates.map((c) => [c.state, c.count]));
@@ -262,14 +271,14 @@ export async function GET(request: NextRequest) {
         c.audio_url
       FROM cards c
       JOIN decks d ON c.deck_id = d.id
-      WHERE d.language = ?
+      WHERE d.language = ? AND d.user_id = ?
         AND c.reps > 0
         AND (c.difficulty > 5 OR c.lapses > 0)
       ORDER BY c.difficulty DESC, c.lapses DESC
       LIMIT 10
     `
       )
-      .all(language) as {
+      .all(language, user.id) as {
       id: number;
       front: string;
       back: string;

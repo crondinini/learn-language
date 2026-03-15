@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getTextById, getTextWithCards, updateText, deleteText } from "@/lib/texts";
+import { getCurrentUser } from "@/lib/auth";
 
 type Params = { params: Promise<{ id: string }> };
 
 // GET /api/texts/:id - Get a single text (with linked cards if ?cards=true)
 export async function GET(request: NextRequest, { params }: Params) {
+  const user = await getCurrentUser();
   const { id } = await params;
   const textId = parseInt(id);
 
@@ -12,14 +14,14 @@ export async function GET(request: NextRequest, { params }: Params) {
   const includeCards = searchParams.get("cards") === "true";
 
   if (includeCards) {
-    const textWithCards = getTextWithCards(textId);
+    const textWithCards = getTextWithCards(textId, user.id);
     if (!textWithCards) {
       return NextResponse.json({ error: "Text not found" }, { status: 404 });
     }
     return NextResponse.json(textWithCards);
   }
 
-  const text = getTextById(textId);
+  const text = getTextById(textId, user.id);
   if (!text) {
     return NextResponse.json({ error: "Text not found" }, { status: 404 });
   }
@@ -28,6 +30,7 @@ export async function GET(request: NextRequest, { params }: Params) {
 
 // PUT /api/texts/:id - Update a text
 export async function PUT(request: NextRequest, { params }: Params) {
+  const user = await getCurrentUser();
   const { id } = await params;
   const textId = parseInt(id);
   const body = await request.json();
@@ -37,7 +40,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
     arabic: body.arabic,
     translation: body.translation,
     category: body.category,
-  });
+  }, user.id);
 
   if (!text) {
     return NextResponse.json({ error: "Text not found" }, { status: 404 });
@@ -48,10 +51,11 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
 // DELETE /api/texts/:id - Delete a text
 export async function DELETE(_request: NextRequest, { params }: Params) {
+  const user = await getCurrentUser();
   const { id } = await params;
   const textId = parseInt(id);
 
-  const deleted = deleteText(textId);
+  const deleted = deleteText(textId, user.id);
   if (!deleted) {
     return NextResponse.json({ error: "Text not found" }, { status: 404 });
   }

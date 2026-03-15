@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAllVerbs, createVerb, CreateVerbInput } from "@/lib/verbs";
+import { getCurrentUser } from "@/lib/auth";
 
 // GET /api/verbs - List all verbs with stats
 export async function GET() {
   try {
-    const verbs = getAllVerbs();
+    const user = await getCurrentUser();
+    const verbs = getAllVerbs(user.id);
     return NextResponse.json(verbs);
   } catch (error) {
     console.error("Error fetching verbs:", error);
@@ -15,6 +17,7 @@ export async function GET() {
 // POST /api/verbs - Create a new verb
 export async function POST(request: NextRequest) {
   try {
+    const user = await getCurrentUser();
     const body = (await request.json()) as CreateVerbInput;
 
     if (!body.root || !body.meaning || !body.past_3ms || !body.present_3ms) {
@@ -28,7 +31,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "At least one past conjugation is required" }, { status: 400 });
     }
 
-    const verb = createVerb(body);
+    const verb = createVerb(body, user.id);
     return NextResponse.json(verb, { status: 201 });
   } catch (error) {
     console.error("Error creating verb:", error);

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
+import { isEmailAllowed, getOrCreateUser } from '@/lib/auth'
 
 export async function POST(request: Request) {
   const { email, password } = await request.json()
@@ -9,6 +10,14 @@ export async function POST(request: Request) {
   const secret = process.env.AUTH_SECRET || 'default-secret'
 
   if (email === validEmail && password === validPassword) {
+    // Check allowlist
+    if (!isEmailAllowed(email)) {
+      return NextResponse.json({ error: 'Email not allowed' }, { status: 403 })
+    }
+
+    // Ensure user exists in DB
+    getOrCreateUser(email)
+
     // Create a simple session token (in production, use proper JWT)
     const token = Buffer.from(`${email}:${Date.now()}:${secret}`).toString('base64')
 

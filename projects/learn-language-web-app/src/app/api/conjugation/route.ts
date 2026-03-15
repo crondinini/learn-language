@@ -10,6 +10,7 @@ import {
 } from "@/lib/verbs";
 import { saveMedia, deleteMedia, parseMediaId } from "@/lib/media";
 import { reviewCard, Rating } from "@/lib/fsrs";
+import { getCurrentUser } from "@/lib/auth";
 
 // GET /api/conjugation - Get conjugations for practice
 // Query params:
@@ -18,19 +19,20 @@ import { reviewCard, Rating } from "@/lib/fsrs";
 // - includeNew: include unpracticed conjugations (default true)
 export async function GET(request: NextRequest) {
   try {
+    const user = await getCurrentUser();
     const { searchParams } = new URL(request.url);
     const verbId = searchParams.get("verbId");
     const limit = parseInt(searchParams.get("limit") || "20");
     const includeNew = searchParams.get("includeNew") !== "false";
 
     // Get due conjugations
-    const due = getDueConjugations(limit);
+    const due = getDueConjugations(user.id, limit);
 
     // Get new conjugations if requested and we have room
     let items: DueConjugation[] = [...due];
     if (includeNew && items.length < limit) {
       const remaining = limit - items.length;
-      const newItems = getNewConjugations(verbId ? parseInt(verbId) : undefined, remaining);
+      const newItems = getNewConjugations(user.id, verbId ? parseInt(verbId) : undefined, remaining);
       items = [...items, ...newItems];
     }
 
@@ -48,6 +50,7 @@ export async function GET(request: NextRequest) {
 // Body: { conjugationId: number, progressId: number | null, rating: 1-4, userAnswer: string }
 export async function POST(request: NextRequest) {
   try {
+    await getCurrentUser();
     const body = await request.json();
     const { conjugationId, progressId, rating } = body as {
       conjugationId: number;
@@ -148,6 +151,7 @@ export async function POST(request: NextRequest) {
 // Or JSON body with { conjugationId, audio_url } to set URL directly
 export async function PATCH(request: NextRequest) {
   try {
+    await getCurrentUser();
     const contentType = request.headers.get("content-type") || "";
 
     if (contentType.includes("multipart/form-data")) {

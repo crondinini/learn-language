@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { cookies } from 'next/headers'
+import { isEmailAllowed, getOrCreateUser } from '@/lib/auth'
 
 interface GoogleTokenResponse {
   access_token: string
@@ -79,6 +80,14 @@ export async function GET(request: NextRequest) {
     if (!user.email_verified) {
       return NextResponse.redirect(new URL('/login?error=google_unverified', request.url))
     }
+
+    // Check allowlist
+    if (!isEmailAllowed(user.email)) {
+      return NextResponse.redirect(new URL('/login?error=not_allowed', request.url))
+    }
+
+    // Ensure user exists in DB
+    getOrCreateUser(user.email, user.name)
 
     // Create session token (same format as email/password auth)
     const secret = process.env.AUTH_SECRET || 'default-secret'

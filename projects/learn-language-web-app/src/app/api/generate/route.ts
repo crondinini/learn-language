@@ -1,8 +1,10 @@
 import { NextRequest } from "next/server";
 import { spawn } from "child_process";
 import { createGeneration } from "@/lib/generations";
+import { getCurrentUser } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
+  const user = await getCurrentUser();
   const body = await request.json();
   const { words, instructions } = body;
 
@@ -195,7 +197,7 @@ Do NOT ask for confirmation. Just do it.`;
                   result: event.result,
                   cost: event.total_cost_usd,
                   duration: event.duration_ms,
-                });
+                }, user.id);
               } catch (e) {
                 console.error("Failed to save generation:", e);
               }
@@ -235,7 +237,7 @@ Do NOT ask for confirmation. Just do it.`;
                   result: event.result,
                   cost: event.total_cost_usd,
                   duration: event.duration_ms,
-                });
+                }, user.id);
               } catch (e) {
                 console.error("Failed to save generation:", e);
               }

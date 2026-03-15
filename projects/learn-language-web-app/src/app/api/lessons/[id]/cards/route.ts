@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import db from "@/lib/db";
 import { getLessonById, linkCardsToLesson } from "@/lib/lessons";
+import { getCurrentUser } from "@/lib/auth";
 
 /**
  * PUT /api/lessons/[id]/cards
@@ -11,9 +12,10 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const user = await getCurrentUser();
   const { id } = await params;
   const lessonId = Number(id);
-  const lesson = getLessonById(lessonId);
+  const lesson = getLessonById(lessonId, user.id);
 
   if (!lesson) {
     return NextResponse.json({ error: "Lesson not found" }, { status: 404 });

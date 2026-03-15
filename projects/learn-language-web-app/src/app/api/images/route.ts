@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import db from "@/lib/db";
-import { getCardById } from "@/lib/cards";
+import { getCardById, verifyCardOwnership } from "@/lib/cards";
 import { saveMedia, deleteMedia, parseMediaId } from "@/lib/media";
+import { getCurrentUser } from "@/lib/auth";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
@@ -13,6 +14,7 @@ const MAX_SIZE = 5 * 1024 * 1024; // 5MB
  */
 export async function POST(request: NextRequest) {
   try {
+    const user = await getCurrentUser();
     const formData = await request.formData();
     const cardId = formData.get("cardId");
     const image = formData.get("image") as File | null;
@@ -41,8 +43,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get the card
-    const card = getCardById(Number(cardId));
+    // Get the card and verify ownership
+    const card = verifyCardOwnership(Number(cardId), user.id);
     if (!card) {
       return NextResponse.json({ error: "Card not found" }, { status: 404 });
     }
@@ -86,6 +88,7 @@ export async function POST(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   try {
+    const user = await getCurrentUser();
     const searchParams = request.nextUrl.searchParams;
     const cardId = searchParams.get("cardId");
 
@@ -93,7 +96,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "cardId is required" }, { status: 400 });
     }
 
-    const card = getCardById(parseInt(cardId));
+    const card = verifyCardOwnership(parseInt(cardId), user.id);
     if (!card) {
       return NextResponse.json({ error: "Card not found" }, { status: 404 });
     }

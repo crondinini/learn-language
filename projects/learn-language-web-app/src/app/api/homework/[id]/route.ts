@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import db, { Homework } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth";
 
 /**
  * GET /api/homework/[id]
@@ -10,10 +11,11 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getCurrentUser();
     const { id } = await params;
     const homework = db
-      .prepare("SELECT * FROM homework WHERE id = ?")
-      .get(id) as Homework | undefined;
+      .prepare("SELECT * FROM homework WHERE id = ? AND user_id = ?")
+      .get(id, user.id) as Homework | undefined;
 
     if (!homework) {
       return NextResponse.json(
@@ -41,13 +43,14 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getCurrentUser();
     const { id } = await params;
     const body = await request.json();
     const { description, status, recording_url, written_text, image_url, audio_url, transcription } = body;
 
     const existing = db
-      .prepare("SELECT * FROM homework WHERE id = ?")
-      .get(id) as Homework | undefined;
+      .prepare("SELECT * FROM homework WHERE id = ? AND user_id = ?")
+      .get(id, user.id) as Homework | undefined;
 
     if (!existing) {
       return NextResponse.json(
@@ -128,11 +131,12 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getCurrentUser();
     const { id } = await params;
 
     const existing = db
-      .prepare("SELECT * FROM homework WHERE id = ?")
-      .get(id) as Homework | undefined;
+      .prepare("SELECT * FROM homework WHERE id = ? AND user_id = ?")
+      .get(id, user.id) as Homework | undefined;
 
     if (!existing) {
       return NextResponse.json(

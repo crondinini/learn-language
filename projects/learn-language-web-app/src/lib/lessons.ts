@@ -20,18 +20,21 @@ export interface LessonWithCards extends Lesson {
   cards: (Card & { deck_name: string })[];
 }
 
-export function getAllLessons(): Lesson[] {
+export function getAllLessons(userId: number): Lesson[] {
   return db.prepare(`
-    SELECT * FROM lessons ORDER BY lesson_date DESC, created_at DESC
-  `).all() as Lesson[];
+    SELECT * FROM lessons WHERE user_id = ? ORDER BY lesson_date DESC, created_at DESC
+  `).all(userId) as Lesson[];
 }
 
-export function getLessonById(id: number): Lesson | undefined {
+export function getLessonById(id: number, userId?: number): Lesson | undefined {
+  if (userId) {
+    return db.prepare("SELECT * FROM lessons WHERE id = ? AND user_id = ?").get(id, userId) as Lesson | undefined;
+  }
   return db.prepare("SELECT * FROM lessons WHERE id = ?").get(id) as Lesson | undefined;
 }
 
-export function getLessonWithCards(id: number): LessonWithCards | undefined {
-  const lesson = getLessonById(id);
+export function getLessonWithCards(id: number, userId?: number): LessonWithCards | undefined {
+  const lesson = getLessonById(id, userId);
   if (!lesson) return undefined;
 
   const cards = db.prepare(`
@@ -46,12 +49,12 @@ export function getLessonWithCards(id: number): LessonWithCards | undefined {
   return { ...lesson, cards };
 }
 
-export function createLesson(input: CreateLessonInput): Lesson {
+export function createLesson(input: CreateLessonInput, userId: number): Lesson {
   const stmt = db.prepare(`
-    INSERT INTO lessons (title, lesson_date, transcript)
-    VALUES (?, ?, ?)
+    INSERT INTO lessons (title, lesson_date, transcript, user_id)
+    VALUES (?, ?, ?, ?)
   `);
-  const result = stmt.run(input.title, input.lesson_date, input.transcript || "");
+  const result = stmt.run(input.title, input.lesson_date, input.transcript || "", userId);
   return getLessonById(result.lastInsertRowid as number) as Lesson;
 }
 
@@ -100,8 +103,8 @@ export function updateLesson(id: number, input: UpdateLessonInput): Lesson | und
   return getLessonById(id);
 }
 
-export function deleteLesson(id: number): boolean {
-  const result = db.prepare("DELETE FROM lessons WHERE id = ?").run(id);
+export function deleteLesson(id: number, userId: number): boolean {
+  const result = db.prepare("DELETE FROM lessons WHERE id = ? AND user_id = ?").run(id, userId);
   return result.changes > 0;
 }
 

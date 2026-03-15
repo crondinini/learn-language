@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import db, { Card } from "@/lib/db";
-import { getDueCards, getCardById, getLessonCards, getStrugglingCards, getNewCards } from "@/lib/cards";
+import { getDueCards, getCardById, getLessonCards, getStrugglingCards, getNewCards, verifyCardOwnership } from "@/lib/cards";
 import { reviewCard } from "@/lib/fsrs";
+import { getCurrentUser } from "@/lib/auth";
 
 /**
  * GET /api/review?deckId=X&limit=20
  * Get due cards for review
  */
 export async function GET(request: NextRequest) {
+  const user = await getCurrentUser();
   const searchParams = request.nextUrl.searchParams;
   const deckId = searchParams.get("deckId");
   const lessonId = searchParams.get("lessonId");
@@ -24,16 +26,16 @@ export async function GET(request: NextRequest) {
     const parsedDeckId = deckId ? parseInt(deckId) : undefined;
 
     if (mode === "struggling") {
-      const cards = getStrugglingCards(parsedDeckId, limit, language);
+      const cards = getStrugglingCards(user.id, parsedDeckId, limit, language);
       return NextResponse.json(cards);
     }
 
     if (mode === "new") {
-      const cards = getNewCards(parsedDeckId, limit, language);
+      const cards = getNewCards(user.id, parsedDeckId, limit, language);
       return NextResponse.json(cards);
     }
 
-    const dueCards = getDueCards(parsedDeckId, limit, language);
+    const dueCards = getDueCards(user.id, parsedDeckId, limit, language);
     return NextResponse.json(dueCards);
   } catch (error) {
     console.error("Error fetching due cards:", error);
@@ -51,6 +53,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    const user = await getCurrentUser();
     const body = await request.json();
     const { cardId, rating } = body;
 
@@ -69,8 +72,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get the card
-    const card = getCardById(cardId);
+    // Get the card and verify ownership
+    const card = verifyCardOwnership(cardId, user.id);
     if (!card) {
       return NextResponse.json(
         { error: "Card not found" },

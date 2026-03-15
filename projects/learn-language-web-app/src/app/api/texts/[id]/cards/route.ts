@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getTextById, linkCardsToText, unlinkCardFromText, getTextCardsByTextId, findMatchingCards } from "@/lib/texts";
+import { getCurrentUser } from "@/lib/auth";
 
 type Params = { params: Promise<{ id: string }> };
 
 // GET /api/texts/:id/cards - Get linked cards or find matching cards
 export async function GET(request: NextRequest, { params }: Params) {
+  const user = await getCurrentUser();
   const { id } = await params;
   const textId = parseInt(id);
 
-  const text = getTextById(textId);
+  const text = getTextById(textId, user.id);
   if (!text) {
     return NextResponse.json({ error: "Text not found" }, { status: 404 });
   }
@@ -29,10 +31,11 @@ export async function GET(request: NextRequest, { params }: Params) {
 
 // POST /api/texts/:id/cards - Link cards to a text
 export async function POST(request: NextRequest, { params }: Params) {
+  const user = await getCurrentUser();
   const { id } = await params;
   const textId = parseInt(id);
 
-  const text = getTextById(textId);
+  const text = getTextById(textId, user.id);
   if (!text) {
     return NextResponse.json({ error: "Text not found" }, { status: 404 });
   }

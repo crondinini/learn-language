@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { readFile } from "fs/promises";
 import path from "path";
 import db, { Homework } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth";
 
 /**
  * POST /api/homework/[id]/transcribe
@@ -12,12 +13,13 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getCurrentUser();
     const { id } = await params;
 
-    // Check homework exists and has a recording
+    // Check homework exists, belongs to user, and has a recording
     const homework = db
-      .prepare("SELECT * FROM homework WHERE id = ?")
-      .get(id) as Homework | undefined;
+      .prepare("SELECT * FROM homework WHERE id = ? AND user_id = ?")
+      .get(id, user.id) as Homework | undefined;
 
     if (!homework) {
       return NextResponse.json(

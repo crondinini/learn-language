@@ -24,8 +24,8 @@ export interface VerbWithStats extends Verb {
 }
 
 // Get all verbs with practice stats
-export function getAllVerbs(): VerbWithStats[] {
-  const verbs = db.prepare("SELECT * FROM verbs ORDER BY created_at DESC").all() as Verb[];
+export function getAllVerbs(userId: number): VerbWithStats[] {
+  const verbs = db.prepare("SELECT * FROM verbs WHERE user_id = ? ORDER BY created_at DESC").all(userId) as Verb[];
 
   return verbs.map((verb) => {
     const stats = db
@@ -59,8 +59,10 @@ export function getAllVerbs(): VerbWithStats[] {
 }
 
 // Get single verb with all conjugations and progress
-export function getVerbById(id: number): VerbWithConjugations | null {
-  const verb = db.prepare("SELECT * FROM verbs WHERE id = ?").get(id) as Verb | undefined;
+export function getVerbById(id: number, userId?: number): VerbWithConjugations | null {
+  const verb = userId
+    ? db.prepare("SELECT * FROM verbs WHERE id = ? AND user_id = ?").get(id, userId) as Verb | undefined
+    : db.prepare("SELECT * FROM verbs WHERE id = ?").get(id) as Verb | undefined;
   if (!verb) return null;
 
   const conjugations = db
@@ -147,10 +149,10 @@ export interface CreateVerbInput {
   present_conjugations?: Record<string, string>;
 }
 
-export function createVerb(input: CreateVerbInput): VerbWithConjugations {
+export function createVerb(input: CreateVerbInput, userId: number): VerbWithConjugations {
   const insertVerb = db.prepare(`
-    INSERT INTO verbs (root, root_transliteration, form, meaning, past_3ms, present_3ms, masdar, active_participle, passive_participle, notes, is_colloquial)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO verbs (root, root_transliteration, form, meaning, past_3ms, present_3ms, masdar, active_participle, passive_participle, notes, is_colloquial, user_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const result = insertVerb.run(
@@ -164,7 +166,8 @@ export function createVerb(input: CreateVerbInput): VerbWithConjugations {
     input.active_participle || null,
     input.passive_participle || null,
     input.notes || null,
-    input.is_colloquial ? 1 : 0
+    input.is_colloquial ? 1 : 0,
+    userId
   );
 
   const verbId = result.lastInsertRowid as number;
@@ -212,8 +215,8 @@ export interface UpdateVerbInput {
   present_conjugations?: Record<string, string>;
 }
 
-export function updateVerb(id: number, input: UpdateVerbInput): VerbWithConjugations | null {
-  const verb = getVerbById(id);
+export function updateVerb(id: number, input: UpdateVerbInput, userId: number): VerbWithConjugations | null {
+  const verb = getVerbById(id, userId);
   if (!verb) return null;
 
   // Update verb fields
@@ -296,12 +299,12 @@ export function updateVerb(id: number, input: UpdateVerbInput): VerbWithConjugat
     }
   }
 
-  return getVerbById(id);
+  return getVerbById(id, userId);
 }
 
 // Delete a verb
-export function deleteVerb(id: number): boolean {
-  const result = db.prepare("DELETE FROM verbs WHERE id = ?").run(id);
+export function deleteVerb(id: number, userId: number): boolean {
+  const result = db.prepare("DELETE FROM verbs WHERE id = ? AND user_id = ?").run(id, userId);
   return result.changes > 0;
 }
 
@@ -332,7 +335,7 @@ export interface DueConjugation {
   last_review: string | null;
 }
 
-export function getDueConjugations(limit: number = 20): DueConjugation[] {
+export function getDueConjugations(userId: number, limit: number = 20): DueConjugation[] {
   return db
     .prepare(
       `
@@ -362,16 +365,16 @@ export function getDueConjugations(limit: number = 20): DueConjugation[] {
     FROM conjugation_progress cp
     JOIN verb_conjugations vc ON cp.verb_conjugation_id = vc.id
     JOIN verbs v ON vc.verb_id = v.id
-    WHERE cp.due <= datetime('now')
+    WHERE cp.due <= datetime('now') AND v.user_id = ?
     ORDER BY cp.due ASC
     LIMIT ?
   `
     )
-    .all(limit) as DueConjugation[];
+    .all(userId, limit) as DueConjugation[];
 }
 
 // Get new conjugations (not yet practiced)
-export function getNewConjugations(verbId?: number, limit: number = 20): DueConjugation[] {
+export function getNewConjugations(userId: number, verbId?: number, limit: number = 20): DueConjugation[] {
   const query = verbId
     ? `
     SELECT
@@ -400,7 +403,7 @@ export function getNewConjugations(verbId?: number, limit: number = 20): DueConj
     FROM verb_conjugations vc
     JOIN verbs v ON vc.verb_id = v.id
     LEFT JOIN conjugation_progress cp ON vc.id = cp.verb_conjugation_id
-    WHERE cp.id IS NULL AND vc.verb_id = ? AND vc.tense IN ('past', 'present')
+    WHERE cp.id IS NULL AND vc.verb_id = ? AND v.user_id = ? AND vc.tense IN ('past', 'present')
     ORDER BY RANDOM()
     LIMIT ?
   `
@@ -431,14 +434,14 @@ export function getNewConjugations(verbId?: number, limit: number = 20): DueConj
     FROM verb_conjugations vc
     JOIN verbs v ON vc.verb_id = v.id
     LEFT JOIN conjugation_progress cp ON vc.id = cp.verb_conjugation_id
-    WHERE cp.id IS NULL AND vc.tense IN ('past', 'present')
+    WHERE cp.id IS NULL AND v.user_id = ? AND vc.tense IN ('past', 'present')
     ORDER BY RANDOM()
     LIMIT ?
   `;
 
   return verbId
-    ? (db.prepare(query).all(verbId, limit) as DueConjugation[])
-    : (db.prepare(query).all(limit) as DueConjugation[]);
+    ? (db.prepare(query).all(verbId, userId, limit) as DueConjugation[])
+    : (db.prepare(query).all(userId, limit) as DueConjugation[]);
 }
 
 // Start practicing a conjugation (create progress record)

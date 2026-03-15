@@ -1,6 +1,11 @@
 import db from "../src/lib/db";
 import { getAllDecks, getDeckById, createDeck, updateDeck, deleteDeck } from "../src/lib/decks";
 import { getCardsByDeckId, getCardById, createCard, createCards, updateCard, deleteCard, getDueCards } from "../src/lib/cards";
+import { getOrCreateUser } from "../src/lib/auth";
+
+// Create a test user
+const testUser = getOrCreateUser("test@example.com", "Test User");
+const userId = testUser.id;
 
 console.log("=== Testing Deck Operations ===\n");
 
@@ -9,12 +14,12 @@ console.log("1. Creating a deck...");
 const deck = createDeck({
   name: "Arabic Basics",
   description: "Essential Arabic vocabulary",
-});
+}, userId);
 console.log("   Created:", deck.name, "(id:", deck.id + ")");
 
 // Test 2: Update deck
 console.log("2. Updating deck...");
-const updatedDeck = updateDeck(deck.id, { name: "Arabic Basics - Updated" });
+const updatedDeck = updateDeck(deck.id, { name: "Arabic Basics - Updated" }, userId);
 console.log("   Updated to:", updatedDeck?.name);
 
 console.log("\n=== Testing Card Operations ===\n");
@@ -51,12 +56,12 @@ console.log("   Updated notes:", updatedCard?.notes);
 
 // Test 7: Get due cards
 console.log("7. Getting due cards...");
-const dueCards = getDueCards(deck.id);
+const dueCards = getDueCards(userId, deck.id);
 console.log("   Due cards:", dueCards.length);
 
 // Test 8: Check deck stats
 console.log("8. Checking deck stats...");
-const deckWithStats = getDeckById(deck.id);
+const deckWithStats = getDeckById(deck.id, userId);
 console.log("   Total cards:", deckWithStats?.total_cards);
 console.log("   Due cards:", deckWithStats?.due_cards);
 console.log("   New cards:", deckWithStats?.new_cards);
@@ -70,8 +75,8 @@ console.log("   Remaining cards:", getCardsByDeckId(deck.id).length);
 // Cleanup
 console.log("\n=== Cleanup ===\n");
 console.log("10. Deleting deck (cascades to cards)...");
-deleteDeck(deck.id);
-console.log("    Decks remaining:", getAllDecks().length);
+deleteDeck(deck.id, userId);
+console.log("    Decks remaining:", getAllDecks(userId).length);
 
 console.log("\n✓ All tests passed!");
 

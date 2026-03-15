@@ -1,23 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAllTexts, createText, createTexts, getTextCategories } from "@/lib/texts";
+import { getCurrentUser } from "@/lib/auth";
 
 // GET /api/texts - List all texts (optionally filter by category)
 export async function GET(request: NextRequest) {
+  const user = await getCurrentUser();
   const { searchParams } = new URL(request.url);
   const categoriesOnly = searchParams.get("categories");
 
   if (categoriesOnly === "true") {
-    const categories = getTextCategories();
+    const categories = getTextCategories(user.id);
     return NextResponse.json(categories);
   }
 
   const language = searchParams.get("language") || undefined;
-  const texts = getAllTexts(language);
+  const texts = getAllTexts(user.id, language);
   return NextResponse.json(texts);
 }
 
 // POST /api/texts - Create new text(s)
 export async function POST(request: NextRequest) {
+  const user = await getCurrentUser();
   const body = await request.json();
 
   // Support both single text and bulk creation
@@ -31,7 +34,7 @@ export async function POST(request: NextRequest) {
         );
       }
     }
-    const texts = createTexts(body);
+    const texts = createTexts(body, user.id);
     return NextResponse.json(texts, { status: 201 });
   } else {
     // Single text creation
@@ -47,7 +50,7 @@ export async function POST(request: NextRequest) {
       arabic: body.arabic,
       translation: body.translation,
       category: body.category,
-    });
+    }, user.id);
 
     return NextResponse.json(text, { status: 201 });
   }

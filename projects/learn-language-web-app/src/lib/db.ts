@@ -265,6 +265,14 @@ function getDb(): Database.Database {
 
     CREATE INDEX IF NOT EXISTS idx_lesson_cards_lesson_id ON lesson_cards(lesson_id);
     CREATE INDEX IF NOT EXISTS idx_lesson_cards_card_id ON lesson_cards(card_id);
+
+    -- Users table: multi-user support
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT NOT NULL UNIQUE,
+      name TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
   `);
 
   // Migration: Add image_url column if it doesn't exist (for existing databases)
@@ -320,12 +328,29 @@ function getDb(): Database.Database {
     _db.exec("ALTER TABLE texts ADD COLUMN language TEXT NOT NULL DEFAULT 'ar'");
   }
 
+  // Migration: Add user_id column to top-level data tables
+  const userIdTables = ['decks', 'verbs', 'homework', 'lessons', 'texts', 'generations'];
+  for (const table of userIdTables) {
+    const cols = _db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[];
+    if (cols.length > 0 && !cols.some((col) => col.name === "user_id")) {
+      _db.exec(`ALTER TABLE ${table} ADD COLUMN user_id INTEGER REFERENCES users(id)`);
+      _db.exec(`CREATE INDEX IF NOT EXISTS idx_${table}_user_id ON ${table}(user_id)`);
+    }
+  }
+
   return _db;
 }
 
 export default getDb();
 
 // Types
+export interface User {
+  id: number;
+  email: string;
+  name: string | null;
+  created_at: string;
+}
+
 export interface Deck {
   id: number;
   name: string;

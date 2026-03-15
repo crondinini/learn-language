@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import db, { Homework } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth";
 
 /**
  * GET /api/homework
@@ -8,14 +9,15 @@ import db, { Homework } from "@/lib/db";
  */
 export async function GET(request: NextRequest) {
   try {
+    const user = await getCurrentUser();
     const searchParams = request.nextUrl.searchParams;
     const status = searchParams.get("status");
 
-    let query = "SELECT * FROM homework";
-    const params: string[] = [];
+    let query = "SELECT * FROM homework WHERE user_id = ?";
+    const params: (string | number)[] = [user.id];
 
     if (status) {
-      query += " WHERE status = ?";
+      query += " AND status = ?";
       params.push(status);
     }
 
@@ -41,6 +43,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    const user = await getCurrentUser();
     const body = await request.json();
     const { description, type = "recording", transcription } = body;
 
@@ -53,9 +56,9 @@ export async function POST(request: NextRequest) {
 
     // For listening type, include transcription at creation time
     const stmt = db.prepare(
-      "INSERT INTO homework (description, type, status, transcription) VALUES (?, ?, 'pending', ?)"
+      "INSERT INTO homework (description, type, status, transcription, user_id) VALUES (?, ?, 'pending', ?, ?)"
     );
-    const result = stmt.run(description.trim(), type, transcription?.trim() || null);
+    const result = stmt.run(description.trim(), type, transcription?.trim() || null, user.id);
 
     const newHomework = db
       .prepare("SELECT * FROM homework WHERE id = ?")

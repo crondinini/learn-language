@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import db from "@/lib/db";
 import { saveMedia, deleteMedia, parseMediaId } from "@/lib/media";
 import { generateTTSAudio, TTS_PROVIDER } from "@/lib/tts";
+import { getCurrentUser } from "@/lib/auth";
 
 interface Verb {
   id: number;
@@ -19,13 +20,14 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getCurrentUser();
     const { id } = await params;
     const verbId = parseInt(id);
     const body = await request.json().catch(() => ({}));
     const regenerate = body.regenerate || false;
 
     // Get the verb
-    const verb = db.prepare("SELECT id, past_3ms, meaning, audio_url FROM verbs WHERE id = ?").get(verbId) as Verb | undefined;
+    const verb = db.prepare("SELECT id, past_3ms, meaning, audio_url FROM verbs WHERE id = ? AND user_id = ?").get(verbId, user.id) as Verb | undefined;
     if (!verb) {
       return NextResponse.json({ error: "Verb not found" }, { status: 404 });
     }
@@ -89,11 +91,12 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getCurrentUser();
     const { id } = await params;
     const verbId = parseInt(id);
 
     // Get the verb
-    const verb = db.prepare("SELECT id, meaning, audio_url FROM verbs WHERE id = ?").get(verbId) as Verb | undefined;
+    const verb = db.prepare("SELECT id, meaning, audio_url FROM verbs WHERE id = ? AND user_id = ?").get(verbId, user.id) as Verb | undefined;
     if (!verb) {
       return NextResponse.json({ error: "Verb not found" }, { status: 404 });
     }
@@ -152,6 +155,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getCurrentUser();
     const { id } = await params;
     const verbId = parseInt(id);
     const body = await request.json();
@@ -161,8 +165,8 @@ export async function PATCH(
       return NextResponse.json({ error: "audio_url is required" }, { status: 400 });
     }
 
-    // Check verb exists
-    const verb = db.prepare("SELECT id FROM verbs WHERE id = ?").get(verbId) as { id: number } | undefined;
+    // Check verb exists and belongs to user
+    const verb = db.prepare("SELECT id FROM verbs WHERE id = ? AND user_id = ?").get(verbId, user.id) as { id: number } | undefined;
     if (!verb) {
       return NextResponse.json({ error: "Verb not found" }, { status: 404 });
     }
@@ -192,10 +196,11 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getCurrentUser();
     const { id } = await params;
     const verbId = parseInt(id);
 
-    const verb = db.prepare("SELECT id, audio_url FROM verbs WHERE id = ?").get(verbId) as Verb | undefined;
+    const verb = db.prepare("SELECT id, audio_url FROM verbs WHERE id = ? AND user_id = ?").get(verbId, user.id) as Verb | undefined;
     if (!verb) {
       return NextResponse.json({ error: "Verb not found" }, { status: 404 });
     }

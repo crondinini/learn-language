@@ -3,12 +3,14 @@ import path from "path";
 import AnkiExport from "anki-apkg-export";
 import db, { Card, CardState } from "@/lib/db";
 import { getMedia, parseMediaId } from "@/lib/media";
+import { getCurrentUser } from "@/lib/auth";
 
 interface ExportCard extends Card {
   deck_name: string;
 }
 
 export async function GET(request: NextRequest) {
+  const user = await getCurrentUser();
   const searchParams = request.nextUrl.searchParams;
   const filter = searchParams.get("filter");
   const search = searchParams.get("search");
@@ -20,9 +22,9 @@ export async function GET(request: NextRequest) {
     SELECT cards.*, decks.name as deck_name
     FROM cards
     JOIN decks ON cards.deck_id = decks.id
-    WHERE 1=1
+    WHERE decks.user_id = ?
   `;
-  const params: (string | number)[] = [];
+  const params: (string | number)[] = [user.id];
 
   if (language) {
     query += " AND decks.language = ?";
