@@ -14,7 +14,8 @@ interface GoogleUserInfo {
   email: string
   name: string
   picture: string
-  email_verified: boolean
+  email_verified?: boolean
+  verified_email?: boolean
 }
 
 export async function GET(request: NextRequest) {
@@ -80,7 +81,7 @@ export async function GET(request: NextRequest) {
     const user: GoogleUserInfo = await userRes.json()
 
     // v2 userinfo returns `verified_email`, not `email_verified`
-    if (user.email_verified === false || (user as Record<string, unknown>).verified_email === false) {
+    if (user.email_verified === false || user.verified_email === false) {
       return NextResponse.redirect(new URL('/login?error=google_unverified', baseUrl))
     }
 
