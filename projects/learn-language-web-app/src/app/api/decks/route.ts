@@ -21,6 +21,7 @@ export async function POST(request: NextRequest) {
   const deck = createDeck({
     name: body.name,
     description: body.description,
+    language: body.language,
   });
 
   return NextResponse.json(deck, { status: 201 });

@@ -33,8 +33,8 @@ interface Deck {
   new_cards: number;
 }
 
-export default function DeckPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function DeckPage({ params }: { params: Promise<{ lang: string; id: string }> }) {
+  const { lang, id } = use(params);
   const [deck, setDeck] = useState<Deck | null>(null);
   const [cards, setCards] = useState<Card[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -240,7 +240,7 @@ export default function DeckPage({ params }: { params: Promise<{ id: string }> }
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <p className="text-ink-faint">Deck not found</p>
-          <Link href="/" className="mt-2 text-accent hover:underline">
+          <Link href={`/${lang}`} className="mt-2 text-accent hover:underline">
             Go back
           </Link>
         </div>
@@ -256,7 +256,7 @@ export default function DeckPage({ params }: { params: Promise<{ id: string }> }
       <main className="mx-auto max-w-5xl px-7 pt-11 pb-20 overflow-hidden">
         {/* Breadcrumb */}
         <nav className="mb-4 flex items-center gap-2 text-sm">
-          <Link href="/" className="text-ink-faint hover:text-accent">
+          <Link href={`/${lang}`} className="text-ink-faint hover:text-accent">
             Decks
           </Link>
           <svg className="h-4 w-4 text-ink-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -297,7 +297,7 @@ export default function DeckPage({ params }: { params: Promise<{ id: string }> }
             <div className="flex gap-2">
               {deck.due_cards > 0 && (
                 <Link
-                  href={`/deck/${id}/review`}
+                  href={`/${lang}/deck/${id}/review`}
                   className="flex-1 sm:flex-none rounded-[var(--radius-sm)] bg-accent px-3 sm:px-4 py-2 text-center text-sm font-medium text-white transition hover:bg-accent-hover"
                 >
                   Study Now

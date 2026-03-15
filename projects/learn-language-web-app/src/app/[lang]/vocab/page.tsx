@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import Header from "@/components/Header";
 
 interface VocabStats {
@@ -43,6 +44,8 @@ const stateColors: Record<number, string> = {
 };
 
 export default function VocabDashboard() {
+  const params = useParams();
+  const lang = params.lang as string;
   const [stats, setStats] = useState<VocabStats | null>(null);
   const [vocabulary, setVocabulary] = useState<VocabCard[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -138,7 +141,7 @@ export default function VocabDashboard() {
       <main className="mx-auto max-w-5xl px-7 pt-11 pb-20">
         {/* Breadcrumb */}
         <nav className="mb-4 flex items-center gap-2 text-sm">
-          <Link href="/" className="text-ink-faint hover:text-accent">
+          <Link href={`/${lang}`} className="text-ink-faint hover:text-accent">
             Home
           </Link>
           <svg className="h-4 w-4 text-ink-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -156,7 +159,7 @@ export default function VocabDashboard() {
           <div className="flex gap-2">
             {dueCount > 0 ? (
               <Link
-                href="/review"
+                href={`/${lang}/review`}
                 className="rounded-[var(--radius-md)] bg-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-hover hover:-translate-y-px"
               >
                 Study Now ({dueCount})
@@ -300,7 +303,7 @@ export default function VocabDashboard() {
                     </td>
                     <td className="hidden px-4 py-3 sm:table-cell">
                       <Link
-                        href={`/deck/${card.deck_id}`}
+                        href={`/${lang}/deck/${card.deck_id}`}
                         className="text-sm text-ink-faint hover:text-accent"
                       >
                         {card.deck_name}

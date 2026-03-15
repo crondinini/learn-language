@@ -3,6 +3,7 @@ import db, { Deck } from "./db";
 export interface CreateDeckInput {
   name: string;
   description?: string;
+  language?: string;
 }
 
 export interface UpdateDeckInput {
@@ -54,10 +55,10 @@ export function getDeckById(id: number): DeckWithStats | undefined {
 
 export function createDeck(input: CreateDeckInput): Deck {
   const stmt = db.prepare(`
-    INSERT INTO decks (name, description)
-    VALUES (?, ?)
+    INSERT INTO decks (name, description, language)
+    VALUES (?, ?, ?)
   `);
-  const result = stmt.run(input.name, input.description || null);
+  const result = stmt.run(input.name, input.description || null, input.language || 'ar');
   return getDeckById(result.lastInsertRowid as number) as Deck;
 }
 

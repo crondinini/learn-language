@@ -23,7 +23,10 @@ export default function LoginPage() {
       })
 
       if (res.ok) {
-        router.push('/')
+        // Read lang cookie to redirect to the right language
+        const langMatch = document.cookie.match(/(?:^|; )lang=([^;]*)/)
+        const lang = langMatch ? langMatch[1] : 'ar'
+        router.push(`/${lang}`)
         router.refresh()
       } else {
         const data = await res.json()

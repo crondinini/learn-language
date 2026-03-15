@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import Header from "@/components/Header";
 
 interface Lesson {
@@ -15,6 +16,8 @@ interface Lesson {
 }
 
 export default function LessonsPage() {
+  const params = useParams();
+  const lang = params.lang as string;
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -48,7 +51,7 @@ export default function LessonsPage() {
       setNewTitle("");
       setNewDate(new Date().toISOString().split("T")[0]);
       // Navigate to the new lesson
-      window.location.href = `/lessons/${lesson.id}`;
+      window.location.href = `/${lang}/lessons/${lesson.id}`;
     }
   }
 
@@ -110,7 +113,7 @@ export default function LessonsPage() {
                 style={{ boxShadow: "var(--shadow-card)" }}
               >
                 <div className="flex items-start justify-between p-5">
-                  <Link href={`/lessons/${lesson.id}`} className="flex-1 min-w-0">
+                  <Link href={`/${lang}/lessons/${lesson.id}`} className="flex-1 min-w-0">
                     <div className="flex items-center gap-3">
                       <h2 className="text-lg font-semibold text-ink">
                         {lesson.title}

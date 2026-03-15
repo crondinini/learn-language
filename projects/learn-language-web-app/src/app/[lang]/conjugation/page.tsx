@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import Header from "@/components/Header";
 import { PersonInfo } from "@/lib/constants";
 
@@ -22,6 +23,8 @@ interface VerbWithStats {
 }
 
 export default function ConjugationPage() {
+  const params = useParams();
+  const lang = params.lang as string;
   const [verbs, setVerbs] = useState<VerbWithStats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -51,7 +54,7 @@ export default function ConjugationPage() {
       <main className="mx-auto max-w-5xl px-7 pt-11 pb-20">
         {/* Breadcrumb */}
         <nav className="mb-4 flex items-center gap-2 text-sm">
-          <Link href="/" className="text-ink-faint hover:text-accent">
+          <Link href={`/${lang}`} className="text-ink-faint hover:text-accent">
             Home
           </Link>
           <svg className="h-4 w-4 text-ink-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -69,14 +72,14 @@ export default function ConjugationPage() {
           <div className="flex gap-2">
             {dueCount > 0 ? (
               <Link
-                href="/conjugation/review"
+                href={`/${lang}/conjugation/review`}
                 className="rounded-[var(--radius-sm)] bg-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-hover hover:-translate-y-px"
               >
                 Practice ({dueCount})
               </Link>
             ) : verbs.length > 0 ? (
               <Link
-                href="/conjugation/review"
+                href={`/${lang}/conjugation/review`}
                 className="rounded-[var(--radius-sm)] bg-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-hover hover:-translate-y-px"
               >
                 Start Practice
@@ -109,7 +112,7 @@ export default function ConjugationPage() {
             {verbs.map((verb) => (
               <Link
                 key={verb.id}
-                href={`/conjugation/${verb.id}`}
+                href={`/${lang}/conjugation/${verb.id}`}
                 className="group rounded-[var(--radius-md)] border border-line/50 bg-surface p-4 transition-all hover:shadow-[var(--shadow-card-hover)] hover:-translate-y-0.5"
                 style={{ boxShadow: "var(--shadow-card)" }}
               >

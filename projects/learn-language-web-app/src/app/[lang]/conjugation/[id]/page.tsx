@@ -53,8 +53,8 @@ const stateLabels: Record<number, string> = {
   3: "Relearning",
 };
 
-export default function VerbDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function VerbDetailPage({ params }: { params: Promise<{ lang: string; id: string }> }) {
+  const { lang, id } = use(params);
   const [verb, setVerb] = useState<Verb | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -83,7 +83,7 @@ export default function VerbDetailPage({ params }: { params: Promise<{ id: strin
     try {
       const res = await fetch(`/api/verbs/${id}`, { method: "DELETE" });
       if (res.ok) {
-        window.location.href = "/conjugation";
+        window.location.href = `/${lang}/conjugation`;
       }
     } catch (error) {
       console.error("Error deleting verb:", error);
@@ -144,13 +144,13 @@ export default function VerbDetailPage({ params }: { params: Promise<{ id: strin
         {/* Breadcrumb */}
         <nav className="mb-4 flex items-center justify-between text-sm">
           <div className="flex items-center gap-2">
-            <Link href="/" className="text-ink-faint hover:text-accent">
+            <Link href={`/${lang}`} className="text-ink-faint hover:text-accent">
               Home
             </Link>
             <svg className="h-4 w-4 text-ink-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
-            <Link href="/conjugation" className="text-ink-faint hover:text-accent">
+            <Link href={`/${lang}/conjugation`} className="text-ink-faint hover:text-accent">
               Conjugation
             </Link>
             <svg className="h-4 w-4 text-ink-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -160,7 +160,7 @@ export default function VerbDetailPage({ params }: { params: Promise<{ id: strin
           </div>
           <div className="flex items-center gap-3">
             <Link
-              href={`/conjugation/review?verbId=${id}`}
+              href={`/${lang}/conjugation/review?verbId=${id}`}
               className="rounded-[var(--radius-sm)] bg-accent px-3 py-1.5 text-xs font-medium text-white transition hover:bg-accent-hover hover:-translate-y-px"
             >
               Practice {dueCount > 0 ? `(${dueCount} due)` : newCount > 0 ? `(${newCount} new)` : ""}

@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+const SUPPORTED_LANGS = new Set(['ar', 'en'])
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
@@ -37,6 +39,17 @@ export function middleware(request: NextRequest) {
         // Token valid for 30 days
         const tokenAge = Date.now() - parseInt(timestamp)
         if (tokenAge < 30 * 24 * 60 * 60 * 1000) {
+          // Sync lang cookie with URL param for /{lang}/... routes
+          const langMatch = pathname.match(/^\/([a-z]{2})(\/|$)/)
+          if (langMatch && SUPPORTED_LANGS.has(langMatch[1])) {
+            const urlLang = langMatch[1]
+            const cookieLang = request.cookies.get('lang')?.value
+            if (cookieLang !== urlLang) {
+              const response = NextResponse.next()
+              response.cookies.set('lang', urlLang, { path: '/', maxAge: 365 * 24 * 60 * 60 })
+              return response
+            }
+          }
           return NextResponse.next()
         }
       }

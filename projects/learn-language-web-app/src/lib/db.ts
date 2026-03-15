@@ -30,6 +30,7 @@ function getDb(): Database.Database {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
       description TEXT,
+      language TEXT NOT NULL DEFAULT 'ar',
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now'))
     );
@@ -103,6 +104,7 @@ function getDb(): Database.Database {
       arabic TEXT NOT NULL,
       translation TEXT NOT NULL,
       category TEXT,
+      language TEXT NOT NULL DEFAULT 'ar',
       recording_url TEXT,
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now'))
@@ -306,6 +308,18 @@ function getDb(): Database.Database {
     _db.exec("ALTER TABLE verb_conjugations ADD COLUMN updated_at TEXT");
   }
 
+  // Migration: Add language column to decks if it doesn't exist
+  const deckColumns = _db.prepare("PRAGMA table_info(decks)").all() as { name: string }[];
+  if (deckColumns.length > 0 && !deckColumns.some((col) => col.name === "language")) {
+    _db.exec("ALTER TABLE decks ADD COLUMN language TEXT NOT NULL DEFAULT 'ar'");
+  }
+
+  // Migration: Add language column to texts if it doesn't exist
+  const textColumns2 = _db.prepare("PRAGMA table_info(texts)").all() as { name: string }[];
+  if (textColumns2.length > 0 && !textColumns2.some((col) => col.name === "language")) {
+    _db.exec("ALTER TABLE texts ADD COLUMN language TEXT NOT NULL DEFAULT 'ar'");
+  }
+
   return _db;
 }
 
@@ -316,6 +330,7 @@ export interface Deck {
   id: number;
   name: string;
   description: string | null;
+  language: string;
   created_at: string;
   updated_at: string;
 }
@@ -403,6 +418,7 @@ export interface Text {
   arabic: string;
   translation: string;
   category: string | null;
+  language: string;
   recording_url: string | null;
   created_at: string;
   updated_at: string;

@@ -1,35 +1,53 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useParams, useRouter } from "next/navigation";
 import { useState } from "react";
+import { SUPPORTED_LANGUAGES } from "@/lib/languages";
 
-const navItems = [
-  { href: "/", label: "Decks" },
-  { href: "/vocab", label: "Vocabulary" },
-  { href: "/conjugation", label: "Conjugation" },
-  { href: "/reading", label: "Reading" },
-  { href: "/homework", label: "Homework" },
-  { href: "/lessons", label: "Lessons" },
-  { href: "/generate", label: "Generate" },
-];
+const LANGUAGE_FLAGS: Record<string, string> = {
+  ar: "\u{1F1F8}\u{1F1E6}",
+  en: "\u{1F1EC}\u{1F1E7}",
+};
 
 export default function Header() {
   const pathname = usePathname();
+  const params = useParams();
+  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const lang = (params.lang as string) || "ar";
+
+  const navItems = [
+    { href: `/${lang}`, label: "Decks" },
+    { href: `/${lang}/vocab`, label: "Vocabulary" },
+    { href: `/${lang}/conjugation`, label: "Conjugation" },
+    { href: `/${lang}/reading`, label: "Reading" },
+    { href: `/${lang}/homework`, label: "Homework" },
+    { href: `/${lang}/lessons`, label: "Lessons" },
+    { href: `/${lang}/generate`, label: "Generate" },
+  ];
+
   function isActive(href: string) {
-    if (href === "/") {
-      return pathname === "/" || pathname.startsWith("/deck");
+    if (href === `/${lang}`) {
+      return pathname === `/${lang}` || pathname.startsWith(`/${lang}/deck`);
     }
     return pathname.startsWith(href);
+  }
+
+  function switchLanguage(newLang: string) {
+    // Set cookie
+    document.cookie = `lang=${newLang};path=/;max-age=${365 * 24 * 60 * 60};samesite=lax`;
+    // Navigate to same page under new lang prefix
+    const newPath = pathname.replace(`/${lang}`, `/${newLang}`);
+    router.push(newPath);
   }
 
   return (
     <header className="sticky top-0 z-10 h-14 border-b border-line/50 bg-bg/80 backdrop-blur-xl">
       <div className="flex h-full items-center justify-between px-7">
         <div className="flex h-full items-center gap-8">
-          <Link href="/" className="flex items-center flex-shrink-0">
+          <Link href={`/${lang}`} className="flex items-center flex-shrink-0">
             <span className="text-[17px] font-semibold text-ink">
               Learn<span className="text-accent">.</span>
             </span>
@@ -52,21 +70,36 @@ export default function Header() {
           </nav>
         </div>
 
-        {/* Mobile menu button */}
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="sm:hidden p-2 rounded-[var(--radius-sm)] text-ink-faint hover:bg-surface-hover"
-        >
-          {mobileMenuOpen ? (
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          ) : (
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          )}
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Language switcher */}
+          <select
+            value={lang}
+            onChange={(e) => switchLanguage(e.target.value)}
+            className="rounded-full border border-line bg-surface px-3 py-1.5 text-sm text-ink-soft focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent cursor-pointer"
+          >
+            {Object.values(SUPPORTED_LANGUAGES).map((l) => (
+              <option key={l.code} value={l.code}>
+                {LANGUAGE_FLAGS[l.code] || ""} {l.name}
+              </option>
+            ))}
+          </select>
+
+          {/* Mobile menu button */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="sm:hidden p-2 rounded-[var(--radius-sm)] text-ink-faint hover:bg-surface-hover"
+          >
+            {mobileMenuOpen ? (
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Mobile nav menu */}

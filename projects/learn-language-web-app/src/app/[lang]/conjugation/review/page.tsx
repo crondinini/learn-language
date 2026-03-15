@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useParams } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
 import SpeakerButton from "@/components/SpeakerButton";
@@ -28,6 +28,8 @@ type ReviewState = "prompt" | "checking" | "result";
 
 function ConjugationReviewContent() {
   const searchParams = useSearchParams();
+  const params = useParams();
+  const lang = params.lang as string;
   const verbId = searchParams.get("verbId");
 
   const [items, setItems] = useState<ConjugationItem[]>([]);
@@ -159,7 +161,7 @@ function ConjugationReviewContent() {
             No conjugations to practice right now. Add some verbs first!
           </p>
           <Link
-            href="/conjugation"
+            href={`/${lang}/conjugation`}
             className="rounded-[var(--radius-md)] bg-accent px-6 py-3 font-medium text-white hover:bg-accent-hover"
           >
             Go to Conjugation
@@ -202,7 +204,7 @@ function ConjugationReviewContent() {
               Practice More
             </button>
             <Link
-              href="/conjugation"
+              href={`/${lang}/conjugation`}
               className="rounded-[var(--radius-md)] border border-line px-6 py-3 font-medium text-ink-soft hover:bg-surface-hover"
             >
               Back to Verbs
@@ -248,7 +250,7 @@ function ConjugationReviewContent() {
               Practice More
             </button>
             <Link
-              href="/conjugation"
+              href={`/${lang}/conjugation`}
               className="rounded-[var(--radius-md)] border border-line px-6 py-3 font-medium text-ink-soft hover:bg-surface-hover"
             >
               Back to Verbs
@@ -426,7 +428,7 @@ function ConjugationReviewContent() {
         {/* Skip / Exit */}
         <div className="mt-4 flex justify-between">
           <Link
-            href="/conjugation"
+            href={`/${lang}/conjugation`}
             className="text-sm text-ink-faint hover:text-ink-soft"
           >
             ← Exit Practice

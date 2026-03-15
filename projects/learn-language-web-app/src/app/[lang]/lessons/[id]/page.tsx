@@ -38,6 +38,7 @@ interface LogEntry {
 
 export default function LessonDetailPage() {
   const params = useParams();
+  const lang = params.lang as string;
   const id = params.id as string;
 
   const [lesson, setLesson] = useState<Lesson | null>(null);
@@ -324,7 +325,7 @@ export default function LessonDetailPage() {
           />
           {lesson.cards.length > 0 && (
             <Link
-              href={`/lessons/${id}/study`}
+              href={`/${lang}/lessons/${id}/study`}
               className="inline-flex items-center gap-2 rounded-[var(--radius-sm)] bg-accent px-4 py-1.5 text-sm font-medium text-white transition hover:bg-accent-hover"
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
