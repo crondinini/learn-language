@@ -1,46 +1,54 @@
 /**
- * Web Speech API utility for Arabic text-to-speech
+ * Web Speech API utility for text-to-speech
  */
+
+// Language-specific voice preferences
+const VOICE_PREFERENCES: Record<string, string[]> = {
+  ar: ["ar-SA", "ar-EG", "ar"],
+  en: ["en-US", "en-GB", "en"],
+};
 
 // Check if speech synthesis is available
 export function isSpeechSupported(): boolean {
   return typeof window !== "undefined" && "speechSynthesis" in window;
 }
 
-// Get available Arabic voices
-export function getArabicVoices(): SpeechSynthesisVoice[] {
+// Get available voices for a language
+export function getVoicesForLanguage(language: string = "ar"): SpeechSynthesisVoice[] {
   if (!isSpeechSupported()) return [];
 
   const voices = window.speechSynthesis.getVoices();
-  return voices.filter(
-    (voice) => voice.lang.startsWith("ar") || voice.lang === "ar-SA" || voice.lang === "ar-EG"
-  );
+  return voices.filter((voice) => voice.lang.startsWith(language));
 }
 
-// Get the best available Arabic voice
-export function getBestArabicVoice(): SpeechSynthesisVoice | null {
-  const arabicVoices = getArabicVoices();
+// Get the best available voice for a language
+export function getBestVoice(language: string = "ar"): SpeechSynthesisVoice | null {
+  const voices = getVoicesForLanguage(language);
 
-  if (arabicVoices.length === 0) return null;
+  if (voices.length === 0) return null;
 
-  // Prefer voices in this order: ar-SA (Saudi), ar-EG (Egyptian), any Arabic
-  const preferred = ["ar-SA", "ar-EG", "ar"];
+  const preferred = VOICE_PREFERENCES[language] || [language];
 
   for (const lang of preferred) {
-    const voice = arabicVoices.find((v) => v.lang === lang || v.lang.startsWith(lang));
+    const voice = voices.find((v) => v.lang === lang || v.lang.startsWith(lang));
     if (voice) return voice;
   }
 
-  return arabicVoices[0];
+  return voices[0];
 }
 
-// Speak Arabic text
-export function speakArabic(
+// Backward-compatible aliases
+export const getArabicVoices = () => getVoicesForLanguage("ar");
+export const getBestArabicVoice = () => getBestVoice("ar");
+
+// Speak text in a given language
+export function speakText(
   text: string,
+  language: string = "ar",
   options?: {
-    rate?: number; // 0.1 to 10, default 0.9 (slightly slower for learning)
-    pitch?: number; // 0 to 2, default 1
-    volume?: number; // 0 to 1, default 1
+    rate?: number;
+    pitch?: number;
+    volume?: number;
     onEnd?: () => void;
     onError?: (error: string) => void;
   }
@@ -55,22 +63,19 @@ export function speakArabic(
 
   const utterance = new SpeechSynthesisUtterance(text);
 
-  // Set Arabic voice if available
-  const arabicVoice = getBestArabicVoice();
-  if (arabicVoice) {
-    utterance.voice = arabicVoice;
-    utterance.lang = arabicVoice.lang;
+  const voice = getBestVoice(language);
+  if (voice) {
+    utterance.voice = voice;
+    utterance.lang = voice.lang;
   } else {
-    // Fallback to Arabic language code (browser will try to find a voice)
-    utterance.lang = "ar-SA";
+    const fallbacks: Record<string, string> = { ar: "ar-SA", en: "en-US" };
+    utterance.lang = fallbacks[language] || language;
   }
 
-  // Apply options
-  utterance.rate = options?.rate ?? 0.9; // Slightly slower for learning
+  utterance.rate = options?.rate ?? 0.9;
   utterance.pitch = options?.pitch ?? 1;
   utterance.volume = options?.volume ?? 1;
 
-  // Event handlers
   if (options?.onEnd) {
     utterance.onend = options.onEnd;
   }
@@ -81,11 +86,16 @@ export function speakArabic(
     };
   }
 
-  // Speak
   window.speechSynthesis.speak(utterance);
 
   return utterance;
 }
+
+// Backward-compatible alias
+export const speakArabic = (
+  text: string,
+  options?: Parameters<typeof speakText>[2]
+) => speakText(text, "ar", options);
 
 // Stop speaking
 export function stopSpeaking(): void {

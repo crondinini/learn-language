@@ -361,6 +361,7 @@ export default function DeckPage({ params }: { params: Promise<{ lang: string; i
                         text={card.front}
                         entityType="card" entityId={card.id}
                         audioUrl={card.audio_url}
+                        language={lang}
                         size="sm"
                       />
                     </div>
@@ -711,6 +712,7 @@ export default function DeckPage({ params }: { params: Promise<{ lang: string; i
                         text={previewCard.front}
                         entityType="card" entityId={previewCard.id}
                         audioUrl={previewCard.audio_url}
+                        language={lang}
                         size="lg"
                       />
                     </div>
@@ -737,6 +739,7 @@ export default function DeckPage({ params }: { params: Promise<{ lang: string; i
                         text={previewCard.front}
                         entityType="card" entityId={previewCard.id}
                         audioUrl={previewCard.audio_url}
+                        language={lang}
                         size="md"
                       />
                     </div>

@@ -357,6 +357,7 @@ export default function ReviewSession({ deckId, lessonId, mode, language, backUr
                       text={currentCard.front}
                       entityType="card" entityId={currentCard.id}
                       audioUrl={currentCard.audio_url}
+                      language={language}
                       size="lg"
                     />
                     <button
@@ -427,6 +428,7 @@ export default function ReviewSession({ deckId, lessonId, mode, language, backUr
                       text={currentCard.front}
                       entityType="card" entityId={currentCard.id}
                       audioUrl={currentCard.audio_url}
+                      language={language}
                       size="md"
                     />
                     <button

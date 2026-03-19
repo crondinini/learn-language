@@ -66,10 +66,12 @@ export async function POST(request: NextRequest) {
 
     // Look up the entity with ownership check
     let entity: Record<string, unknown> | undefined;
+    let language = "ar"; // default
     if (entityType === "card") {
       entity = db.prepare(
-        `SELECT c.id, c.${config.textColumn}, c.${config.audioColumn} FROM cards c JOIN decks d ON c.deck_id = d.id WHERE c.id = ? AND d.user_id = ?`
+        `SELECT c.id, c.${config.textColumn}, c.${config.audioColumn}, d.language FROM cards c JOIN decks d ON c.deck_id = d.id WHERE c.id = ? AND d.user_id = ?`
       ).get(entityId, user.id) as Record<string, unknown> | undefined;
+      if (entity) language = (entity.language as string) || "ar";
     } else if (entityType === "verb") {
       entity = db.prepare(
         `SELECT id, ${config.textColumn}, ${config.audioColumn} FROM verbs WHERE id = ? AND user_id = ?`
@@ -101,7 +103,7 @@ export async function POST(request: NextRequest) {
     // Generate audio
     let audioBuffer: Buffer;
     try {
-      audioBuffer = await generateTTSAudio(text);
+      audioBuffer = await generateTTSAudio(text, language);
     } catch (error) {
       console.error(`${TTS_PROVIDER} TTS error:`, error);
       return NextResponse.json(

@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { speakArabic, isSpeechSupported, stopSpeaking } from "@/lib/speech";
+import { speakText, isSpeechSupported, stopSpeaking } from "@/lib/speech";
 
 interface SpeakerButtonProps {
   text: string;
   audioUrl?: string | null; // Pre-generated audio URL
   entityType?: "card" | "verb" | "conjugation"; // For on-demand generation
   entityId?: number; // For on-demand generation
+  language?: string; // Language code (e.g., "ar", "en") — defaults to "ar"
   size?: "sm" | "md" | "lg";
   className?: string;
   onAudioGenerated?: (audioUrl: string) => void; // Callback when audio is generated
@@ -18,6 +19,7 @@ export default function SpeakerButton({
   audioUrl,
   entityType,
   entityId,
+  language = "ar",
   size = "md",
   className = "",
   onAudioGenerated,
@@ -88,7 +90,7 @@ export default function SpeakerButton({
   // Play using Web Speech API
   const playWithWebSpeech = () => {
     setIsPlaying(true);
-    speakArabic(text, {
+    speakText(text, language, {
       rate: 0.85,
       onEnd: () => setIsPlaying(false),
       onError: () => setIsPlaying(false),

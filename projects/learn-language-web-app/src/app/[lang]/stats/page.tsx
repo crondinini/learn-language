@@ -777,7 +777,7 @@ const RATING_LABELS: Record<number, string> = {
 };
 
 // Top 10 hardest words with review dots colored by rating
-function HardestWords({ words }: { words: HardWord[] }) {
+function HardestWords({ words, language }: { words: HardWord[]; language: string }) {
   if (words.length === 0) {
     return (
       <p className="text-sm text-ink-faint py-4 text-center">
@@ -808,6 +808,7 @@ function HardestWords({ words }: { words: HardWord[] }) {
               audioUrl={word.audio_url}
               entityType="card"
               entityId={word.id}
+              language={language}
               size="sm"
             />
 
@@ -1323,7 +1324,7 @@ export default function StatsPage() {
                 unit={stats.streak.best === 1 ? "day" : "days"}
               />
               <StatCard
-                label="Total Reviews"
+                label="Total Cards Reviewed"
                 value={stats.totals.reviews.toLocaleString()}
               />
               <StatCard
@@ -1396,7 +1397,7 @@ export default function StatsPage() {
               <h2 className="text-[13px] font-medium uppercase tracking-wide text-ink-faint mb-4">
                 Hardest Words
               </h2>
-              <HardestWords words={stats.hardest_words} />
+              <HardestWords words={stats.hardest_words} language={language} />
             </section>
 
             {/* Calendar — last 6 months */}
