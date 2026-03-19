@@ -1,9 +1,23 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useParams } from "next/navigation";
 import mammoth from "mammoth";
 import Header from "@/components/Header";
 import { useFeatureGuard } from "@/hooks/useFeatureGuard";
+
+const languageNames: Record<string, string> = {
+  ar: "Arabic",
+  en: "English",
+  fr: "French",
+  es: "Spanish",
+  de: "German",
+  it: "Italian",
+  pt: "Portuguese",
+  ja: "Japanese",
+  zh: "Chinese",
+  ko: "Korean",
+};
 
 type InputMode = "paste" | "upload";
 
@@ -29,6 +43,10 @@ interface GenerationRecord {
 
 export default function GeneratePage() {
   useFeatureGuard("generate");
+  const params = useParams();
+  const lang = params.lang as string;
+  const langName = languageNames[lang] || lang;
+  const isArabic = lang === "ar";
   const [inputMode, setInputMode] = useState<InputMode>("paste");
   const [text, setText] = useState("");
   const [fileName, setFileName] = useState<string | null>(null);
@@ -112,7 +130,7 @@ export default function GeneratePage() {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ words, instructions: instructions || undefined }),
+        body: JSON.stringify({ words, instructions: instructions || undefined, language: lang }),
       });
 
       if (!res.ok) {
@@ -229,8 +247,9 @@ export default function GeneratePage() {
             Generate Vocabulary
           </h1>
           <p className="mt-1 text-sm text-ink-faint">
-            Enter English words and Claude will translate them to Arabic and add
-            them to the best matching deck.
+            {isArabic
+              ? "Enter English words and Claude will translate them to Arabic and add them to the best matching deck."
+              : `Enter words and Claude will create flashcards and add them to the best matching ${langName} deck.`}
           </p>
         </div>
 
@@ -265,7 +284,9 @@ export default function GeneratePage() {
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder={
-                "Enter English words separated by commas or newlines...\n\nExample:\nbook, table, chair\nwindow\ndoor"
+                isArabic
+                  ? "Enter English words separated by commas or newlines...\n\nExample:\nbook, table, chair\nwindow\ndoor"
+                  : "Enter words separated by commas or newlines...\n\nExample:\nbook, table, chair\nwindow\ndoor"
               }
               rows={6}
               disabled={isGenerating}

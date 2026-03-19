@@ -6,7 +6,8 @@ import { getCurrentUser } from "@/lib/auth";
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser();
   const body = await request.json();
-  const { words, instructions } = body;
+  const { words, instructions, language } = body;
+  const lang = language || "ar";
 
   if (!words || !Array.isArray(words) || words.length === 0) {
     return new Response(JSON.stringify({ error: "words array is required" }), {
@@ -18,7 +19,23 @@ export async function POST(request: NextRequest) {
   const apiToken = process.env.API_TOKEN;
   const apiUrl = process.env.API_URL || "https://learn.rocksbythesea.uk";
 
-  const prompt = `You are a vocabulary generation assistant. Your task is to translate English words to Arabic (MSA) and add them to the flashcard system.
+  const languageNames: Record<string, string> = {
+    ar: "Arabic (MSA / Modern Standard Arabic)",
+    en: "English",
+    fr: "French",
+    es: "Spanish",
+    de: "German",
+    it: "Italian",
+    pt: "Portuguese",
+    ja: "Japanese",
+    zh: "Chinese (Mandarin)",
+    ko: "Korean",
+  };
+  const targetLangName = languageNames[lang] || lang;
+  const isArabic = lang === "ar";
+
+  const prompt = isArabic
+    ? `You are a vocabulary generation assistant. Your task is to translate English words to Arabic (MSA) and add them to the flashcard system.
 ${instructions ? `\nAdditional instructions from the user:\n${instructions}\n` : ""}
 Here are the English words to process:
 ${words.join(", ")}
@@ -26,13 +43,13 @@ ${words.join(", ")}
 Follow these steps:
 
 1. First, check for duplicates by searching each word:
-   For each word, run: curl -s -H "Authorization: Bearer ${apiToken}" "${apiUrl}/api/vocab?search=WORD"
+   For each word, run: curl -s -H "Authorization: Bearer ${apiToken}" "${apiUrl}/api/vocab?search=WORD&language=ar"
    Check if the word already exists in any card's "back" field.
 
 2. For each non-duplicate word, determine the Arabic translation (MSA / Modern Standard Arabic). Include diacritics (tashkeel) when possible.
 
 3. Fetch available decks:
-   curl -s -H "Authorization: Bearer ${apiToken}" "${apiUrl}/api/decks"
+   curl -s -H "Authorization: Bearer ${apiToken}" "${apiUrl}/api/decks?language=ar"
 
 4. Choose the most appropriate deck based on word types:
    - Nouns → Nouns deck
@@ -51,6 +68,41 @@ Follow these steps:
 6. At the end, output a summary in this exact format:
    SUMMARY:
    - Added: [list of "arabic (english)" pairs that were added]
+   - Duplicates: [list of words that were skipped]
+   - Deck: [name of deck used]
+
+Do NOT ask for confirmation. Just do it.`
+    : `You are a vocabulary generation assistant. Your task is to create ${targetLangName} flashcards and add them to the flashcard system.
+${instructions ? `\nAdditional instructions from the user:\n${instructions}\n` : ""}
+Here are the words to process:
+${words.join(", ")}
+
+Follow these steps:
+
+1. First, check for duplicates by searching each word:
+   For each word, run: curl -s -H "Authorization: Bearer ${apiToken}" "${apiUrl}/api/vocab?search=WORD&language=${lang}"
+   Check if the word already exists in any card's "front" or "back" field.
+
+2. For each non-duplicate word, create a flashcard with "front" as the word/phrase to learn and "back" as the definition, translation, or explanation.
+
+3. Fetch available decks:
+   curl -s -H "Authorization: Bearer ${apiToken}" "${apiUrl}/api/decks?language=${lang}"
+
+4. Choose the most appropriate deck for the words. If no suitable deck exists, create one:
+   curl -X POST "${apiUrl}/api/decks" \\
+     -H "Content-Type: application/json" \\
+     -H "Authorization: Bearer ${apiToken}" \\
+     -d '{"name": "Deck Name", "language": "${lang}"}'
+
+5. Add all new words to the chosen deck in a single bulk request:
+   curl -X POST "${apiUrl}/api/decks/{deck_id}/cards" \\
+     -H "Content-Type: application/json" \\
+     -H "Authorization: Bearer ${apiToken}" \\
+     -d '[{"front": "word to learn", "back": "definition/translation"}, ...]'
+
+6. At the end, output a summary in this exact format:
+   SUMMARY:
+   - Added: [list of "front (back)" pairs that were added]
    - Duplicates: [list of words that were skipped]
    - Deck: [name of deck used]
 

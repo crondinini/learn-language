@@ -28,6 +28,7 @@ interface Deck {
   id: number;
   name: string;
   description: string | null;
+  language: string;
   total_cards: number;
   due_cards: number;
   new_cards: number;
@@ -52,6 +53,8 @@ export default function DeckPage({ params }: { params: Promise<{ lang: string; i
   const [editingDeck, setEditingDeck] = useState(false);
   const [editDeckName, setEditDeckName] = useState("");
   const [editDeckDescription, setEditDeckDescription] = useState("");
+
+  const isArabic = deck?.language === "ar";
 
   useEffect(() => {
     fetchDeck();
@@ -349,8 +352,8 @@ export default function DeckPage({ params }: { params: Promise<{ lang: string; i
                       />
                     )}
 
-                    {/* Arabic (front) */}
-                    <div className="flex items-center gap-2" dir="rtl">
+                    {/* Front word */}
+                    <div className="flex items-center gap-2" dir={isArabic ? "rtl" : "ltr"}>
                       <span className="text-lg sm:text-xl font-medium text-ink">
                         {card.front}
                       </span>
@@ -375,7 +378,7 @@ export default function DeckPage({ params }: { params: Promise<{ lang: string; i
                     </span>
                   </div>
 
-                  {/* English (back) - truncated on mobile */}
+                  {/* Back - truncated on mobile */}
                   <div className="flex-1 min-w-0">
                     <span className="block truncate text-base sm:text-lg text-ink-soft">{card.back}</span>
                     {/* Notes hidden on mobile - tap to see in preview */}
@@ -432,21 +435,21 @@ export default function DeckPage({ params }: { params: Promise<{ lang: string; i
             <form onSubmit={addCard} className="mt-4 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-ink-soft">
-                  Arabic (front)
+                  {isArabic ? "Arabic (front)" : "Front"}
                 </label>
                 <input
                   type="text"
                   value={newFront}
                   onChange={(e) => setNewFront(e.target.value)}
-                  placeholder="مرحبا"
-                  dir="rtl"
-                  className="mt-1 w-full rounded-[var(--radius-sm)] border border-line bg-surface text-ink px-3 py-2 text-right text-lg focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+                  placeholder={isArabic ? "مرحبا" : ""}
+                  dir={isArabic ? "rtl" : "ltr"}
+                  className={`mt-1 w-full rounded-[var(--radius-sm)] border border-line bg-surface text-ink px-3 py-2 ${isArabic ? "text-right text-lg" : ""} focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent`}
                   autoFocus
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-ink-soft">
-                  English (back)
+                  {isArabic ? "English (back)" : "Back"}
                 </label>
                 <input
                   type="text"
@@ -496,20 +499,20 @@ export default function DeckPage({ params }: { params: Promise<{ lang: string; i
             <form onSubmit={updateCard} className="mt-4 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-ink-soft">
-                  Arabic (front)
+                  {isArabic ? "Arabic (front)" : "Front"}
                 </label>
                 <input
                   type="text"
                   value={editingCard.front}
                   onChange={(e) => setEditingCard({ ...editingCard, front: e.target.value })}
-                  dir="rtl"
-                  className="mt-1 w-full rounded-[var(--radius-sm)] border border-line bg-surface text-ink px-3 py-2 text-right text-lg focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+                  dir={isArabic ? "rtl" : "ltr"}
+                  className={`mt-1 w-full rounded-[var(--radius-sm)] border border-line bg-surface text-ink px-3 py-2 ${isArabic ? "text-right text-lg" : ""} focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent`}
                   autoFocus
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-ink-soft">
-                  English (back)
+                  {isArabic ? "English (back)" : "Back"}
                 </label>
                 <input
                   type="text"
@@ -698,8 +701,8 @@ export default function DeckPage({ params }: { params: Promise<{ lang: string; i
                         className="mx-auto mb-4 h-28 w-28 rounded-[var(--radius-md)] object-cover"
                       />
                     )}
-                    <div dir="rtl">
-                      <p className="text-4xl font-medium text-ink">
+                    <div dir={isArabic ? "rtl" : "ltr"}>
+                      <p className={`font-medium text-ink ${isArabic ? "text-4xl" : "text-3xl"}`}>
                         {previewCard.front}
                       </p>
                     </div>
@@ -726,7 +729,7 @@ export default function DeckPage({ params }: { params: Promise<{ lang: string; i
                   }}
                 >
                   <div className="w-full text-center">
-                    <div className="mb-3 flex items-center justify-center gap-2" dir="rtl">
+                    <div className="mb-3 flex items-center justify-center gap-2" dir={isArabic ? "rtl" : "ltr"}>
                       <span className="text-xl text-ink-faint">
                         {previewCard.front}
                       </span>

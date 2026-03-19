@@ -21,7 +21,7 @@ Arabic flashcard web application with spaced repetition learning.
 | `/review` | Global review - cards due across all decks |
 | `/conjugation` | Arabic verb conjugation practice with FSRS |
 | `/homework` | Recording and written homework assignments |
-| `/generate` | Generate Arabic vocabulary from English words via Claude Code skill |
+| `/generate` | Generate vocabulary via Claude — supports any language (Arabic, English, etc.) |
 | `/lessons` | Class lessons with transcripts, AI summaries, and card generation |
 | `/lessons/[id]` | Lesson detail: transcript, summarize, generate cards, notes |
 | `/reading` | Arabic reading passages with linked vocabulary |
@@ -54,7 +54,7 @@ Endpoint: `https://learn.rocksbythesea.uk/mcp`
 
 | Skill | Purpose |
 |-------|---------|
-| `add-word` | Add single Arabic word with duplicate check |
+| `add-word` | Add single word with duplicate check (any language) |
 | `import-vocabulary` | Extract vocabulary from Word docs |
 | `generate-card-image` | Download Unsplash images for cards |
 | `download-playaling-audio` | Get Arabic pronunciation from Playaling |
@@ -65,6 +65,7 @@ Endpoint: `https://learn.rocksbythesea.uk/mcp`
 
 <!-- Keep only relevant/current changes. Remove entries that are superseded or no longer applicable. -->
 
+- **2026-03**: Multi-language support for generate page, card forms, vocab table, review session, and MCP tools
 - **2026-03**: Multi-user support — `users` table, `user_id` on all data tables, email allowlist via `ALLOWED_EMAILS` env var, automatic data backfill on first login
 - **2026-03**: UI redesign — teal accent, Plus Jakarta Sans font, card grid layout, frosted glass header, shadows/animations, design token system (see DESIGN.md)
 - **2026-03**: Extracted shared TTS module, unified audio generation endpoint for cards/verbs/conjugations

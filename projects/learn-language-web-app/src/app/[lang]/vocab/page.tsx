@@ -281,11 +281,11 @@ export default function VocabDashboard() {
             <table className="w-full">
               <thead className="border-b border-line bg-surface-hover">
                 <tr>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-ink-faint">
-                    Arabic
+                  <th className={`px-4 py-3 ${lang === "ar" ? "text-right" : "text-left"} text-sm font-medium text-ink-faint`}>
+                    {lang === "ar" ? "Arabic" : "Front"}
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-ink-faint">
-                    English
+                    {lang === "ar" ? "English" : "Back"}
                   </th>
                   <th className="hidden px-4 py-3 text-left text-sm font-medium text-ink-faint sm:table-cell">
                     Deck
@@ -309,8 +309,8 @@ export default function VocabDashboard() {
                   >
                     <td className="px-4 py-3">
                       <span
-                        dir="rtl"
-                        className="text-lg font-medium text-ink"
+                        dir={lang === "ar" ? "rtl" : "ltr"}
+                        className={`${lang === "ar" ? "text-lg" : ""} font-medium text-ink`}
                       >
                         {card.front}
                       </span>

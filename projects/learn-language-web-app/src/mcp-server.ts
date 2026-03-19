@@ -249,22 +249,22 @@ function createMcpServer(): McpServer {
   // Tool: Add word
   server.tool(
     "add_word",
-    "Add a vocabulary word",
+    "Add a vocabulary word. Use 'front' for the word to learn and 'back' for the definition/translation. For Arabic decks: front=Arabic, back=English.",
     {
-      arabic_word: z.string(),
-      english_translation: z.string(),
+      front: z.string().describe("The word to learn (front of card). For Arabic decks, this is the Arabic word."),
+      back: z.string().describe("The definition or translation (back of card). For Arabic decks, this is the English translation."),
       deck_id: z.number().optional().default(15),
       notes: z.string().optional(),
     },
-    async ({ arabic_word, english_translation, deck_id, notes }) => {
+    async ({ front, back, deck_id, notes }) => {
       try {
-        const cardData = [{ front: arabic_word, back: english_translation, ...(notes && { notes }) }];
+        const cardData = [{ front, back, ...(notes && { notes }) }];
         const response = await apiRequest(`/api/decks/${deck_id}/cards`, { method: "POST", body: JSON.stringify(cardData) });
         if (!response.ok) {
           return { content: [{ type: "text" as const, text: `Failed: ${response.status}` }], isError: true };
         }
         const result = await response.json();
-        return { content: [{ type: "text" as const, text: `Added "${arabic_word}" (${english_translation}) ID: ${result[0]?.id}` }] };
+        return { content: [{ type: "text" as const, text: `Added "${front}" (${back}) ID: ${result[0]?.id}` }] };
       } catch (error) {
         return { content: [{ type: "text" as const, text: `Error: ${String(error)}` }], isError: true };
       }
@@ -274,20 +274,20 @@ function createMcpServer(): McpServer {
   // Tool: Add multiple words
   server.tool(
     "add_words",
-    "Add multiple words",
+    "Add multiple words. Use 'front' for the word to learn and 'back' for the definition/translation.",
     {
-      words: z.array(z.object({ arabic_word: z.string(), english_translation: z.string(), notes: z.string().optional() })),
+      words: z.array(z.object({ front: z.string(), back: z.string(), notes: z.string().optional() })),
       deck_id: z.number().optional().default(15),
     },
     async ({ words, deck_id }) => {
       try {
-        const cardData = words.map((w) => ({ front: w.arabic_word, back: w.english_translation, ...(w.notes && { notes: w.notes }) }));
+        const cardData = words.map((w) => ({ front: w.front, back: w.back, ...(w.notes && { notes: w.notes }) }));
         const response = await apiRequest(`/api/decks/${deck_id}/cards`, { method: "POST", body: JSON.stringify(cardData) });
         if (!response.ok) {
           return { content: [{ type: "text" as const, text: `Failed: ${response.status}` }], isError: true };
         }
         const result = await response.json();
-        const added = words.map((w, i) => `- ${w.arabic_word} (${w.english_translation}) [${result[i]?.id}]`).join("\n");
+        const added = words.map((w, i) => `- ${w.front} (${w.back}) [${result[i]?.id}]`).join("\n");
         return { content: [{ type: "text" as const, text: `Added ${words.length} words:\n${added}` }] };
       } catch (error) {
         return { content: [{ type: "text" as const, text: `Error: ${String(error)}` }], isError: true };
