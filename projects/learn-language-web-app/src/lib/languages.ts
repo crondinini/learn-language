@@ -31,7 +31,7 @@ export const SUPPORTED_LANGUAGES: Record<string, LanguageConfig> = {
     font: null,
     speechCode: 'en-US',
     browserSpeechCode: 'en-US',
-    features: [],  // only decks, vocab, review for now
+    features: ['generate'],
   },
 };
 
