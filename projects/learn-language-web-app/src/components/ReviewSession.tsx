@@ -43,6 +43,7 @@ interface ReviewSessionProps {
 }
 
 export default function ReviewSession({ deckId, lessonId, mode, language, backUrl, backLabel }: ReviewSessionProps) {
+  const isArabic = language === "ar" || !language;
   const [cards, setCards] = useState<Card[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -345,8 +346,8 @@ export default function ReviewSession({ deckId, lessonId, mode, language, backUr
                     />
                   )}
                   {(!imageOnly || !currentCard.image_url) && (
-                    <div dir="rtl">
-                      <p className="text-5xl font-medium text-ink">
+                    <div dir={isArabic ? "rtl" : "ltr"}>
+                      <p className={`${isArabic ? "text-5xl" : "text-4xl"} font-medium text-ink`}>
                         {currentCard.front}
                       </p>
                     </div>
@@ -364,7 +365,7 @@ export default function ReviewSession({ deckId, lessonId, mode, language, backUr
                         copyToClipboard(currentCard.front);
                       }}
                       className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-surface-hover text-ink-faint transition-colors hover:bg-surface-active hover:text-ink-soft"
-                      title={copied ? "Copied!" : "Copy Arabic text"}
+                      title={copied ? "Copied!" : "Copy text"}
                     >
                       {copied ? (
                         <svg className="h-5 w-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -416,9 +417,9 @@ export default function ReviewSession({ deckId, lessonId, mode, language, backUr
                   boxShadow: "var(--shadow-lg)",
                 }}
               >
-                {/* Fixed header: Arabic + English */}
+                {/* Fixed header: Front + Back */}
                 <div className="flex-shrink-0 text-center">
-                  <div className="mb-3 flex items-center justify-center gap-2" dir="rtl">
+                  <div className="mb-3 flex items-center justify-center gap-2" dir={isArabic ? "rtl" : "ltr"}>
                     <span className="text-2xl text-ink-faint">
                       {currentCard.front}
                     </span>
@@ -434,7 +435,7 @@ export default function ReviewSession({ deckId, lessonId, mode, language, backUr
                         copyToClipboard(currentCard.front);
                       }}
                       className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-surface-hover text-ink-faint transition-colors hover:bg-surface-active hover:text-ink-soft"
-                      title={copied ? "Copied!" : "Copy Arabic text"}
+                      title={copied ? "Copied!" : "Copy text"}
                     >
                       {copied ? (
                         <svg className="h-4 w-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
