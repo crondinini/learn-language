@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
+import SpeakerButton from "@/components/SpeakerButton";
 
 interface DictionaryResult {
   word: string;
@@ -351,10 +352,11 @@ function ResultCard({ result, label }: { result: DictionaryResult; label: string
 
       {/* Word + definition */}
       <div>
-        <div dir={isRtl ? "rtl" : "ltr"}>
+        <div dir={isRtl ? "rtl" : "ltr"} className="flex items-center gap-2">
           <h3 className={`text-2xl font-bold text-ink ${isRtl ? "font-[var(--font-arabic)]" : ""}`}>
             {result.word}
           </h3>
+          <SpeakerButton text={result.word} language={result.language} size="md" />
         </div>
         {result.transliteration && (
           <p className="text-sm text-ink-faint italic">{result.transliteration}</p>
