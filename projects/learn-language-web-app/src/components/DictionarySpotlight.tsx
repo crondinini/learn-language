@@ -37,6 +37,7 @@ export default function DictionarySpotlight() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const params = useParams();
   const currentLang = (params?.lang as string) || "en";
+  const currentDeckId = params?.id ? parseInt(params.id as string) : null;
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -133,6 +134,12 @@ export default function DictionarySpotlight() {
   }
 
   async function handleAddToCards() {
+    // If we're on a deck page, add directly without asking
+    if (currentDeckId) {
+      handleSelectDeck(currentDeckId);
+      return;
+    }
+
     try {
       const res = await fetch("/api/decks");
       if (res.ok) {
