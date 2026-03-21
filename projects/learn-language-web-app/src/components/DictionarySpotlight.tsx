@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 
 interface DictionaryResult {
   word: string;
+  transliteration?: string;
   language: string;
   definition: string;
   translations: { en: string; pt: string; es: string };
@@ -349,10 +350,15 @@ function ResultCard({ result, label }: { result: DictionaryResult; label: string
       </div>
 
       {/* Word + definition */}
-      <div dir={isRtl ? "rtl" : "ltr"}>
-        <h3 className={`text-2xl font-bold text-ink ${isRtl ? "font-[var(--font-arabic)]" : ""}`}>
-          {result.word}
-        </h3>
+      <div>
+        <div dir={isRtl ? "rtl" : "ltr"}>
+          <h3 className={`text-2xl font-bold text-ink ${isRtl ? "font-[var(--font-arabic)]" : ""}`}>
+            {result.word}
+          </h3>
+        </div>
+        {result.transliteration && (
+          <p className="text-sm text-ink-faint italic">{result.transliteration}</p>
+        )}
         <p className="mt-1 text-ink-soft">{result.definition}</p>
       </div>
 

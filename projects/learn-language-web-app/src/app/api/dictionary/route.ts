@@ -57,7 +57,7 @@ function extractJSON(text: string): string {
 function lookupClaude(word: string, targetLang?: string): Promise<DictionaryResult | null> {
   const isArabicMode = targetLang === "ar";
   const prompt = isArabicMode
-    ? `You are an Arabic dictionary API. The user typed "${word}" which could be an English word, an Arabic word in Latin transliteration, or Arabic script. Identify the Arabic word they mean, then respond with ONLY a JSON object, nothing else. Schema: {"word":"the Arabic word in Arabic script with diacritics","language":"ar","definition":"brief definition in Arabic (1-2 sentences)","translations":{"en":"English translation","pt":"Portuguese translation","es":"Spanish translation"},"example":"one example sentence in Arabic script"}. Keep it concise.`
+    ? `You are an Arabic dictionary API. The user typed "${word}" which could be an English word, an Arabic word in Latin transliteration, or Arabic script. Identify the Arabic word they mean, then respond with ONLY a JSON object, nothing else. Schema: {"word":"the Arabic word in Arabic script with diacritics","transliteration":"Latin transliteration of the Arabic word","language":"ar","definition":"brief definition in English (1-2 sentences)","translations":{"en":"English translation","pt":"Portuguese translation","es":"Spanish translation"},"example":"one example sentence in Arabic script"}. Keep it concise.`
     : `You are a dictionary API. Given the word "${word}", respond with ONLY a JSON object, nothing else. Schema: {"word":"string","language":"string","definition":"string","translations":{"en":"string","pt":"string","es":"string"},"example":"string"}. If the word is English, set "en" to the word itself. Keep the definition to 1-2 sentences.`;
 
   const env = { ...process.env };
