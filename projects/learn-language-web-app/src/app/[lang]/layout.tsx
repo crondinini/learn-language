@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { SUPPORTED_LANGUAGES } from "@/lib/languages";
+import DictionarySpotlight from "@/components/DictionarySpotlight";
 
 export default async function LangLayout({
   children,
@@ -12,5 +13,10 @@ export default async function LangLayout({
   if (!SUPPORTED_LANGUAGES[lang]) {
     notFound();
   }
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <DictionarySpotlight />
+    </>
+  );
 }
