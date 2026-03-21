@@ -43,7 +43,10 @@ export default function DictionarySpotlight() {
     function handleKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        setIsOpen((prev) => !prev);
+        setIsOpen((prev) => {
+          if (!prev) requestAnimationFrame(() => inputRef.current?.focus());
+          return !prev;
+        });
       }
       if (e.key === "Escape") {
         if (showDecks) {
@@ -58,9 +61,7 @@ export default function DictionarySpotlight() {
   }, [isOpen, showDecks]);
 
   useEffect(() => {
-    if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 100);
-    } else {
+    if (!isOpen) {
       setQuery("");
       setDictResult(null);
       setAiResult(null);
@@ -192,7 +193,11 @@ export default function DictionarySpotlight() {
     <>
       {/* Floating button */}
       <button
-        onClick={() => setIsOpen(true)}
+        onClick={() => {
+          setIsOpen(true);
+          // Focus synchronously within tap gesture for mobile keyboard
+          requestAnimationFrame(() => inputRef.current?.focus());
+        }}
         className="fixed bottom-6 right-6 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-accent text-white transition hover:bg-accent-hover active:scale-95"
         style={{ boxShadow: "var(--shadow-lg)" }}
         title="Dictionary (Cmd+K)"
@@ -223,6 +228,7 @@ export default function DictionarySpotlight() {
               <input
                 ref={inputRef}
                 type="text"
+                autoFocus
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Look up a word..."
