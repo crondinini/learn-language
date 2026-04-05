@@ -41,6 +41,8 @@ export default function ReadingPage() {
   const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
   const [isTtsPlaying, setIsTtsPlaying] = useState(false);
   const [isExtractingImage, setIsExtractingImage] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(false);
+  const [categoryInput, setCategoryInput] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Use shared recorder hook
@@ -181,6 +183,22 @@ export default function ReadingPage() {
     } catch (error) {
       console.error("Error deleting recording:", error);
     }
+  }
+
+  async function updateCategory(newCategory: string) {
+    if (!selectedText) return;
+    const category = newCategory.trim() || null;
+    const res = await fetch(`/api/texts/${selectedText.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ category }),
+    });
+    if (res.ok) {
+      const updated = { ...selectedText, category };
+      setSelectedText(updated);
+      setTexts((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+    }
+    setEditingCategory(false);
   }
 
   async function generateTransliteration() {
@@ -379,11 +397,36 @@ export default function ReadingPage() {
           <div className="lg:col-span-2">
             {selectedText ? (
               <div className="rounded-[var(--radius-md)] border border-line/50 bg-surface p-6" style={{ boxShadow: "var(--shadow-card)" }}>
-                {selectedText.title && (
-                  <h2 className="mb-4 text-lg font-semibold text-ink">
-                    {selectedText.title}
-                  </h2>
-                )}
+                <div className="mb-4 flex items-start justify-between gap-2">
+                  {selectedText.title && (
+                    <h2 className="text-lg font-semibold text-ink">
+                      {selectedText.title}
+                    </h2>
+                  )}
+                  {editingCategory ? (
+                    <form
+                      onSubmit={(e) => { e.preventDefault(); updateCategory(categoryInput); }}
+                      className="flex items-center gap-1.5"
+                    >
+                      <input
+                        type="text"
+                        value={categoryInput}
+                        onChange={(e) => setCategoryInput(e.target.value)}
+                        placeholder="Category"
+                        autoFocus
+                        onBlur={() => updateCategory(categoryInput)}
+                        className="w-36 rounded-[var(--radius-sm)] border border-line px-2 py-0.5 text-xs focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+                      />
+                    </form>
+                  ) : (
+                    <button
+                      onClick={() => { setEditingCategory(true); setCategoryInput(selectedText.category || ""); }}
+                      className="rounded-full bg-surface-hover px-2.5 py-0.5 text-xs text-ink-faint hover:text-ink-soft hover:bg-accent-subtle transition"
+                    >
+                      {selectedText.category || "Add category"}
+                    </button>
+                  )}
+                </div>
 
                 {/* Arabic Text with Transliteration */}
                 <div className="mb-6 rounded-[var(--radius-sm)] bg-surface-hover p-6">
