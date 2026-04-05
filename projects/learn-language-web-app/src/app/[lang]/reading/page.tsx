@@ -40,6 +40,8 @@ export default function ReadingPage() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
   const [isTtsPlaying, setIsTtsPlaying] = useState(false);
+  const [isExtractingImage, setIsExtractingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Use shared recorder hook
   const recorder = useRecorder();
@@ -201,6 +203,41 @@ export default function ReadingPage() {
       console.error("Failed to generate audio:", error);
     } finally {
       setIsGeneratingAudio(false);
+    }
+  }
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || isExtractingImage) return;
+
+    setIsExtractingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const res = await fetch("/api/texts/extract-from-image", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setNewText({
+          title: data.title || "",
+          arabic: data.arabic || "",
+          translation: data.translation || "",
+          category: newText.category,
+        });
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to extract text from image");
+      }
+    } catch (error) {
+      console.error("Failed to extract text from image:", error);
+      alert("Failed to extract text from image");
+    } finally {
+      setIsExtractingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }
 
@@ -490,13 +527,13 @@ export default function ReadingPage() {
                         {isGeneratingAudio ? "Regenerating..." : "Regenerate"}
                       </button>
                       {selectedText.tts_provider && (
-                        <span
-                          className="inline-flex items-center justify-center h-6 w-6 rounded-full text-ink-faint hover:text-ink-soft hover:bg-surface-hover transition cursor-help"
-                          title={`Generated with ${selectedText.tts_provider}`}
-                        >
+                        <span className="group relative inline-flex items-center justify-center h-6 w-6 rounded-full text-ink-faint hover:text-ink-soft hover:bg-surface-hover transition">
                           <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
+                          <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 whitespace-nowrap rounded-[var(--radius-sm)] bg-ink px-2.5 py-1 text-xs text-surface opacity-0 group-hover:opacity-100 transition-opacity">
+                            Generated with {selectedText.tts_provider}
+                          </span>
                         </span>
                       )}
                     </>
@@ -586,6 +623,41 @@ export default function ReadingPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 backdrop-blur-sm p-4">
           <div className="w-full max-w-lg rounded-[var(--radius-md)] bg-surface p-6 animate-modal">
             <h2 className="text-xl font-semibold text-ink">Add Reading Text</h2>
+
+            {/* Image upload for OCR */}
+            <div className="mt-4">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isExtractingImage}
+                className="w-full rounded-[var(--radius-sm)] border-2 border-dashed border-line px-4 py-3 text-sm text-ink-faint transition hover:border-accent hover:text-accent disabled:border-line disabled:text-ink-faint"
+              >
+                {isExtractingImage ? (
+                  <span className="inline-flex items-center gap-2">
+                    <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Extracting text from image...
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-2">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    Upload image to extract text
+                  </span>
+                )}
+              </button>
+            </div>
+
             <form onSubmit={createText} className="mt-4 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-ink-soft">
