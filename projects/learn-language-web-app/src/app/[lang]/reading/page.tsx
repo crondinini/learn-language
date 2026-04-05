@@ -14,6 +14,7 @@ interface Text {
   category: string | null;
   recording_url: string | null;
   tts_audio_url: string | null;
+  tts_provider: string | null;
   created_at: string;
 }
 
@@ -192,7 +193,7 @@ export default function ReadingPage() {
       });
       if (res.ok) {
         const data = await res.json();
-        const updated = { ...selectedText, tts_audio_url: data.tts_audio_url };
+        const updated = { ...selectedText, tts_audio_url: data.tts_audio_url, tts_provider: data.tts_provider };
         setSelectedText(updated);
         setTexts((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
       }
@@ -488,6 +489,16 @@ export default function ReadingPage() {
                       >
                         {isGeneratingAudio ? "Regenerating..." : "Regenerate"}
                       </button>
+                      {selectedText.tts_provider && (
+                        <span
+                          className="inline-flex items-center justify-center h-6 w-6 rounded-full text-ink-faint hover:text-ink-soft hover:bg-surface-hover transition cursor-help"
+                          title={`Generated with ${selectedText.tts_provider}`}
+                        >
+                          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </span>
+                      )}
                     </>
                   ) : (
                     <button

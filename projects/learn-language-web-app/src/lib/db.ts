@@ -108,6 +108,7 @@ function getDb(): Database.Database {
       language TEXT NOT NULL DEFAULT 'ar',
       recording_url TEXT,
       tts_audio_url TEXT,
+      tts_provider TEXT,
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now'))
     );
@@ -338,6 +339,9 @@ function getDb(): Database.Database {
   if (textColumns3.length > 0 && !textColumns3.some((col) => col.name === "tts_audio_url")) {
     _db.exec("ALTER TABLE texts ADD COLUMN tts_audio_url TEXT");
   }
+  if (textColumns3.length > 0 && !textColumns3.some((col) => col.name === "tts_provider")) {
+    _db.exec("ALTER TABLE texts ADD COLUMN tts_provider TEXT");
+  }
 
   // Migration: Add user_id column to top-level data tables
   const userIdTables = ['decks', 'verbs', 'homework', 'lessons', 'texts', 'generations'];
@@ -458,6 +462,7 @@ export interface Text {
   language: string;
   recording_url: string | null;
   tts_audio_url: string | null;
+  tts_provider: string | null;
   created_at: string;
   updated_at: string;
 }

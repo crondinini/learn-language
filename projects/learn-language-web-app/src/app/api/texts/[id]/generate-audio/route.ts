@@ -51,14 +51,14 @@ export async function POST(_request: NextRequest, { params }: Params) {
     );
     const audioUrl = `/api/media/${mediaId}`;
 
-    // Update text with TTS audio URL
+    // Update text with TTS audio URL and provider
     db.prepare(
-      "UPDATE texts SET tts_audio_url = ?, updated_at = datetime('now') WHERE id = ?"
-    ).run(audioUrl, id);
+      "UPDATE texts SET tts_audio_url = ?, tts_provider = ?, updated_at = datetime('now') WHERE id = ?"
+    ).run(audioUrl, TTS_PROVIDER, id);
 
     return NextResponse.json({
       tts_audio_url: audioUrl,
-      provider: TTS_PROVIDER,
+      tts_provider: TTS_PROVIDER,
     });
   } catch (error) {
     console.error("Error generating audio:", error);
