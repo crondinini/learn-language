@@ -9,9 +9,11 @@ interface Text {
   id: number;
   title: string | null;
   arabic: string;
+  transliteration: string | null;
   translation: string;
   category: string | null;
   recording_url: string | null;
+  tts_audio_url: string | null;
   created_at: string;
 }
 
@@ -31,7 +33,12 @@ export default function ReadingPage() {
   const [showModal, setShowModal] = useState(false);
   const [newText, setNewText] = useState({ title: "", arabic: "", translation: "", category: "" });
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isGeneratingTranslit, setIsGeneratingTranslit] = useState(false);
+  const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
+  const [showTransliteration, setShowTransliteration] = useState(true);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [isTtsPlaying, setIsTtsPlaying] = useState(false);
 
   // Use shared recorder hook
   const recorder = useRecorder();
@@ -156,6 +163,67 @@ export default function ReadingPage() {
     }
   }
 
+  async function generateTransliteration() {
+    if (!selectedText || isGeneratingTranslit) return;
+    setIsGeneratingTranslit(true);
+    try {
+      const res = await fetch(`/api/texts/${selectedText.id}/transliterate`, {
+        method: "POST",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const updated = { ...selectedText, transliteration: data.transliteration };
+        setSelectedText(updated);
+        setTexts((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+      }
+    } catch (error) {
+      console.error("Failed to generate transliteration:", error);
+    } finally {
+      setIsGeneratingTranslit(false);
+    }
+  }
+
+  async function generateTtsAudio() {
+    if (!selectedText || isGeneratingAudio) return;
+    setIsGeneratingAudio(true);
+    try {
+      const res = await fetch(`/api/texts/${selectedText.id}/generate-audio`, {
+        method: "POST",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const updated = { ...selectedText, tts_audio_url: data.tts_audio_url };
+        setSelectedText(updated);
+        setTexts((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+      }
+    } catch (error) {
+      console.error("Failed to generate audio:", error);
+    } finally {
+      setIsGeneratingAudio(false);
+    }
+  }
+
+  function playTtsAudio() {
+    if (!selectedText?.tts_audio_url) return;
+    if (ttsAudioRef.current) {
+      ttsAudioRef.current.pause();
+    }
+    const audio = new Audio(selectedText.tts_audio_url);
+    ttsAudioRef.current = audio;
+    audio.onplay = () => setIsTtsPlaying(true);
+    audio.onended = () => setIsTtsPlaying(false);
+    audio.onpause = () => setIsTtsPlaying(false);
+    audio.play();
+  }
+
+  function stopTtsAudio() {
+    if (ttsAudioRef.current) {
+      ttsAudioRef.current.pause();
+      ttsAudioRef.current.currentTime = 0;
+    }
+    setIsTtsPlaying(false);
+  }
+
   // Group texts by category
   const groupedTexts = texts.reduce((acc, text) => {
     const category = text.category || "Uncategorized";
@@ -263,15 +331,46 @@ export default function ReadingPage() {
                   </h2>
                 )}
 
-                {/* Arabic Text */}
+                {/* Arabic Text with Transliteration */}
                 <div className="mb-6 rounded-[var(--radius-sm)] bg-surface-hover p-6">
-                  <p
-                    className="text-2xl leading-loose text-ink"
-                    dir="rtl"
-                    style={{ fontFamily: "var(--font-arabic), sans-serif", lineHeight: "2.5" }}
-                  >
-                    {selectedText.arabic}
-                  </p>
+                  {selectedText.arabic.split("\n").map((line, i) => {
+                    const translitLines = selectedText.transliteration?.split("\n") || [];
+                    return (
+                      <div key={i} className={i > 0 ? "mt-4" : ""}>
+                        <p
+                          className="text-2xl leading-loose text-ink"
+                          dir="rtl"
+                          style={{ fontFamily: "var(--font-arabic), sans-serif", lineHeight: "2" }}
+                        >
+                          {line}
+                        </p>
+                        {showTransliteration && translitLines[i] && (
+                          <p className="mt-0.5 text-sm italic text-ink-faint leading-relaxed">
+                            {translitLines[i]}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+                  {/* Transliteration controls */}
+                  <div className="mt-4 flex items-center gap-2 border-t border-line/50 pt-3">
+                    {selectedText.transliteration ? (
+                      <button
+                        onClick={() => setShowTransliteration(!showTransliteration)}
+                        className="text-xs text-ink-faint hover:text-ink-soft transition"
+                      >
+                        {showTransliteration ? "Hide transliteration" : "Show transliteration"}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={generateTransliteration}
+                        disabled={isGeneratingTranslit}
+                        className="text-xs text-accent hover:text-accent-hover transition disabled:text-ink-faint"
+                      >
+                        {isGeneratingTranslit ? "Generating transliteration..." : "Generate transliteration"}
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Recording Controls */}
@@ -354,6 +453,65 @@ export default function ReadingPage() {
                         </button>
                       )}
                     </>
+                  )}
+                </div>
+
+                {/* TTS Audio (ElevenLabs) */}
+                <div className="mb-6 flex flex-wrap items-center gap-3">
+                  {selectedText.tts_audio_url ? (
+                    <>
+                      {isTtsPlaying ? (
+                        <button
+                          onClick={stopTtsAudio}
+                          className="inline-flex items-center gap-2 rounded-[var(--radius-sm)] bg-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-hover"
+                        >
+                          <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clipRule="evenodd" />
+                          </svg>
+                          Stop
+                        </button>
+                      ) : (
+                        <button
+                          onClick={playTtsAudio}
+                          className="inline-flex items-center gap-2 rounded-[var(--radius-sm)] bg-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-hover"
+                        >
+                          <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                          </svg>
+                          Play Audio
+                        </button>
+                      )}
+                      <button
+                        onClick={generateTtsAudio}
+                        disabled={isGeneratingAudio}
+                        className="inline-flex items-center gap-1 rounded-[var(--radius-sm)] border border-line px-3 py-2 text-sm font-medium text-ink-soft transition hover:bg-surface-hover disabled:text-ink-faint"
+                      >
+                        {isGeneratingAudio ? "Regenerating..." : "Regenerate"}
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={generateTtsAudio}
+                      disabled={isGeneratingAudio}
+                      className="inline-flex items-center gap-2 rounded-[var(--radius-sm)] border border-line px-4 py-2 text-sm font-medium text-ink-soft transition hover:bg-surface-hover disabled:text-ink-faint"
+                    >
+                      {isGeneratingAudio ? (
+                        <>
+                          <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                          Generating Audio...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                          </svg>
+                          Generate Audio
+                        </>
+                      )}
+                    </button>
                   )}
                 </div>
 

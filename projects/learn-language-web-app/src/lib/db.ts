@@ -102,10 +102,12 @@ function getDb(): Database.Database {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT,
       arabic TEXT NOT NULL,
+      transliteration TEXT,
       translation TEXT NOT NULL,
       category TEXT,
       language TEXT NOT NULL DEFAULT 'ar',
       recording_url TEXT,
+      tts_audio_url TEXT,
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now'))
     );
@@ -328,6 +330,15 @@ function getDb(): Database.Database {
     _db.exec("ALTER TABLE texts ADD COLUMN language TEXT NOT NULL DEFAULT 'ar'");
   }
 
+  // Migration: Add transliteration and tts_audio_url columns to texts
+  const textColumns3 = _db.prepare("PRAGMA table_info(texts)").all() as { name: string }[];
+  if (textColumns3.length > 0 && !textColumns3.some((col) => col.name === "transliteration")) {
+    _db.exec("ALTER TABLE texts ADD COLUMN transliteration TEXT");
+  }
+  if (textColumns3.length > 0 && !textColumns3.some((col) => col.name === "tts_audio_url")) {
+    _db.exec("ALTER TABLE texts ADD COLUMN tts_audio_url TEXT");
+  }
+
   // Migration: Add user_id column to top-level data tables
   const userIdTables = ['decks', 'verbs', 'homework', 'lessons', 'texts', 'generations'];
   for (const table of userIdTables) {
@@ -441,10 +452,12 @@ export interface Text {
   id: number;
   title: string | null;
   arabic: string;
+  transliteration: string | null;
   translation: string;
   category: string | null;
   language: string;
   recording_url: string | null;
+  tts_audio_url: string | null;
   created_at: string;
   updated_at: string;
 }

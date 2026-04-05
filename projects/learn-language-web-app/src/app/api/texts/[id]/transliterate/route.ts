@@ -1,0 +1,91 @@
+import { NextRequest, NextResponse } from "next/server";
+import { spawn } from "child_process";
+import db, { Text } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth";
+
+type Params = { params: Promise<{ id: string }> };
+
+function generateTransliteration(arabic: string): Promise<string | null> {
+  const lineCount = arabic.split("\n").length;
+  const prompt = `Transliterate this Arabic text to Latin script. Output ONLY the transliteration, nothing else. Preserve line breaks exactly — the input has ${lineCount} line(s), your output must have exactly ${lineCount} line(s). Use standard Arabic transliteration (e.g., "ana ismi..." for "أنا اسمي"). Do not add vowel marks that aren't pronounced. Here is the text:\n\n${arabic}`;
+
+  const env = { ...process.env };
+  delete env.CLAUDECODE;
+
+  return new Promise((resolve) => {
+    const claude = spawn(
+      "claude",
+      ["--print", "--model", "haiku", "--output-format", "text"],
+      { env, stdio: ["pipe", "pipe", "pipe"] }
+    );
+
+    let stdout = "";
+
+    claude.stdout.on("data", (data: Buffer) => {
+      stdout += data.toString();
+    });
+
+    const timeout = setTimeout(() => {
+      claude.kill();
+      resolve(null);
+    }, 30000);
+
+    claude.on("close", (code: number | null) => {
+      clearTimeout(timeout);
+      if (code === 0 && stdout.trim()) {
+        resolve(stdout.trim());
+      } else {
+        resolve(null);
+      }
+    });
+
+    claude.on("error", () => {
+      clearTimeout(timeout);
+      resolve(null);
+    });
+
+    claude.stdin.write(prompt);
+    claude.stdin.end();
+  });
+}
+
+/**
+ * POST /api/texts/[id]/transliterate
+ * Generate and save transliteration for a reading text
+ */
+export async function POST(_request: NextRequest, { params }: Params) {
+  try {
+    const user = await getCurrentUser();
+    const { id } = await params;
+
+    const text = db
+      .prepare("SELECT * FROM texts WHERE id = ? AND user_id = ?")
+      .get(id, user.id) as Text | undefined;
+
+    if (!text) {
+      return NextResponse.json({ error: "Text not found" }, { status: 404 });
+    }
+
+    const transliteration = await generateTransliteration(text.arabic);
+
+    if (!transliteration) {
+      return NextResponse.json(
+        { error: "Failed to generate transliteration" },
+        { status: 500 }
+      );
+    }
+
+    // Save to database
+    db.prepare(
+      "UPDATE texts SET transliteration = ?, updated_at = datetime('now') WHERE id = ?"
+    ).run(transliteration, id);
+
+    return NextResponse.json({ transliteration });
+  } catch (error) {
+    console.error("Error generating transliteration:", error);
+    return NextResponse.json(
+      { error: "Failed to generate transliteration" },
+      { status: 500 }
+    );
+  }
+}
