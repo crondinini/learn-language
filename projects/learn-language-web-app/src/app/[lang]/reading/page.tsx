@@ -620,8 +620,8 @@ export default function ReadingPage() {
 
       {/* Create Text Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 backdrop-blur-sm p-4">
-          <div className="w-full max-w-lg rounded-[var(--radius-md)] bg-surface p-6 animate-modal">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="w-full max-w-lg rounded-[var(--radius-md)] bg-surface p-6 animate-modal my-auto max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-semibold text-ink">Add Reading Text</h2>
 
             {/* Image upload for OCR */}
