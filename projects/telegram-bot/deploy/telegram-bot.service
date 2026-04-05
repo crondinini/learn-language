@@ -1,0 +1,18 @@
+[Unit]
+Description=Arabic Practice Telegram Bot
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/telegram-bot
+ExecStart=/usr/bin/node dist/index.js
+EnvironmentFile=/opt/telegram-bot/.env
+Environment=NODE_ENV=production
+Environment=PATH=/root/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

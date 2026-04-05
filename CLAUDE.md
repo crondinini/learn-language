@@ -20,6 +20,7 @@ Each project has a `STATE.md` file that captures the current state of the projec
 | [period-tracker](./projects/period-tracker) | Period tracking app with partner sharing (Flutter + Hono API) | [STATE.md](./projects/period-tracker/STATE.md) |
 | [cycle-health](./projects/cycle-health) | Period tracking PWA with cycle-synced fitness (React + Hono) | [STATE.md](./projects/cycle-health/STATE.md) |
 | [chrome-extension](./projects/chrome-extension) | Netflix dual subtitle extension (Arabic + English) | [STATE.md](./projects/chrome-extension/STATE.md) |
+| [telegram-bot](./projects/telegram-bot) | Telegram bot for Arabic conversation practice | [STATE.md](./projects/telegram-bot/STATE.md) |
 
 ## Repository Structure
 
@@ -42,7 +43,10 @@ projects/
 │   ├── web/                   # Vite React PWA
 │   ├── CLAUDE.md
 │   └── STATE.md
-└── chrome-extension/          # Netflix dual subtitle Chrome extension
+├── chrome-extension/          # Netflix dual subtitle Chrome extension
+│   └── STATE.md
+└── telegram-bot/              # Telegram bot for Arabic conversation practice
+    ├── CLAUDE.md
     └── STATE.md
 ```
 

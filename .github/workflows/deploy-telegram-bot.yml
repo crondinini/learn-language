@@ -1,0 +1,70 @@
+name: Deploy Telegram Bot
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'projects/telegram-bot/**'
+      - '.github/workflows/deploy-telegram-bot.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to Hetzner
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: ${{ secrets.HETZNER_USER }}
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          command_timeout: 10m
+          script: |
+            set -e
+
+            APP_DIR=~/learn-language
+            BOT_SRC=$APP_DIR/projects/telegram-bot
+            DEPLOY_DIR=/opt/telegram-bot
+
+            # Pull latest code
+            if [ ! -d "$APP_DIR/.git" ]; then
+              git clone git@github.com:${{ github.repository }}.git $APP_DIR
+            else
+              cd $APP_DIR
+              git fetch origin
+              git reset --hard origin/main
+            fi
+
+            # Deploy bot directory
+            mkdir -p $DEPLOY_DIR
+            rsync -a --delete --exclude='.env' --exclude='node_modules' $BOT_SRC/ $DEPLOY_DIR/
+
+            cd $DEPLOY_DIR
+
+            # Install deps and build
+            npm ci
+            npm run build
+
+            # Check .env exists
+            if [ ! -f .env ]; then
+              cp .env.example .env
+              echo "⚠ Created .env from example — edit $DEPLOY_DIR/.env with real values!"
+            fi
+
+            # Install systemd service
+            cp deploy/telegram-bot.service /etc/systemd/system/
+            systemctl daemon-reload
+            systemctl enable telegram-bot
+            systemctl restart telegram-bot
+
+            # Verify
+            sleep 3
+            if systemctl is-active --quiet telegram-bot; then
+              echo "✓ Telegram bot deployed successfully!"
+              journalctl -u telegram-bot --no-pager -n 5
+            else
+              echo "✗ Service failed to start"
+              journalctl -u telegram-bot --no-pager -n 20
+              exit 1
+            fi
