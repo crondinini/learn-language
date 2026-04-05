@@ -32,7 +32,7 @@ export default function ReadingPage() {
   const [linkedCards, setLinkedCards] = useState<Card[]>([]);
   const [showTranslation, setShowTranslation] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [newText, setNewText] = useState({ title: "", arabic: "", translation: "", category: "" });
+  const [newText, setNewText] = useState({ title: "", arabic: "", category: "" });
   const [isPlaying, setIsPlaying] = useState(false);
   const [isGeneratingTranslit, setIsGeneratingTranslit] = useState(false);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
@@ -70,22 +70,39 @@ export default function ReadingPage() {
 
   async function createText(e: React.FormEvent) {
     e.preventDefault();
-    if (!newText.arabic.trim() || !newText.translation.trim()) return;
+    if (!newText.arabic.trim()) return;
 
-    await fetch("/api/texts", {
+    const res = await fetch("/api/texts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         title: newText.title || null,
         arabic: newText.arabic,
-        translation: newText.translation,
         category: newText.category || null,
       }),
     });
 
-    setNewText({ title: "", arabic: "", translation: "", category: "" });
+    setNewText({ title: "", arabic: "", category: "" });
     setShowModal(false);
-    fetchTexts();
+
+    if (res.ok) {
+      const created = await res.json();
+      fetchTexts();
+      // Auto-generate translation in the background
+      fetch(`/api/texts/${created.id}/translate`, { method: "POST" })
+        .then((r) => r.ok ? r.json() : null)
+        .then((data) => {
+          if (data?.translation) {
+            setTexts((prev) => prev.map((t) => t.id === created.id ? { ...t, translation: data.translation } : t));
+            if (selectedText?.id === created.id) {
+              setSelectedText((prev) => prev ? { ...prev, translation: data.translation } : prev);
+            }
+          }
+        })
+        .catch(() => {});
+    } else {
+      fetchTexts();
+    }
   }
 
   async function deleteText(id: number) {
@@ -225,7 +242,6 @@ export default function ReadingPage() {
         setNewText({
           title: data.title || "",
           arabic: data.arabic || "",
-          translation: data.translation || "",
           category: newText.category,
         });
       } else {
@@ -686,19 +702,7 @@ export default function ReadingPage() {
                   required
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-ink-soft">
-                  Translation
-                </label>
-                <textarea
-                  value={newText.translation}
-                  onChange={(e) => setNewText({ ...newText, translation: e.target.value })}
-                  placeholder="My name is..."
-                  rows={4}
-                  className="mt-1 w-full rounded-[var(--radius-sm)] border border-line px-3 py-2 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
-                  required
-                />
-              </div>
+              <p className="text-xs text-ink-faint">Translation will be auto-generated</p>
               <div>
                 <label className="block text-sm font-medium text-ink-soft">
                   Category (optional)

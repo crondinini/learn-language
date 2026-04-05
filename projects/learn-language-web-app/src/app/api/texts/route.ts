@@ -38,9 +38,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(texts, { status: 201 });
   } else {
     // Single text creation
-    if (!body.arabic || !body.translation) {
+    if (!body.arabic) {
       return NextResponse.json(
-        { error: "arabic and translation are required" },
+        { error: "arabic is required" },
         { status: 400 }
       );
     }
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     const text = createText({
       title: body.title,
       arabic: body.arabic,
-      translation: body.translation,
+      translation: body.translation || "",
       category: body.category,
     }, user.id);
 
