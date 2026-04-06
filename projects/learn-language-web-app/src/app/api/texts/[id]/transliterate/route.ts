@@ -93,7 +93,7 @@ export async function POST(_request: NextRequest, { params }: Params) {
       "UPDATE texts SET transliteration = ?, updated_at = datetime('now') WHERE id = ?"
     ).run(transliteration, id);
 
-    console.log("Transliterate: saved to DB, returning response");
+    console.log("Transliterate: saved to DB");
     return NextResponse.json({ transliteration });
   } catch (error) {
     console.error("Error generating transliteration:", error);
