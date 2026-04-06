@@ -29,8 +29,8 @@ export function askClaude(prompt: string, model = "haiku"): Promise<string> {
 
     const timeout = setTimeout(() => {
       claude.kill();
-      reject(new Error("Claude timed out after 60 seconds"));
-    }, 60_000);
+      reject(new Error(`Claude timed out after 120 seconds. stderr: ${stderr.slice(0, 300)}`));
+    }, 120_000);
 
     claude.on("close", (code: number | null) => {
       clearTimeout(timeout);
