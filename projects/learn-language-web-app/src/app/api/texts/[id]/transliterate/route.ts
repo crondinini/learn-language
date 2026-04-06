@@ -15,7 +15,7 @@ function generateTransliteration(arabic: string): string | null {
   try {
     console.log("Transliteration: calling Claude CLI via execSync...");
     const result = execSync(
-      `echo ${JSON.stringify(prompt)} | claude --print --model haiku --output-format text 2>&1`,
+      `echo ${JSON.stringify(prompt)} | claude --print --model haiku --output-format text --mcp-config '{}' 2>&1`,
       { env, cwd: "/tmp", timeout: 60000, encoding: "utf-8" }
     );
     console.log("Transliteration: Claude returned", result.length, "chars:", result.slice(0, 200));

@@ -66,7 +66,7 @@ function lookupClaude(word: string, targetLang?: string): Promise<DictionaryResu
   return new Promise((resolve) => {
     const claude = spawn(
       "claude",
-      ["--print", "--model", "haiku", "--output-format", "text"],
+      ["--print", "--model", "haiku", "--output-format", "text", "--mcp-config", "{}"],
       { env, stdio: ["pipe", "pipe", "pipe"] }
     );
 

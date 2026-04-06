@@ -13,7 +13,7 @@ function generateTranslation(arabic: string): string | null {
 
   try {
     const result = execSync(
-      `echo ${JSON.stringify(prompt)} | claude --print --model haiku --output-format text`,
+      `echo ${JSON.stringify(prompt)} | claude --print --model haiku --output-format text --mcp-config '{}'`,
       { env, cwd: "/tmp", timeout: 60000, encoding: "utf-8" }
     );
     return result.trim() || null;
