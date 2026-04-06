@@ -15,7 +15,7 @@ function generateTransliteration(arabic: string): Promise<string | null> {
   return new Promise((resolve) => {
     const claude = spawn(
       "claude",
-      ["--print", "--model", "haiku", "--output-format", "text", "--mcp-config", "{}"],
+      ["--print", "--model", "haiku", "--output-format", "text", "--mcp-config", "{\"mcpServers\":{}}"],
       { env, stdio: ["pipe", "pipe", "pipe"], cwd: "/tmp" }
     );
 
