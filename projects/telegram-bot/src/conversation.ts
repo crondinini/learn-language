@@ -3,7 +3,7 @@
  * and handles back-and-forth conversation.
  */
 
-import { sampleWords, addBotPracticeWords } from "./api.js";
+import { getRecentWords, addBotPracticeWords } from "./api.js";
 import { askClaude } from "./claude.js";
 
 interface Message {
@@ -79,7 +79,7 @@ export async function generateProactiveMessage(chatId: number): Promise<string> 
   // Clear old conversation — starting fresh
   conversations.set(chatId, []);
 
-  const words = await sampleWords(15);
+  const words = await getRecentWords(15);
   if (words.length === 0) {
     return "مرحبا! كيف حالك اليوم؟"; // fallback
   }
@@ -132,7 +132,7 @@ ${wordList}`;
 export async function generateReply(chatId: number, userMessage: string): Promise<string> {
   addMessage(chatId, "user", userMessage);
 
-  const words = await sampleWords(15);
+  const words = await getRecentWords(15);
   const wordList = words
     .map((w) => `${w.front} (${w.back})`)
     .join("\n");

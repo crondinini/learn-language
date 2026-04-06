@@ -45,28 +45,14 @@ async function apiFetch(path: string, options?: RequestInit): Promise<Response> 
 }
 
 /**
- * Get learned vocabulary (words in Learning or Review state)
+ * Get recent vocabulary — the API returns words sorted by
+ * last_review DESC, created_at DESC so newest/most recently
+ * reviewed words come first.
  */
-export async function getLearnedWords(): Promise<Card[]> {
-  const [learningRes, masteredRes] = await Promise.all([
-    apiFetch("/api/vocab?filter=learning&language=ar"),
-    apiFetch("/api/vocab?filter=mastered&language=ar"),
-  ]);
-
-  const learning: VocabResponse = await learningRes.json();
-  const mastered: VocabResponse = await masteredRes.json();
-
-  return [...learning.vocabulary, ...mastered.vocabulary];
-}
-
-/**
- * Get a random sample of words for conversation context
- */
-export async function sampleWords(count: number): Promise<Card[]> {
-  const words = await getLearnedWords();
-  // Shuffle and take N
-  const shuffled = words.sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, Math.min(count, shuffled.length));
+export async function getRecentWords(count: number): Promise<Card[]> {
+  const res = await apiFetch("/api/vocab?language=ar");
+  const data: VocabResponse = await res.json();
+  return data.vocabulary.slice(0, Math.min(count, data.vocabulary.length));
 }
 
 /**
