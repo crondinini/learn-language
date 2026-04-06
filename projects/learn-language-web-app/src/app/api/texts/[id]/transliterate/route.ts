@@ -11,12 +11,14 @@ function generateTransliteration(arabic: string): Promise<string | null> {
 
   const env = { ...process.env };
   delete env.CLAUDECODE;
+  // Prevent MCP server config from being loaded
+  delete env.CLAUDE_MCP_CONFIG;
 
   return new Promise((resolve) => {
     const claude = spawn(
       "claude",
       ["--print", "--model", "haiku", "--output-format", "text"],
-      { env, stdio: ["pipe", "pipe", "pipe"] }
+      { env, stdio: ["pipe", "pipe", "pipe"], cwd: "/tmp" }
     );
 
     let stdout = "";
@@ -66,15 +68,20 @@ export async function POST(_request: NextRequest, { params }: Params) {
     const user = await getCurrentUser();
     const { id } = await params;
 
+    console.log(`Transliterate: request for text id=${id}, user=${user.id}`);
+
     const text = db
       .prepare("SELECT * FROM texts WHERE id = ? AND user_id = ?")
       .get(id, user.id) as Text | undefined;
 
     if (!text) {
+      console.log("Transliterate: text not found");
       return NextResponse.json({ error: "Text not found" }, { status: 404 });
     }
 
+    console.log(`Transliterate: found text, arabic length=${text.arabic.length}, generating...`);
     const transliteration = await generateTransliteration(text.arabic);
+    console.log(`Transliterate: result=${transliteration ? transliteration.slice(0, 100) : "NULL"}`);
 
     if (!transliteration) {
       return NextResponse.json(
@@ -88,6 +95,7 @@ export async function POST(_request: NextRequest, { params }: Params) {
       "UPDATE texts SET transliteration = ?, updated_at = datetime('now') WHERE id = ?"
     ).run(transliteration, id);
 
+    console.log("Transliterate: saved to DB, returning response");
     return NextResponse.json({ transliteration });
   } catch (error) {
     console.error("Error generating transliteration:", error);

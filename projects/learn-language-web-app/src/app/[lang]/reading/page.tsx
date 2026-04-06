@@ -208,8 +208,10 @@ export default function ReadingPage() {
       const res = await fetch(`/api/texts/${selectedText.id}/transliterate`, {
         method: "POST",
       });
-      if (res.ok) {
-        const data = await res.json();
+      console.log("Transliterate response status:", res.status);
+      const data = await res.json();
+      console.log("Transliterate response data:", data);
+      if (res.ok && data.transliteration) {
         const updated = { ...selectedText, transliteration: data.transliteration };
         setSelectedText(updated);
         setTexts((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
