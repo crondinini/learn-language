@@ -155,15 +155,26 @@ export default function Home() {
                   </div>
 
                   {/* Stats */}
-                  <div className="mt-4 flex items-center gap-3 text-sm">
-                    {deck.due_cards > 0 && (
-                      <span className="rounded-full bg-accent-subtle px-2.5 py-0.5 text-xs font-medium text-accent">
-                        {deck.due_cards} due
+                  <div className="mt-4 flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-3">
+                      {deck.due_cards > 0 && (
+                        <span className="rounded-full bg-accent-subtle px-2.5 py-0.5 text-xs font-medium text-accent">
+                          {deck.due_cards} due
+                        </span>
+                      )}
+                      <span className="text-ink-faint tabular-nums">
+                        {deck.total_cards} card{deck.total_cards !== 1 ? "s" : ""}
                       </span>
+                    </div>
+                    {deck.due_cards > 0 && (
+                      <Link
+                        href={`/${language}/deck/${deck.id}/review`}
+                        className="relative z-[2] rounded-[var(--radius-sm)] bg-accent px-3 py-1.5 text-xs font-medium text-white transition hover:bg-accent-hover"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Study Now
+                      </Link>
                     )}
-                    <span className="text-ink-faint tabular-nums">
-                      {deck.total_cards} card{deck.total_cards !== 1 ? "s" : ""}
-                    </span>
                   </div>
 
                   {/* Progress bar */}
