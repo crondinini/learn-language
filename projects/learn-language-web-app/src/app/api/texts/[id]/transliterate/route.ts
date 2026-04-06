@@ -13,13 +13,21 @@ function generateTransliteration(arabic: string): string | null {
   delete env.CLAUDECODE;
 
   try {
+    console.log("Transliteration: calling Claude CLI via execSync...");
     const result = execSync(
-      `echo ${JSON.stringify(prompt)} | claude --print --model haiku --output-format text`,
+      `echo ${JSON.stringify(prompt)} | claude --print --model haiku --output-format text 2>&1`,
       { env, cwd: "/tmp", timeout: 60000, encoding: "utf-8" }
     );
+    console.log("Transliteration: Claude returned", result.length, "chars:", result.slice(0, 200));
     return result.trim() || null;
-  } catch (error) {
-    console.error("Transliteration: execSync error:", error instanceof Error ? error.message : error);
+  } catch (error: unknown) {
+    const execError = error as { status?: number; stdout?: string; stderr?: string; message?: string };
+    console.error("Transliteration: execSync error:", {
+      status: execError.status,
+      stdout: execError.stdout?.slice(0, 300),
+      stderr: execError.stderr?.slice(0, 300),
+      message: execError.message?.slice(0, 300),
+    });
     return null;
   }
 }
