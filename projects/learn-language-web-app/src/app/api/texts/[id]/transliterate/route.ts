@@ -20,12 +20,18 @@ function generateTransliteration(arabic: string): Promise<string | null> {
     );
 
     let stdout = "";
+    let stderr = "";
 
     claude.stdout.on("data", (data: Buffer) => {
       stdout += data.toString();
     });
 
+    claude.stderr.on("data", (data: Buffer) => {
+      stderr += data.toString();
+    });
+
     const timeout = setTimeout(() => {
+      console.error("Transliteration: Claude CLI timed out");
       claude.kill();
       resolve(null);
     }, 30000);
@@ -35,12 +41,14 @@ function generateTransliteration(arabic: string): Promise<string | null> {
       if (code === 0 && stdout.trim()) {
         resolve(stdout.trim());
       } else {
+        console.error("Transliteration: Claude exited with code", code, "stderr:", stderr.slice(0, 300), "stdout:", stdout.slice(0, 300));
         resolve(null);
       }
     });
 
-    claude.on("error", () => {
+    claude.on("error", (err) => {
       clearTimeout(timeout);
+      console.error("Transliteration: Claude spawn error:", err.message);
       resolve(null);
     });
 
