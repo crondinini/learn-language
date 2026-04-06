@@ -24,6 +24,17 @@ interface Card {
   back: string;
 }
 
+interface WordAnnotation {
+  front: string;
+  back: string;
+  cardId: number;
+}
+
+// Strip Arabic diacritics for matching (must match server logic)
+function stripDiacritics(text: string): string {
+  return text.replace(/[\u064B-\u065F\u0670]/g, "");
+}
+
 export default function ReadingPage() {
   const lang = useFeatureGuard("reading");
   const [texts, setTexts] = useState<Text[]>([]);
@@ -44,6 +55,7 @@ export default function ReadingPage() {
   const [editingCategory, setEditingCategory] = useState(false);
   const [categoryInput, setCategoryInput] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [wordAnnotations, setWordAnnotations] = useState<Record<string, WordAnnotation>>({});
 
   // Use shared recorder hook
   const recorder = useRecorder();
@@ -64,10 +76,15 @@ export default function ReadingPage() {
     setShowTranslation(false);
     setIsPlaying(false);
     recorder.clearRecording();
-    // Fetch linked cards
-    const res = await fetch(`/api/texts/${text.id}?cards=true`);
-    const data = await res.json();
-    setLinkedCards(data.cards || []);
+    // Fetch linked cards and word annotations in parallel
+    const [cardsRes, annotationsRes] = await Promise.all([
+      fetch(`/api/texts/${text.id}?cards=true`),
+      fetch(`/api/texts/${text.id}/word-annotations`),
+    ]);
+    const cardsData = await cardsRes.json();
+    setLinkedCards(cardsData.cards || []);
+    const annotationsData = await annotationsRes.json();
+    setWordAnnotations(annotationsData.annotations || {});
   }
 
   async function createText(e: React.FormEvent) {
@@ -208,9 +225,7 @@ export default function ReadingPage() {
       const res = await fetch(`/api/texts/${selectedText.id}/transliterate`, {
         method: "POST",
       });
-      console.log("Transliterate response status:", res.status);
       const data = await res.json();
-      console.log("Transliterate response data:", data);
       if (res.ok && data.transliteration) {
         const updated = { ...selectedText, transliteration: data.transliteration };
         setSelectedText(updated);
@@ -296,6 +311,42 @@ export default function ReadingPage() {
       ttsAudioRef.current.currentTime = 0;
     }
     setIsTtsPlaying(false);
+  }
+
+  // Render a line of Arabic text with hoverable word annotations
+  function renderAnnotatedLine(line: string, annotations: Record<string, WordAnnotation>) {
+    const annotationKeys = Object.keys(annotations);
+    if (annotationKeys.length === 0) return line;
+
+    // Split by whitespace, keeping separators
+    const tokens = line.split(/(\s+)/);
+
+    return tokens.map((token, idx) => {
+      // Whitespace tokens pass through
+      if (/^\s+$/.test(token)) return token;
+
+      // Strip diacritics for matching
+      const normalized = stripDiacritics(token);
+      // Remove common punctuation for matching
+      const cleaned = normalized.replace(/[،.؟!,?]/g, "");
+
+      // Check if this word matches any annotation
+      const annotation = annotations[cleaned];
+      if (annotation) {
+        return (
+          <span key={idx} className="group/word relative inline-block">
+            <span className="cursor-pointer rounded-sm transition-colors hover:bg-accent/15 px-0.5 -mx-0.5">
+              {token}
+            </span>
+            <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap rounded-[var(--radius-sm)] bg-ink px-3 py-1.5 text-sm text-surface opacity-0 group-hover/word:opacity-100 transition-opacity z-10 shadow-lg">
+              <span className="block text-center font-medium">{annotation.back}</span>
+            </span>
+          </span>
+        );
+      }
+
+      return token;
+    });
   }
 
   // Group texts by category
@@ -439,9 +490,9 @@ export default function ReadingPage() {
                         <p
                           className="text-2xl leading-loose text-ink"
                           dir="rtl"
-                          style={{ fontFamily: "var(--font-arabic), sans-serif", lineHeight: "2" }}
+                          style={{ fontFamily: "var(--font-arabic), sans-serif", lineHeight: "2.2" }}
                         >
-                          {line}
+                          {renderAnnotatedLine(line, wordAnnotations)}
                         </p>
                         {showTransliteration && translitLines[i] && (
                           <p className="mt-0.5 text-sm italic text-ink-faint leading-relaxed">

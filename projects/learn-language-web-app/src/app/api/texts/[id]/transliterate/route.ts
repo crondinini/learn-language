@@ -20,25 +20,18 @@ function generateTransliteration(arabic: string): Promise<string | null> {
     );
 
     let stdout = "";
-    let stderr = "";
 
     claude.stdout.on("data", (data: Buffer) => {
       stdout += data.toString();
     });
 
-    claude.stderr.on("data", (data: Buffer) => {
-      stderr += data.toString();
-    });
-
     const timeout = setTimeout(() => {
-      console.error("Transliteration: Claude CLI timed out");
       claude.kill();
       resolve(null);
     }, 60000);
 
     claude.on("close", (code: number | null) => {
       clearTimeout(timeout);
-      console.log("Transliteration: Claude exited code:", code, "stdout:", stdout.slice(0, 200), "stderr:", stderr.slice(0, 200));
       if (code === 0 && stdout.trim()) {
         resolve(stdout.trim());
       } else {
@@ -46,9 +39,8 @@ function generateTransliteration(arabic: string): Promise<string | null> {
       }
     });
 
-    claude.on("error", (err) => {
+    claude.on("error", () => {
       clearTimeout(timeout);
-      console.error("Transliteration: spawn error:", err.message);
       resolve(null);
     });
 
@@ -66,20 +58,15 @@ export async function POST(_request: NextRequest, { params }: Params) {
     const user = await getCurrentUser();
     const { id } = await params;
 
-    console.log(`Transliterate: request for text id=${id}, user=${user.id}`);
-
     const text = db
       .prepare("SELECT * FROM texts WHERE id = ? AND user_id = ?")
       .get(id, user.id) as Text | undefined;
 
     if (!text) {
-      console.log("Transliterate: text not found");
       return NextResponse.json({ error: "Text not found" }, { status: 404 });
     }
 
-    console.log(`Transliterate: found text, arabic length=${text.arabic.length}, generating...`);
     const transliteration = await generateTransliteration(text.arabic);
-    console.log(`Transliterate: result=${transliteration ? transliteration.slice(0, 100) : "NULL"}`);
 
     if (!transliteration) {
       return NextResponse.json(
@@ -88,12 +75,10 @@ export async function POST(_request: NextRequest, { params }: Params) {
       );
     }
 
-    // Save to database
     db.prepare(
       "UPDATE texts SET transliteration = ?, updated_at = datetime('now') WHERE id = ?"
     ).run(transliteration, id);
 
-    console.log("Transliterate: saved to DB");
     return NextResponse.json({ transliteration });
   } catch (error) {
     console.error("Error generating transliteration:", error);
