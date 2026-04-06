@@ -1,51 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
-import { spawn } from "child_process";
+import { execSync } from "child_process";
 import db, { Text } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 
 type Params = { params: Promise<{ id: string }> };
 
-function generateTranslation(arabic: string): Promise<string | null> {
+function generateTranslation(arabic: string): string | null {
   const prompt = `Translate this Arabic text to English. Output ONLY the English translation, nothing else. Preserve line breaks to match the original.\n\n${arabic}`;
 
   const env = { ...process.env };
   delete env.CLAUDECODE;
 
-  return new Promise((resolve) => {
-    const claude = spawn(
-      "claude",
-      ["--print", "--model", "haiku", "--output-format", "text", "--tools", ""],
-      { env, stdio: ["pipe", "pipe", "pipe"], cwd: "/tmp" }
+  try {
+    const result = execSync(
+      `echo ${JSON.stringify(prompt)} | claude --print --model haiku --output-format text`,
+      { env, cwd: "/tmp", timeout: 60000, encoding: "utf-8" }
     );
-
-    let stdout = "";
-
-    claude.stdout.on("data", (data: Buffer) => {
-      stdout += data.toString();
-    });
-
-    const timeout = setTimeout(() => {
-      claude.kill();
-      resolve(null);
-    }, 30000);
-
-    claude.on("close", (code: number | null) => {
-      clearTimeout(timeout);
-      if (code === 0 && stdout.trim()) {
-        resolve(stdout.trim());
-      } else {
-        resolve(null);
-      }
-    });
-
-    claude.on("error", () => {
-      clearTimeout(timeout);
-      resolve(null);
-    });
-
-    claude.stdin.write(prompt);
-    claude.stdin.end();
-  });
+    return result.trim() || null;
+  } catch (error) {
+    console.error("Translation: execSync error:", error instanceof Error ? error.message : error);
+    return null;
+  }
 }
 
 /**
@@ -65,7 +40,7 @@ export async function POST(_request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: "Text not found" }, { status: 404 });
     }
 
-    const translation = await generateTranslation(text.arabic);
+    const translation = generateTranslation(text.arabic);
 
     if (!translation) {
       return NextResponse.json(
