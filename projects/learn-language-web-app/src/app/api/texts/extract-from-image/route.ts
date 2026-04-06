@@ -25,7 +25,7 @@ function extractTextFromImage(imagePath: string): Promise<{
   return new Promise((resolve) => {
     const claude = spawn(
       "claude",
-      ["--print", "--model", "haiku", "--output-format", "text", "--dangerously-skip-permissions"],
+      ["--print", "--model", "haiku", "--output-format", "text", "--allowedTools", "Read"],
       { env, stdio: ["pipe", "pipe", "pipe"] }
     );
 
