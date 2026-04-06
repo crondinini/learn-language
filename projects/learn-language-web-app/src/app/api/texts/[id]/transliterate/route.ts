@@ -17,7 +17,7 @@ function generateTransliteration(arabic: string): Promise<string | null> {
   return new Promise((resolve) => {
     const claude = spawn(
       "claude",
-      ["--print", "--model", "haiku", "--output-format", "text"],
+      ["--print", "--model", "haiku", "--output-format", "text", "--tools", ""],
       { env, stdio: ["pipe", "pipe", "pipe"], cwd: "/tmp" }
     );
 

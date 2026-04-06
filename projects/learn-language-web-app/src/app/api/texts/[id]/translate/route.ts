@@ -14,8 +14,8 @@ function generateTranslation(arabic: string): Promise<string | null> {
   return new Promise((resolve) => {
     const claude = spawn(
       "claude",
-      ["--print", "--model", "haiku", "--output-format", "text"],
-      { env, stdio: ["pipe", "pipe", "pipe"] }
+      ["--print", "--model", "haiku", "--output-format", "text", "--tools", ""],
+      { env, stdio: ["pipe", "pipe", "pipe"], cwd: "/tmp" }
     );
 
     let stdout = "";
