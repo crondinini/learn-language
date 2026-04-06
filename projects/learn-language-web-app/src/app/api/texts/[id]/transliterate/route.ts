@@ -1,35 +1,60 @@
 import { NextRequest, NextResponse } from "next/server";
-import { execSync } from "child_process";
+import { spawn } from "child_process";
 import db, { Text } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 
 type Params = { params: Promise<{ id: string }> };
 
-function generateTransliteration(arabic: string): string | null {
+function generateTransliteration(arabic: string): Promise<string | null> {
   const lineCount = arabic.split("\n").length;
   const prompt = `Transliterate this Arabic text to Latin script. Output ONLY the transliteration, nothing else. Preserve line breaks exactly — the input has ${lineCount} line(s), your output must have exactly ${lineCount} line(s). Use standard Arabic transliteration (e.g., "ana ismi..." for "أنا اسمي"). Do not add vowel marks that aren't pronounced. Here is the text:\n\n${arabic}`;
 
   const env = { ...process.env };
   delete env.CLAUDECODE;
 
-  try {
-    console.log("Transliteration: calling Claude CLI via execSync...");
-    const result = execSync(
-      `echo ${JSON.stringify(prompt)} | claude --print --model haiku --output-format text --mcp-config '{}' 2>&1`,
-      { env, cwd: "/tmp", timeout: 60000, encoding: "utf-8" }
+  return new Promise((resolve) => {
+    const claude = spawn(
+      "claude",
+      ["--print", "--model", "haiku", "--output-format", "text", "--mcp-config", "{}"],
+      { env, stdio: ["pipe", "pipe", "pipe"], cwd: "/tmp" }
     );
-    console.log("Transliteration: Claude returned", result.length, "chars:", result.slice(0, 200));
-    return result.trim() || null;
-  } catch (error: unknown) {
-    const execError = error as { status?: number; stdout?: string; stderr?: string; message?: string };
-    console.error("Transliteration: execSync error:", {
-      status: execError.status,
-      stdout: execError.stdout?.slice(0, 300),
-      stderr: execError.stderr?.slice(0, 300),
-      message: execError.message?.slice(0, 300),
+
+    let stdout = "";
+    let stderr = "";
+
+    claude.stdout.on("data", (data: Buffer) => {
+      stdout += data.toString();
     });
-    return null;
-  }
+
+    claude.stderr.on("data", (data: Buffer) => {
+      stderr += data.toString();
+    });
+
+    const timeout = setTimeout(() => {
+      console.error("Transliteration: Claude CLI timed out");
+      claude.kill();
+      resolve(null);
+    }, 60000);
+
+    claude.on("close", (code: number | null) => {
+      clearTimeout(timeout);
+      console.log("Transliteration: Claude exited code:", code, "stdout:", stdout.slice(0, 200), "stderr:", stderr.slice(0, 200));
+      if (code === 0 && stdout.trim()) {
+        resolve(stdout.trim());
+      } else {
+        resolve(null);
+      }
+    });
+
+    claude.on("error", (err) => {
+      clearTimeout(timeout);
+      console.error("Transliteration: spawn error:", err.message);
+      resolve(null);
+    });
+
+    claude.stdin.write(prompt);
+    claude.stdin.end();
+  });
 }
 
 /**
@@ -53,7 +78,7 @@ export async function POST(_request: NextRequest, { params }: Params) {
     }
 
     console.log(`Transliterate: found text, arabic length=${text.arabic.length}, generating...`);
-    const transliteration = generateTransliteration(text.arabic);
+    const transliteration = await generateTransliteration(text.arabic);
     console.log(`Transliterate: result=${transliteration ? transliteration.slice(0, 100) : "NULL"}`);
 
     if (!transliteration) {
